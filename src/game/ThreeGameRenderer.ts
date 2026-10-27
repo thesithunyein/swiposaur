@@ -3046,8 +3046,32 @@ export class ThreeGameRenderer {
       const bz = -b.y * SCALE_Y;
       mesh.position.set(bx, 0.23, bz);
 
-      // Facing towards street
-      mesh.rotation.y = b.x < 0 ? Math.PI / 2 : -Math.PI / 2;
+      // Idlers face the street; walkers face the direction they are travelling.
+      if (b.walking && b.walkSpeed !== 0) {
+        mesh.rotation.y = b.walkSpeed > 0 ? Math.PI : 0;
+      } else {
+        mesh.rotation.y = b.x < 0 ? Math.PI / 2 : -Math.PI / 2;
+      }
+
+      // Walk cycle: the legs swing from the hip at a pace that matches how fast
+      // the pedestrian is actually travelling along the curb.
+      const walking = b.walking && !b.slapped && !this.reducedMotion;
+      const stride = walking ? Math.sin(time * (6.2 + Math.abs(b.walkSpeed) * 3) + b.walkPhase) : 0;
+      const leftLeg = mesh.getObjectByName('leftLeg');
+      const rightLeg = mesh.getObjectByName('rightLeg');
+      const leftArm = mesh.getObjectByName('leftArm');
+      const rightArm = mesh.getObjectByName('rightArm');
+      if (leftLeg && rightLeg) {
+        leftLeg.rotation.x = stride * 0.42;
+        rightLeg.rotation.x = -stride * 0.42;
+      }
+      if (leftArm && rightArm) {
+        leftArm.rotation.x = -stride * 0.32;
+        rightArm.rotation.x = stride * 0.32;
+      }
+      if (walking) {
+        mesh.position.y = 0.23 + Math.abs(stride) * 0.035;
+      }
 
       // Strike range indicator (Floating Voxel Exclamation/Diamond)
       const reticle = mesh.getObjectByName('reticle');
@@ -3143,16 +3167,44 @@ export class ThreeGameRenderer {
       group.add(briefcase);
     }
 
-    // Voxel Legs
+    // Voxel Arms — shoulder-pivoted so a walking pedestrian counter-swings.
+    const armGeo = new THREE.BoxGeometry(0.2, 0.72, 0.2);
+    armGeo.translate(0, -0.34, 0);
+
+    const armL = new THREE.Group();
+    armL.name = 'leftArm';
+    armL.position.set(-0.46, 1.73, 0);
+    const armLMesh = new THREE.Mesh(armGeo, shirtMat);
+    armLMesh.castShadow = true;
+    armL.add(armLMesh);
+    group.add(armL);
+
+    const armR = new THREE.Group();
+    armR.name = 'rightArm';
+    armR.position.set(0.46, 1.73, 0);
+    const armRMesh = new THREE.Mesh(armGeo, shirtMat);
+    armRMesh.castShadow = true;
+    armR.add(armRMesh);
+    group.add(armR);
+
+    // Voxel Legs — grouped at the hip so walkers can take a step.
     const legGeo = new THREE.BoxGeometry(0.28, 0.82, 0.28);
-    const legL = new THREE.Mesh(legGeo, pantsMat);
-    legL.position.set(-0.22, 0.42, 0);
-    legL.castShadow = true;
+    legGeo.translate(0, -0.41, 0);
+
+    const legL = new THREE.Group();
+    legL.name = 'leftLeg';
+    legL.position.set(-0.22, 0.82, 0);
+    const legLMesh = new THREE.Mesh(legGeo, pantsMat);
+    legLMesh.castShadow = true;
+    legL.add(legLMesh);
     group.add(legL);
 
-    const legR = new THREE.Mesh(legGeo, pantsMat);
-    legR.position.set(0.22, 0.42, 0);
-    legR.castShadow = true;
+    const legR = new THREE.Group();
+    legR.name = 'rightLeg';
+    legR.position.set(0.22, 0.82, 0);
+    const legRMesh = new THREE.Mesh(legGeo, pantsMat);
+    legRMesh.castShadow = true;
+    legR.add(legRMesh);
     group.add(legR);
 
     // Floating Voxel Target Exclamation Indicator

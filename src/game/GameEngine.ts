@@ -694,7 +694,9 @@ export class GameEngine {
     }
 
     // 3. Forward Speed calculation (faster base speed, gradually increases with distance)
-    const speedProgressBonus = Math.min(3.8, (p.y / 5000) * 1.5);
+    // Full speed now arrives at ~760 m / ~18 s instead of ~1,266 m / ~30 s,
+    // so the acceleration is felt while obstacle density is still climbing.
+    const speedProgressBonus = Math.min(3.8, (p.y / 3000) * 1.5);
     let currentSpeed = (p.baseSpeed + speedProgressBonus);
     if (this.stats.feverActive) {
       currentSpeed *= 1.45; // Super turbo in Fever
@@ -770,6 +772,12 @@ export class GameEngine {
         b.x += b.knockbackVx * 0.016 * dtFactor;
         b.knockbackVx *= 0.85;
         if (Math.abs(b.knockbackVx) < 0.8) b.knockbackVx = 0;
+      }
+
+      // A walker covers ground along the curb; an idler stays put. The strike
+      // window therefore moves with them, so a whip has to be timed.
+      if (!b.slapped && b.walking && b.walkSpeed !== 0) {
+        b.y += b.walkSpeed * dtFactor;
       }
 
       if (!b.slapped) {
@@ -1464,6 +1472,7 @@ export class GameEngine {
     // (Bystanders stand at -155 or +155, easily slappable when player is in lane -90 or +90)
     const numBystanders = Math.random() > 0.35 ? 2 : 1;
     for (let i = 0; i < numBystanders; i++) {
+      const walking = Math.random() < 0.55;
       const template = BYSTANDER_TEMPLATES[Math.floor(Math.random() * BYSTANDER_TEMPLATES.length)];
       const side = (i === 0 ? (Math.random() > 0.5 ? 1 : -1) : (Math.random() > 0.5 ? -1 : 1));
       const bx = side * (155 + Math.random() * 8);
@@ -1481,6 +1490,11 @@ export class GameEngine {
         accessory: template.accessory,
         slapped: false,
         wobble: 0,
+        // Roughly half the crowd actually walks the sidewalk: a human pace,
+        // either with the traffic or toward the runner, with a per-person phase.
+        walking: walking,
+        walkSpeed: walking ? (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.45) : 0,
+        walkPhase: Math.random() * Math.PI * 2,
       });
     }
 

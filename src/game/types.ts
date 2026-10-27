@@ -70,6 +70,12 @@ export interface Bystander {
   accessory: 'hat' | 'glasses' | 'phone' | 'fish' | 'fruit';
   slapped: boolean;
   wobble: number;
+  /** Idle pedestrians stand; walkers travel along the sidewalk. */
+  walking: boolean;
+  /** Signed units per frame along the sidewalk (+away from camera, -toward). */
+  walkSpeed: number;
+  /** Per-person offset so a crowd never marches in lockstep. */
+  walkPhase: number;
   knockbackVx?: number;
   inStrikeRange?: boolean;
   flyingAccessory?: {

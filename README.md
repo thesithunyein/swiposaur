@@ -38,7 +38,7 @@ binary files in the build are the app icons and favicons.
 | **Live build** | <https://swiposaur.sithunyein.com/> |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
-| **Footprint** | ~2.4 MB on disk · ~295 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
+| **Footprint** | ~1.4 MB on disk · ~430 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
 
 ---
 
@@ -294,9 +294,6 @@ ever creates one record.
 - External font requests to `fonts.googleapis.com`; if the network blocks them the game
   falls back to system sans-serif.
 - Very old low-end Android devices with weak GPUs may drop below 30 FPS at 2× pixel ratio.
-- The app icons ship at full export size (~1.2 MB of the 2.4 MB build), which is most of
-  the bytes a first-time visitor downloads; they are cached afterwards. The playable code
-  is ~280 KB gzipped.
 
 ---
 
