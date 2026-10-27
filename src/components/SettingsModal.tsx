@@ -4,6 +4,7 @@ import { GameSettings } from '../game/settings.ts';
 import { sounds } from '../game/SoundEngine.ts';
 import { getPlayerId, loadPlayerName, savePlayerName, syncPlayerName } from '../game/leaderboard.ts';
 import { MAX_PLAYER_NAME_LENGTH } from '../game/leaderboardCore.ts';
+import { LANGUAGES, setLanguage, t, useLanguage, type Language } from '../game/i18n.ts';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetProgress,
   onPlayerNameSaved,
 }) => {
+  const language = useLanguage();
   const [showConfirmReset, setShowConfirmReset] = useState<boolean>(false);
   const [nameDraft, setNameDraft] = useState<string>(() => loadPlayerName());
   const [nameSaved, setNameSaved] = useState<boolean>(false);
@@ -87,6 +89,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onUpdateSettings({ ...settings, onScreenControls: next });
   };
 
+  const selectLanguage = (next: Language) => {
+    sounds.playClick();
+    setLanguage(next);
+    onUpdateSettings({ ...settings, language: next });
+  };
+
   const handleConfirmReset = () => {
     sounds.playWhack();
     onResetProgress();
@@ -105,10 +113,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h2 className="font-['Lilita_One'] text-xl sm:text-2xl font-bold text-[#FEF08A] tracking-wider">
-                GAME SETTINGS
+                {t('GAME SETTINGS')}
               </h2>
               <span className="text-xs text-[#FED7AA] font-medium block">
-                Tune graphics, audio, camera & controls
+                {t('Tune graphics, audio, camera & controls')}
               </span>
             </div>
           </div>
@@ -118,7 +126,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               sounds.playClick();
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-9 h-9 flex items-center justify-center bg-[#EF4444] hover:bg-[#F87171] text-white border-2 border-white/40 shadow-md active:scale-95 rounded-2xl cursor-pointer transition-all"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
@@ -127,16 +135,56 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+          {/* Language */}
+          <div className="p-3.5 bg-[#25180E] rounded-2xl border border-white/10 space-y-2.5">
+            <div className="flex items-center gap-3">
+              <span className="text-lg leading-none" aria-hidden="true">
+                🌐
+              </span>
+              <div>
+                <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
+                  {t('Language')}
+                </h4>
+                <p className="text-xs text-[#FED7AA]/70">
+                  {t('English and Burmese are available. The choice is saved on this device.')}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label={t('Game language')}>
+              {LANGUAGES.map((option) => {
+                const active = language === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => selectLanguage(option.id)}
+                    aria-pressed={active}
+                    className={`py-2.5 rounded-xl font-['Lilita_One'] text-sm border transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      active
+                        ? 'bg-[#F97316] text-white border-white/50 shadow-md'
+                        : 'bg-[#160E08] text-[#FED7AA] border-white/15 hover:border-[#F59E0B]/60'
+                    }`}
+                  >
+                    {active ? <Check className="w-4 h-4" /> : null}
+                    <span className={option.id === 'my' ? "font-['Aka08']" : undefined}>
+                      {option.nativeLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Leaderboard name */}
           <div className="p-3.5 bg-[#25180E] rounded-2xl border border-white/10 space-y-2.5">
             <div className="flex items-center gap-3">
               <User className="w-5 h-5 text-[#FBBF24] shrink-0" />
               <div>
                 <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                  Leaderboard Name
+                  {t('Leaderboard Name')}
                 </h4>
                 <p className="text-xs text-[#FED7AA]/70">
-                  Shown on the global board. Auto-generated until you change it.
+                  {t('Shown on the global board. Auto-generated until you change it.')}
                 </p>
               </div>
             </div>
@@ -145,7 +193,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 type="text"
                 value={nameDraft}
                 maxLength={MAX_PLAYER_NAME_LENGTH}
-                aria-label="Leaderboard name"
+                aria-label={t('Leaderboard name')}
                 onChange={(event) => {
                   setNameDraft(event.target.value);
                   setNameSaved(false);
@@ -169,7 +217,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="px-3 py-2 bg-[#F97316] hover:bg-[#FB923C] text-white font-['Lilita_One'] text-xs rounded-xl border border-white/40 shadow-sm flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 {nameSaved ? <Check className="w-3.5 h-3.5" /> : null}
-                {nameSaved ? 'SAVED' : 'SAVE'}
+                {nameSaved ? t('SAVED') : t('SAVE')}
               </button>
             </div>
           </div>
@@ -184,10 +232,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
               <div>
                 <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                  Audio & Arcade Synth Beat
+                  {t('Audio & Arcade Synth Beat')}
                 </h4>
                 <p className="text-xs text-[#FED7AA]/70">
-                  {settings.isMuted ? 'Muted' : 'Enabled (Zero-lag synth)'}
+                  {t(settings.isMuted ? 'Muted' : 'Enabled (Zero-lag synth)')}
                 </p>
               </div>
             </div>
@@ -199,7 +247,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   : 'bg-[#10B981] text-white border-white/40 shadow-sm'
               }`}
             >
-              {settings.isMuted ? 'MUTED' : 'ON'}
+              {t(settings.isMuted ? 'MUTED' : 'ON')}
             </button>
           </div>
 
@@ -207,10 +255,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="flex items-center justify-between p-3.5 bg-[#25180E] rounded-2xl border border-white/10">
             <div>
               <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                Cartoon Impact Screen Shake
+                {t('Cartoon Impact Screen Shake')}
               </h4>
               <p className="text-xs text-[#FED7AA]/70">
-                Juicy hit-stop & rumble during critical tail slaps
+                {t('Juicy hit-stop & rumble during critical tail slaps')}
               </p>
             </div>
             <button
@@ -221,7 +269,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   : 'bg-white/10 text-white/50 border-white/10'
               }`}
             >
-              {settings.cameraShake ? 'ENABLED' : 'OFF'}
+              {t(settings.cameraShake ? 'ENABLED' : 'OFF')}
             </button>
           </div>
 
@@ -229,12 +277,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="flex items-center justify-between p-3.5 bg-[#25180E] rounded-2xl border border-white/10">
             <div>
               <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                Camera Perspective
+                {t('Camera Perspective')}
               </h4>
               <p className="text-xs text-[#FED7AA]/70">
-                {settings.characterFocus === 'classic'
-                  ? 'Classic Arcade Overview'
-                  : 'Close-Up Dino Action Cam'}
+                {t(
+                  settings.characterFocus === 'classic'
+                    ? 'Classic Arcade Overview'
+                    : 'Close-Up Dino Action Cam'
+                )}
               </p>
             </div>
             <button
@@ -251,10 +301,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Smartphone className="w-5 h-5 text-[#38BDF8]" />
               <div>
                 <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                  On-Screen Controls
+                  {t('On-Screen Controls')}
                 </h4>
                 <p className="text-xs text-[#FED7AA]/70">
-                  Virtual joystick and action buttons ({settings.onScreenControls})
+                  {t('Virtual joystick and action buttons')} ({settings.onScreenControls})
                 </p>
               </div>
             </div>
@@ -270,10 +320,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="flex items-center justify-between p-3.5 bg-[#25180E] rounded-2xl border border-white/10">
             <div>
               <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white">
-                Quick Lane Tap Buttons
+                {t('Show Lane Buttons')}
               </h4>
               <p className="text-xs text-[#FED7AA]/70">
-                Left / Right arrow buttons on mobile HUD ({settings.showLaneButtons})
+                {t('Left / Right arrow buttons on mobile HUD')} ({settings.showLaneButtons})
               </p>
             </div>
             <button
@@ -292,25 +342,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="w-full py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 font-['Lilita_One'] text-xs rounded-xl flex items-center justify-center gap-2 border border-red-500/30 cursor-pointer transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>RESET ALL LOCAL PROGRESS & SCORES</span>
+                <span>{t('Reset Progress')}</span>
               </button>
             ) : (
               <div className="p-3 bg-red-950/70 border-2 border-red-500 rounded-xl text-center space-y-2">
                 <p className="text-xs text-red-200 font-bold">
-                  Are you sure? This will reset unlocked levels, skins, and high scores!
+                  {t('Are you sure? This cannot be undone.')}
                 </p>
                 <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={handleConfirmReset}
                     className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-['Lilita_One'] text-xs rounded-lg cursor-pointer"
                   >
-                    YES, RESET ALL
+                    {t('YES, RESET EVERYTHING')}
                   </button>
                   <button
                     onClick={() => setShowConfirmReset(false)}
                     className="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white font-['Lilita_One'] text-xs rounded-lg cursor-pointer"
                   >
-                    CANCEL
+                    {t('Cancel')}
                   </button>
                 </div>
               </div>

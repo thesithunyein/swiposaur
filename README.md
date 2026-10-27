@@ -38,7 +38,7 @@ binary files in the build are the app icons and favicons.
 | **Live build** | <https://swiposaur.sithunyein.com/> |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
-| **Footprint** | ~1.4 MB on disk · ~430 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
+| **Footprint** | ~1.3 MB on disk · ~410 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
 
 ---
 

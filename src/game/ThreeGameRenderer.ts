@@ -65,6 +65,9 @@ export class ThreeGameRenderer {
   private megaSlapGlove: THREE.Mesh;
   private playerTail?: THREE.Group;
   private currentSkin?: CharacterSkin;
+  private playerFireAura: THREE.Group;
+  private playerFireLight: THREE.PointLight;
+  private fireAuraFlames: THREE.Mesh[] = [];
 
   // High-Clarity Player Focus Elements
   private playerFocusGroup!: THREE.Group;
@@ -182,6 +185,44 @@ export class ThreeGameRenderer {
     this.megaSlapGlove = charBuild.megaSlapGlove;
     this.playerTail = charBuild.tail;
     this.scene.add(this.playerGroup);
+
+    // Flame Mode aura: a handful of voxel flames that flicker around the dino.
+    this.playerFireAura = new THREE.Group();
+    const flameOuter = new THREE.MeshBasicMaterial({
+      color: 0xff6b1a,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+    });
+    const flameInner = new THREE.MeshBasicMaterial({
+      color: 0xffd166,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+    });
+    const flameSpots: Array<[number, number, number, number]> = [
+      [-0.62, 0.85, 0.1, 0.34],
+      [0.66, 1.15, -0.1, 0.4],
+      [-0.45, 1.9, 0.2, 0.28],
+      [0.5, 2.05, 0.05, 0.3],
+      [0, 1.5, 0.55, 0.46],
+      [0, 2.9, 0, 0.3],
+    ];
+    flameSpots.forEach(([x, y, z, size], index) => {
+      const flame = new THREE.Mesh(
+        new THREE.ConeGeometry(size, size * 2.2, 5),
+        index % 2 === 0 ? flameOuter : flameInner
+      );
+      flame.position.set(x, y, z);
+      this.fireAuraFlames.push(flame);
+      this.playerFireAura.add(flame);
+    });
+    this.playerFireAura.visible = false;
+    this.scene.add(this.playerFireAura);
+
+    this.playerFireLight = new THREE.PointLight(0xff7a18, 0, 14, 2);
+    this.playerFireLight.visible = false;
+    this.scene.add(this.playerFireLight);
 
     // 9. Build 3D Voxel Intro Target Character (The Smug Boss)
     this.introVictimGroup = this.createIntroVictimMesh();
@@ -2251,6 +2292,19 @@ export class ThreeGameRenderer {
       }
     }
 
+    // Flame Mode repaints the air around the runner for ten seconds.
+    const fireMode = (player.fireTime || 0) > 0;
+    if (fireMode && !feverActive) {
+      this.scene.background = new THREE.Color(0x2a1508);
+      (this.scene.fog as THREE.FogExp2).color.setHex(0x7c2d12);
+      this.playerPointLight.intensity = 2.6;
+      this.playerPointLight.color.setHex(0xff7a18);
+      if (this.playerRimLight) {
+        this.playerRimLight.intensity = 3.4;
+        this.playerRimLight.color.setHex(0xffb066);
+      }
+    }
+
     // 2. Map Player World Coordinates
     const px = player.x * SCALE_X;
     const pz = -player.y * SCALE_Y;
@@ -2258,6 +2312,19 @@ export class ThreeGameRenderer {
 
     this.playerGroup.position.set(px, py, pz);
     this.playerPointLight.position.set(px, py + 1.6, pz);
+
+    this.playerFireAura.visible = fireMode;
+    this.playerFireLight.visible = fireMode;
+    if (fireMode) {
+      this.playerFireAura.position.set(px, py, pz);
+      this.playerFireLight.position.set(px, py + 1.6, pz - 0.3);
+      this.playerFireLight.intensity = 3.1 + Math.sin(elapsedTime * 18) * 0.5;
+      this.fireAuraFlames.forEach((flame, index) => {
+        const pulse = 0.9 + Math.sin(elapsedTime * 11 + index * 1.7) * 0.22;
+        flame.scale.set(pulse, 1.15 + pulse * 0.35, pulse);
+        flame.rotation.y = elapsedTime * 2.4 + index;
+      });
+    }
     if (this.playerRimLight) {
       this.playerRimLight.position.set(px, py + 3.2, pz + 2.5);
     }
@@ -2315,17 +2382,36 @@ export class ThreeGameRenderer {
 
     // Dynamic 3D Voxel SLAP! Glove / Intro Windup / Runner Arms
     if (introActive && introPhase === 'WINDUP') {
-      this.playerRightArm.position.set(0.55, 1.35, 0);
-      this.playerRightArm.rotation.set(1.25, 1.2, 0.5);
-      this.playerLeftArm.position.set(-0.55, 1.35, 0);
-      this.playerLeftArm.rotation.set(-0.55, 0, -0.25);
+      // Coil the tail like a whip: no boxing glove, the opening strike is a
+      // full-body tail lash. Arms brace against the torso while it winds up.
+      this.playerGroup.rotation.y = -0.32;
+      this.playerRightArm.position.set(0.5, 1.4, -0.05);
+      this.playerRightArm.rotation.set(0.55, 0.4, 0.3);
+      this.playerLeftArm.position.set(-0.5, 1.4, -0.05);
+      this.playerLeftArm.rotation.set(0.45, -0.4, -0.3);
+      this.megaSlapGlove.visible = false;
 
-      // Pulse charging mega glove!
-      this.megaSlapGlove.visible = true;
-      const glovePulse = 1.2 + Math.sin(elapsedTime * 14) * 0.25;
-      this.megaSlapGlove.scale.set(glovePulse, glovePulse, glovePulse);
-      this.megaSlapGlove.position.set(0.9, 1.6, 0.35);
-      this.megaSlapGlove.rotation.y = 0.4;
+      if (this.playerTail) {
+        const coil = Math.sin(elapsedTime * 7) * 0.12;
+        this.playerTail.scale.set(1.12, 1.12, 1.12);
+        this.playerTail.rotation.y = -2.05 - coil;
+        this.playerTail.rotation.x = -0.32;
+      }
+    } else if (player.isWhipping) {
+      const swing = Math.sin(Math.min(1, player.whipProgress) * Math.PI);
+      this.playerGroup.rotation.y = swing * Math.PI * 2;
+      this.playerGroup.rotation.z = -swing * 0.16;
+      this.playerLeftArm.position.set(-0.5, 1.4, 0);
+      this.playerLeftArm.rotation.set(-0.2, 0, -0.5);
+      this.playerRightArm.position.set(0.5, 1.4, 0);
+      this.playerRightArm.rotation.set(-0.2, 0, 0.5);
+      this.megaSlapGlove.visible = false;
+
+      if (this.playerTail) {
+        this.playerTail.scale.set(1.24, 1.24, 1 + swing * 1.35);
+        this.playerTail.rotation.y = -2.3 + swing * 1.5;
+        this.playerTail.rotation.x = -0.34 - swing * 0.22;
+      }
     } else if (player.isSlapping) {
       const slapProgress = player.slapProgress;
       const isLeft = player.slapHand === 'left';
@@ -3417,24 +3503,61 @@ export class ThreeGameRenderer {
 
       let mesh = this.powerupMeshes.get(pu.id);
       if (!mesh) {
-        mesh = new THREE.Group();
-        const canGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.88, 8);
-        const canMat = new THREE.MeshStandardMaterial({
-          color: pu.type === 'soda' ? 0xef4444 : 0x06b6d4,
-          roughness: 0.25,
-          metalness: 0.75,
-          flatShading: true,
-        });
-        const can = new THREE.Mesh(canGeo, canMat);
-        can.castShadow = true;
-        mesh.add(can);
+        const group = new THREE.Group();
+        if (pu.type === 'fire') {
+          // Voxel brazier: dark wooden handle under three stacked flame cubes.
+          const handle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.16, 0.22, 0.62, 6),
+            new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8, flatShading: true })
+          );
+          handle.position.y = -0.42;
+          handle.castShadow = true;
+          group.add(handle);
 
+          const flameColors = [0xff5a1f, 0xff9d2e, 0xffe066];
+          const flameSizes = [0.46, 0.34, 0.22];
+          flameColors.forEach((color, index) => {
+            const flame = new THREE.Mesh(
+              new THREE.BoxGeometry(flameSizes[index], flameSizes[index], flameSizes[index]),
+              new THREE.MeshBasicMaterial({ color })
+            );
+            flame.name = 'fireFlame';
+            flame.position.set(0, -0.02 + index * 0.3, 0);
+            group.add(flame);
+          });
+
+          const glow = new THREE.PointLight(0xff7a18, 2.6, 5.5, 2);
+          glow.position.y = 0.2;
+          group.add(glow);
+        } else {
+          const canGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.88, 8);
+          const canMat = new THREE.MeshStandardMaterial({
+            color: pu.type === 'soda' ? 0xef4444 : 0x06b6d4,
+            roughness: 0.25,
+            metalness: 0.75,
+            flatShading: true,
+          });
+          const can = new THREE.Mesh(canGeo, canMat);
+          can.castShadow = true;
+          group.add(can);
+        }
+
+        mesh = group;
         this.powerupMeshes.set(pu.id, mesh);
         this.scene.add(mesh);
       }
 
       mesh.position.set(pu.x * SCALE_X, 1.15 + Math.sin(time * 3 + pu.bobPhase) * 0.25, -pu.y * SCALE_Y);
       mesh.rotation.y = time * 2.2;
+
+      if (pu.type === 'fire') {
+        mesh.children.forEach((child, index) => {
+          if (child.name !== 'fireFlame') return;
+          const flicker = 0.8 + Math.sin(time * 12 + index * 1.9) * 0.22;
+          child.scale.set(flicker, flicker + 0.15, flicker);
+          child.rotation.y = time * 3 + index;
+        });
+      }
     }
 
     for (const [id, mesh] of this.powerupMeshes.entries()) {

@@ -10,6 +10,7 @@ import {
 import { sounds } from '../game/SoundEngine.ts';
 import { Target, Coins, Check, X, Footprints, Flame, Clock, Zap, BatteryCharging } from 'lucide-react';
 import { DinoVectorIcon, Missions3DIcon } from './GameIcons.tsx';
+import { t } from '../game/i18n.ts';
 
 interface DailyMissionsModalProps {
   isOpen: boolean;
@@ -83,14 +84,14 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-['Lilita_One'] text-xl text-[#FEF08A] tracking-wider uppercase">
-                  DAILY MISSIONS
+                  {t('DAILY MISSIONS')}
                 </h2>
                 <span className="text-xs font-['Lilita_One'] text-[#FED7AA]">
                   ({completedCount}/{MISSIONS_PER_DAY})
                 </span>
               </div>
               <span className="text-xs text-[#FED7AA] font-medium block">
-                Five bounties a day, resetting at midnight
+                {t('Five bounties a day, resetting at midnight')}
               </span>
             </div>
           </div>
@@ -101,7 +102,7 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
               sounds.playClick();
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-8 h-8 sm:w-9 sm:h-9 bg-[#EF4444] hover:bg-[#F87171] text-white border-2 border-white/40 shadow-md active:scale-95 rounded-2xl cursor-pointer flex items-center justify-center transition-all"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
@@ -131,7 +132,7 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <h3 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide truncate">
-                      {mission.title}
+                      {t(mission.title)}
                     </h3>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="flex items-center gap-0.5 font-['Lilita_One'] text-[11px] text-[#FACC15]">
@@ -144,7 +145,7 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
                   </div>
 
                   <p className="text-[11px] sm:text-xs text-[#FED7AA]/90 font-medium leading-snug mb-1.5">
-                    {mission.description}
+                    {t(mission.description)}
                   </p>
 
                   <div className="flex items-center gap-2">
@@ -168,7 +169,7 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
                   {mission.claimed ? (
                     <div className="flex items-center gap-1 font-['Lilita_One'] text-[11px] text-[#10B981] bg-[#10B981]/15 px-2.5 py-1 rounded-xl border border-[#10B981]/40">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>DONE</span>
+                      <span>{t('DONE')}</span>
                     </div>
                   ) : mission.completed ? (
                     <button
@@ -176,7 +177,7 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
                       onClick={() => handleClaim(mission.id)}
                       className="px-3.5 py-1.5 bg-gradient-to-b from-[#10B981] to-[#047857] hover:from-[#34D399] hover:to-[#059669] text-white border border-[#A7F3D0] shadow-sm active:scale-95 rounded-xl font-['Lilita_One'] text-xs flex items-center gap-1 cursor-pointer transition-all animate-pulse"
                     >
-                      <span>CLAIM</span>
+                      <span>{t('CLAIM')}</span>
                     </button>
                   ) : (
                     <span className="text-[10px] font-['Lilita_One'] text-[#94A3B8] px-2 py-1 bg-black/30 rounded-lg">
@@ -193,10 +194,10 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
         <div className="bg-[#140D08] border-t-2 border-[#F97316]/40 px-5 py-3 flex items-center justify-between text-xs text-[#FED7AA] font-medium shrink-0">
           <span className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-[#38BDF8]" />
-            Resets at midnight (Myanmar)
+            {t('Resets at midnight (Myanmar)')}
           </span>
           <span className="text-[#38BDF8] font-['Lilita_One'] text-xs tracking-wider">
-            {claimedCount}/{MISSIONS_PER_DAY} claimed · {resetCountdown} left
+            {claimedCount}/{MISSIONS_PER_DAY} {t('claimed')} · {t('{time} left', { time: resetCountdown })}
           </span>
         </div>
       </div>

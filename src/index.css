@@ -117,3 +117,72 @@
     transition: opacity 200ms linear;
   }
 }
+
+/* ---------------------------------------------------------------- *
+ * Daily egg hatch ceremony
+ * ---------------------------------------------------------------- */
+
+@keyframes egg-wobble {
+  0%,
+  100% {
+    transform: rotate(-1.8deg);
+  }
+  25% {
+    transform: rotate(2.4deg);
+  }
+  50% {
+    transform: rotate(-2.4deg);
+  }
+  75% {
+    transform: rotate(1.4deg);
+  }
+}
+
+@keyframes coin-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--coin-x, 0px)), calc(-50% + var(--coin-y, -80px))) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*='egg-wobble'] {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * Burmese typography — Aka 08 (Saturn's Myanmar font set)
+ * ---------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'Aka08';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src:
+    local('A ka 08'),
+    url('https://cdn.jsdelivr.net/gh/saturngod/myanmar-unicode-fonts@master/docs/Aka/Aka08-Regular.ttf')
+      format('truetype');
+}
+
+html[lang='my'] body,
+html[lang='my'] button,
+html[lang='my'] input,
+html[lang='my'] select {
+  font-family: 'Aka08', 'Noto Sans Myanmar', 'Myanmar Text', 'Padauk', 'Fredoka', ui-sans-serif, system-ui,
+    sans-serif;
+  line-height: 1.65;
+}
+
+html[lang='my'] .font-pixel,
+html[lang='my'] .font-ui {
+  letter-spacing: 0;
+}

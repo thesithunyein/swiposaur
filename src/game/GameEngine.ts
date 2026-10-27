@@ -42,6 +42,31 @@ import {
   isRampType,
 } from './obstacleRules.ts';
 
+/**
+ * Flame pickup cadence: the first one only after 45 s of running, then one every
+ * 30 s, and each collection burns for 8 s.
+ */
+const FIRE_SPAWN_INTERVAL_SECONDS = 30;
+const FIRE_FIRST_SPAWN_SECONDS = 45;
+const FIRE_DURATION_MS = 8_000;
+/** How far ahead of the runner the fire breath catches an obstacle. */
+const FIRE_BREATH_LEAD = 72;
+const MOBILE_TUTORIAL_KEY = 'slap_run_mobile_tutorial_done';
+
+function hasSeenMobileTutorial(): boolean {
+  try {
+    return localStorage.getItem(MOBILE_TUTORIAL_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
+function markMobileTutorialSeen(): void {
+  try {
+    localStorage.setItem(MOBILE_TUTORIAL_KEY, '1');
+  } catch {}
+}
+
 export class GameEngine {
   private canvas: HTMLCanvasElement;
   private renderer: ThreeGameRenderer;
@@ -151,6 +176,19 @@ export class GameEngine {
   // Opening grace window (seconds) after the intro cinematic. While it runs the
   // street is clear, the mob is off-camera and a mistake cannot end the run.
   private graceTimer: number = 0;
+  /** Seconds of actual running time, frozen during the intro and tutorial. */
+  private runTimeSeconds: number = 0;
+  private nextFireAt: number = FIRE_FIRST_SPAWN_SECONDS;
+  /**
+   * Touch-only first-run dodge lesson. While active the street is frozen and
+   * only the indicated direction is accepted, so the player must use the cue
+   * before the run starts properly.
+   */
+  public tutorialState: { active: boolean; pending: boolean; direction: -1 | 1 } = {
+    active: false,
+    pending: false,
+    direction: 1,
+  };
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -334,6 +372,17 @@ export class GameEngine {
     this.stats.currentLevel = this.currentLevel;
     this.stats.isLevelMode = this.isLevelMode;
     this.stats.currentMapId = this.currentMap.id;
+    this.stats.fireActive = false;
+    this.stats.fireTimeLeft = 0;
+    this.stats.tutorialActive = false;
+    this.stats.tutorialDirection = 1;
+    this.runTimeSeconds = 0;
+    this.nextFireAt = FIRE_FIRST_SPAWN_SECONDS;
+    this.tutorialState = {
+      active: false,
+      pending: this.touchInputMode && !hasSeenMobileTutorial(),
+      direction: 1,
+    };
 
     if (this.isLevelMode) {
       this.currentLevelDef = getLevel(this.currentLevel);
@@ -368,6 +417,8 @@ export class GameEngine {
       this.spawnMarketSegment(240 + i * openingGap);
       this.nextSpawnY = 240 + (i + 1) * openingGap;
     }
+
+    if (this.tutorialState.pending) this.setupMobileTutorialRow();
 
     // Initialize Intro Cinematic Slap Sequence: target positioned squarely in the middle of the road!
     this.introState = {
@@ -416,6 +467,10 @@ export class GameEngine {
     };
     this.stats.introActive = false;
     this.stats.introPhase = 'DONE';
+    this.stats.tutorialActive = false;
+    this.stats.fireActive = false;
+    this.stats.fireTimeLeft = 0;
+    this.tutorialState = { active: false, pending: false, direction: 1 };
     sounds.stopArcadeBeat();
     this.initPlayer();
     this.bystanders = [];
@@ -439,11 +494,73 @@ export class GameEngine {
    */
   public changeLane(direction: -1 | 1): void {
     if (this.introState.active) return;
+
+    // The first-run mobile lesson accepts only the cued direction. All other
+    // steering is ignored until the player performs it.
+    if (this.tutorialState.active) {
+      if (direction !== this.tutorialState.direction) {
+        sounds.playTutorialWrong();
+        return;
+      }
+      this.currentLaneIndex = Math.max(
+        0,
+        Math.min(ROAD_LANES.length - 1, this.currentLaneIndex + direction)
+      );
+      this.stats.currentLane = this.currentLaneIndex;
+      this.tutorialState.active = false;
+      this.stats.tutorialActive = false;
+      markMobileTutorialSeen();
+      sounds.playPowerup();
+      this.addFloatingText(
+        ROAD_LANES[this.currentLaneIndex],
+        this.player.y + 25,
+        'NICE DODGE!',
+        '#34D399',
+        24
+      );
+      return;
+    }
+
     const newIndex = Math.max(0, Math.min(ROAD_LANES.length - 1, this.currentLaneIndex + direction));
     if (newIndex !== this.currentLaneIndex) {
       this.currentLaneIndex = newIndex;
       this.stats.currentLane = this.currentLaneIndex;
       sounds.playWhoosh();
+    }
+  }
+
+  /**
+   * Builds one unmistakable lesson row: a blocker dead ahead in the centre lane
+   * and a coin trail in the right lane, where the cue points.
+   */
+  private setupMobileTutorialRow(): void {
+    this.obstacles = this.obstacles.filter((o) => o.y > 620);
+    this.coins = this.coins.filter((c) => c.y > 620);
+    this.powerups = this.powerups.filter((p) => p.y > 620);
+
+    this.obstacles.push({
+      id: this.entityIdCounter++,
+      x: 0,
+      y: 430,
+      type: 'barrier',
+      width: 54,
+      height: 36,
+      hit: false,
+      rollSpeed: 0,
+      vx: 0,
+      isShifting: false,
+      shiftMinX: -100,
+      shiftMaxX: 100,
+    });
+
+    for (let i = 0; i < 4; i++) {
+      this.coins.push({
+        id: this.entityIdCounter++,
+        x: ROAD_LANES[2],
+        y: 355 + i * 30,
+        collected: false,
+        bobPhase: i * 0.4,
+      });
     }
   }
 
@@ -465,9 +582,10 @@ export class GameEngine {
     this.introState.phase = 'SLAP_IMPACT';
     const v = this.introState.victim;
     v.slapped = true;
-    this.player.isSlapping = true;
-    this.player.slapProgress = 0.5;
-    this.player.slapHand = 'right';
+    // The opening strike is a full-body tail-whip, not a hand slap.
+    this.player.isWhipping = true;
+    this.player.whipProgress = 0;
+    this.player.isSlapping = false;
 
     // Massive impact physics: victim flies backwards and launches into the sky
     v.vx = (Math.random() - 0.5) * 6;
@@ -484,8 +602,8 @@ export class GameEngine {
     this.renderer.triggerShake(24);
     this.renderer.triggerHitFreeze(3);
 
-    // Audio impact
-    sounds.playMegaSlap();
+    // Audio impact: a leather-crack whip, not a palm slap.
+    sounds.playWhipCrack();
 
     // Mobile haptic feedback
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -550,6 +668,9 @@ export class GameEngine {
       slipTimer: 0,
       invulnerableTimer: 0,
       feverTime: 0,
+      fireTime: 0,
+      isWhipping: false,
+      whipProgress: 0,
       skin: this.selectedSkin,
       runCycle: 0,
       stamina: 100,
@@ -561,11 +682,12 @@ export class GameEngine {
   }
 
   public requestSlap(): void {
+    if (this.tutorialState.active) return;
     this.input.slapRequested = true;
   }
 
   public requestJump(): void {
-    if (this.introState.active || this.state !== 'PLAYING') return;
+    if (this.introState.active || this.tutorialState.active || this.state !== 'PLAYING') return;
     const p = this.player;
     if (!p) return;
     if (p.z <= 0.6 && p.vz <= 0.2) {
@@ -637,13 +759,26 @@ export class GameEngine {
   private update(dtFactor: number): void {
     const p = this.player;
 
-    // 0. Introductory Cinematic Slap Sequence (Opening mega slap in middle of road)
+    // 0. Introductory Cinematic Tail-Whip Sequence (Opening strike in the road)
     if (this.introState.active) {
       this.updateIntroSequence(dtFactor);
       this.updateParticlesAndTexts(dtFactor);
       if (this.onStatsUpdate) this.onStatsUpdate(this.stats, this.state);
       return;
     }
+
+    // 0b. First-run mobile lesson: hold the street still until the cued dodge.
+    if (this.tutorialState.active) {
+      p.runCycle += 0.04 * dtFactor;
+      this.stats.stamina = Math.round(p.stamina);
+      this.stats.tutorialActive = true;
+      this.stats.tutorialDirection = this.tutorialState.direction;
+      this.updateParticlesAndTexts(dtFactor);
+      if (this.onStatsUpdate) this.onStatsUpdate(this.stats, this.state);
+      return;
+    }
+
+    this.runTimeSeconds += dtFactor / 60;
 
     // 1. Fever Run Timer
     if (p.feverTime > 0) {
@@ -662,6 +797,20 @@ export class GameEngine {
         this.stats.chaosLevel = Math.max(0, this.stats.chaosLevel - 0.04 * dtFactor);
         this.updateChaosMultiplier();
       }
+    }
+
+    // 1b. Flame Mode Timer
+    if (p.fireTime > 0) {
+      p.fireTime = Math.max(0, p.fireTime - 16.66 * dtFactor);
+      this.stats.fireActive = p.fireTime > 0;
+      this.stats.fireTimeLeft = Math.ceil(p.fireTime / 1000);
+      if (p.fireTime <= 0) {
+        this.stats.fireActive = false;
+        this.stats.fireTimeLeft = 0;
+      }
+    } else {
+      this.stats.fireActive = false;
+      this.stats.fireTimeLeft = 0;
     }
 
     // 2. Health / Stamina
@@ -756,7 +905,14 @@ export class GameEngine {
       this.executeSlap();
     }
 
-    // Progress active slap animation
+    // Progress active whip / slap animation
+    if (p.isWhipping) {
+      p.whipProgress += 0.09 * dtFactor;
+      if (p.whipProgress >= 1) {
+        p.isWhipping = false;
+        p.whipProgress = 0;
+      }
+    }
     if (p.isSlapping) {
       p.slapProgress += 0.14 * dtFactor;
       if (p.slapProgress >= 1) {
@@ -887,6 +1043,24 @@ export class GameEngine {
         }
       }
 
+      // Hovering surveillance drones drift across the lanes and bob, so the
+      // night map keeps the player reading the road instead of pattern-matching
+      // a static prop.
+      if (obs.type === 'drone_hazard') {
+        if (!obs.vx) obs.vx = 1.15 + Math.random() * 0.4;
+        obs.x += obs.vx * dtFactor;
+        const minX = obs.shiftMinX ?? -95;
+        const maxX = obs.shiftMaxX ?? 95;
+        if (obs.x < minX) {
+          obs.x = minX;
+          obs.vx = Math.abs(obs.vx);
+        } else if (obs.x > maxX) {
+          obs.x = maxX;
+          obs.vx = -Math.abs(obs.vx);
+        }
+        obs.z = 3 + Math.sin(p.y * 0.04 + obs.id) * 3;
+      }
+
       // Rolling Barrels & Boulders with realistic road bounce
       if (obs.type === 'barrel' || obs.type === 'loop_boulder') {
         obs.y -= (obs.rollSpeed ?? 2.0) * dtFactor;
@@ -934,6 +1108,32 @@ export class GameEngine {
       const overlapY = pMaxY >= obsMinY && pMinY <= obsMaxY;
       const overlapX = pMaxX >= obsMinX && pMinX <= obsMaxX;
 
+      // Flame Mode breath: while burning, the dino exhales a jet the moment an
+      // obstacle it did not jump comes within reach, so the burn reads as an
+      // attack instead of a body-check. Fire mode is a shield for its full
+      // duration — the contact branch inside the overlap below is the fallback.
+      if (p.fireTime > 0 && !obs.hit && !isRampType(obs.type)) {
+        const gap = obs.y - pMaxY;
+        if (gap >= -6 && gap <= FIRE_BREATH_LEAD && Math.abs(obs.x - p.x) < 62) {
+          obs.hit = true;
+          obs.hitVx = (Math.random() - 0.5) * 8;
+          obs.hitVy = 16 + Math.random() * 6;
+          obs.hitVz = 10 + Math.random() * 4;
+          obs.rotVx = 0.45;
+          obs.rotVy = 0.3;
+          obs.rotVz = 0.2;
+          sounds.playFireBlast();
+          this.renderer.triggerShake(5);
+          // Forward burst from the mouth, so the flame has a direction.
+          this.spawnParticleExplosion(p.x, p.y + 14, '#F97316', 14, 'star');
+          this.spawnParticleExplosion((p.x + obs.x) / 2, (p.y + obs.y) / 2, '#FBBF24', 10, 'sparkle');
+          this.spawnParticleExplosion(obs.x, obs.y, '#F59E0B', 8, 'sparkle');
+          this.addFloatingText(obs.x, obs.y, 'FIRE BREATH!', '#F97316', 22);
+          this.stats.score += 120 * this.stats.chaosMultiplier;
+          continue;
+        }
+      }
+
       if (overlapY && overlapX) {
         // Launch Ramp Trigger (Standard ramp or Terminal launch pad). Ramps only
         // launch a grounded runner: jumping over one must not re-launch you in
@@ -950,6 +1150,26 @@ export class GameEngine {
           this.addFloatingText(p.x, p.y + 20, obs.type === 'terminal_ramp' ? 'TURBO LAUNCH!' : 'BOOST JUMP!', '#10B981', 24);
           this.spawnParticleExplosion(obs.x, obs.y, '#34D399', 12, 'sparkle');
           this.triggerAchievementCheck({ rampHit: true });
+          continue;
+        }
+
+        // Flame Mode: anything that still reaches the runner is incinerated on
+        // contact, with no stamina cost and no stumble. Ramps stay friendly
+        // (handled above).
+        if (p.fireTime > 0) {
+          obs.hit = true;
+          obs.hitVx = (Math.random() - 0.5) * 8;
+          obs.hitVy = 16 + Math.random() * 6;
+          obs.hitVz = 10 + Math.random() * 4;
+          obs.rotVx = 0.45;
+          obs.rotVy = 0.3;
+          obs.rotVz = 0.2;
+          sounds.playFireBlast();
+          this.renderer.triggerShake(6);
+          this.spawnParticleExplosion(obs.x, obs.y, '#F97316', 18, 'star');
+          this.spawnParticleExplosion(obs.x, obs.y, '#FBBF24', 10, 'sparkle');
+          this.addFloatingText(obs.x, obs.y, 'BURNED!', '#F97316', 24);
+          this.stats.score += 120 * this.stats.chaosMultiplier;
           continue;
         }
 
@@ -1092,8 +1312,18 @@ export class GameEngine {
       const dx = Math.abs(p.x - pu.x);
       if (dy < 26 && dx < 26) {
         pu.collected = true;
-        sounds.playPowerup();
-        if (pu.type === 'soda') {
+        if (pu.type === 'fire') {
+          // Flame Mode: ten seconds of burning through anything ahead.
+          p.fireTime = FIRE_DURATION_MS;
+          this.stats.fireActive = true;
+          this.stats.fireTimeLeft = Math.ceil(FIRE_DURATION_MS / 1000);
+          sounds.playFirePickup();
+          this.renderer.triggerShake(5);
+          this.addFloatingText(p.x, p.y + 20, `FIRE MODE! ${FIRE_DURATION_MS / 1000}s`, '#F97316', 26);
+          this.spawnParticleExplosion(pu.x, pu.y, '#F97316', 20, 'star');
+          this.spawnParticleExplosion(pu.x, pu.y, '#FBBF24', 12, 'sparkle');
+        } else if (pu.type === 'soda') {
+          sounds.playPowerup();
           // Espresso Turbo Fuel
           this.addChaos(35);
           p.stamina = Math.min(this.stats.maxStamina, p.stamina + 45);
@@ -1102,6 +1332,7 @@ export class GameEngine {
           this.spawnParticleExplosion(pu.x, pu.y, '#F59E0B', 14, 'star');
         } else {
           // Debug Shield Orb (invulnerability barrier)
+          sounds.playPowerup();
           p.feverTime = Math.max(p.feverTime, 3500);
           this.addFloatingText(p.x, p.y + 20, 'ENERGY SHIELD!', '#00F0FF', 22);
           this.spawnParticleExplosion(pu.x, pu.y, '#00F0FF', 14, 'sparkle');
@@ -1190,12 +1421,12 @@ export class GameEngine {
         v.rotationZ += 0.15 * dtFactor;
       }
 
-      // Progress player slap swing
-      if (this.player.isSlapping) {
-        this.player.slapProgress += 0.10 * dtFactor;
-        if (this.player.slapProgress >= 1) {
-          this.player.isSlapping = false;
-          this.player.slapProgress = 0;
+      // Progress the tail-whip swing through the victim.
+      if (this.player.isWhipping) {
+        this.player.whipProgress += 0.09 * dtFactor;
+        if (this.player.whipProgress >= 1) {
+          this.player.isWhipping = false;
+          this.player.whipProgress = 0;
         }
       }
 
@@ -1215,6 +1446,17 @@ export class GameEngine {
         this.stats.chaserOnScreen = false;
         this.stats.chaserAlertTimer = 0;
         this.addFloatingText(0, 95, 'SAFE START 6s', '#34D399', 18);
+
+        // First touch run: hold the street for one guided dodge before the
+        // player is expected to read a two-lane block on their own.
+        if (this.tutorialState.pending) {
+          this.tutorialState.pending = false;
+          this.tutorialState.active = true;
+          this.tutorialState.direction = 1;
+          this.stats.tutorialActive = true;
+          this.stats.tutorialDirection = 1;
+          sounds.playTutorialCue();
+        }
 
         if (this.onStatsUpdate) this.onStatsUpdate(this.stats, this.state);
       }
@@ -1569,7 +1811,7 @@ export class GameEngine {
         ? (Math.random() > 0.5 ? 1 : -1) * (1.6 + Math.random() * 0.6)
         : 0;
 
-      this.obstacles.push({
+      const spawned: Obstacle = {
         id: this.entityIdCounter++,
         x: ox,
         y: oy,
@@ -1582,7 +1824,8 @@ export class GameEngine {
         isShifting,
         shiftMinX: -100,
         shiftMaxX: 100,
-      });
+      };
+      this.obstacles.push(spawned);
     }
 
     // 3. A ramp in the open lane is an optional boost, never a forced launch.
@@ -1603,24 +1846,23 @@ export class GameEngine {
       });
     }
 
-    // 4. Gold Coins mark the open escape routes squarely!
+    // 4. Coins live in exactly one lane of the three, so the other two lanes stay
+    // purely about survival and a run cannot bank a full wallet by drifting.
     const openLanes = lanes.filter((l) => !occupiedLanes.has(l));
-    if (openLanes.length > 0) {
-      const numCoinLanes = Math.min(openLanes.length, Math.random() > 0.45 ? 2 : 1);
-      const shuffledOpen = [...openLanes].sort(() => Math.random() - 0.5);
-
-      for (let cl = 0; cl < numCoinLanes; cl++) {
-        const coinLane = shuffledOpen[cl];
-        for (let c = 0; c < 3; c++) {
-          this.coins.push({
-            id: this.entityIdCounter++,
-            x: coinLane,
-            y: targetY + c * 32,
-            collected: false,
-            bobPhase: c * 0.4,
-          });
-        }
-      }
+    const coinLane = openLanes.length > 0
+      ? openLanes[Math.floor(Math.random() * openLanes.length)]
+      : lanes[Math.floor(Math.random() * lanes.length)];
+    // Far fewer coins than before: two on a blocked row, one on an open
+    // stretch, so a skin still takes a few runs to afford.
+    const coinCount = spawnDecision.isObstacleSegment ? 2 : 1;
+    for (let c = 0; c < coinCount; c++) {
+      this.coins.push({
+        id: this.entityIdCounter++,
+        x: coinLane,
+        y: targetY - 10 + c * 34,
+        collected: false,
+        bobPhase: c * 0.4,
+      });
     }
 
     // 5. Occasional Powerup (Soda / Soap)
@@ -1635,6 +1877,23 @@ export class GameEngine {
         collected: false,
         bobPhase: 0,
       });
+    }
+
+    // 6. Flame pickup: first one after 45 seconds of running, then one every 30
+    // seconds. It sits in an open lane, slightly past the row so it reads as a
+    // prize, not a trap, and is collected the same way coins are: run into it.
+    if (this.runTimeSeconds >= this.nextFireAt) {
+      const fireLane =
+        openLanes.length > 0 ? openLanes[Math.floor(Math.random() * openLanes.length)] : lanes[1];
+      this.powerups.push({
+        id: this.entityIdCounter++,
+        x: fireLane,
+        y: targetY + 120,
+        type: 'fire',
+        collected: false,
+        bobPhase: 0,
+      });
+      this.nextFireAt += FIRE_SPAWN_INTERVAL_SECONDS;
     }
   }
 
@@ -1686,6 +1945,9 @@ export class GameEngine {
   private triggerGameOver(reason: 'BUSTED' | 'EXHAUSTED' | 'COLLISION' = 'BUSTED'): void {
     this.state = 'GAMEOVER';
     this.stats.gameOverReason = reason;
+    this.stats.tutorialActive = false;
+    this.stats.fireActive = false;
+    if (this.player) this.player.fireTime = 0;
     sounds.stopArcadeBeat();
     sounds.playBusted();
     this.renderer.triggerShake(12);

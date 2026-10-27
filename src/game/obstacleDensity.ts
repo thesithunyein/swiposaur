@@ -1,19 +1,21 @@
 /**
  * Obstacle density by distance band.
  *
- * Touch players get a gentler curve than keyboard players: a swipe has to be
- * recognised, travel across the thumb and land in the right lane, while a key
- * press is instant. Fewer back-to-back obstacle segments gives mobile runs the
- * reaction room that a keyboard player does not need.
+ * Every obstacle row now blocks two of the three lanes, leaving exactly one
+ * clear escape lane. Rows are still spaced in time rather than world units, so
+ * the warning window stays the same at every speed.
  *
- * Only obstacle density changes here. Damage, stamina, Fever smashing, ramps,
- * vaultable low obstacles and the post-hit invulnerability window are shared by
- * both input modes, so a collision still hurts instead of ending the run.
+ * Variety comes from the blocked-lane count: roughly seven rows in ten fill two
+ * lanes and three in ten fill only one. A row is never allowed to fill all three
+ * lanes, so a clean route always exists.
+ *
+ * The opening band is slightly gentler while the player reads the first rows;
+ * after 80 m the street is relentless. Obstacle type still depends on the biome.
  */
 export interface ObstacleRule {
   /** Chance that a segment contains any obstacle at all. */
   chance: number;
-  /** Share of obstacle segments that occupy a single lane (the rest use two). */
+  /** Share of obstacle rows that occupy a single lane (the rest use two). */
   oneLaneShare: number;
 }
 
@@ -23,18 +25,24 @@ export interface ObstacleDensityTable {
   late: ObstacleRule; // 250m+
 }
 
-/** Desktop: enough room to read the corridor at every speed. */
+/** 30% single-lane, 70% two-lane: the requested 3/10 and 7/10 split. */
+const ONE_LANE_SHARE = 0.3;
+
+/** Desktop: the full requested density. */
 export const DESKTOP_OBSTACLE_RULES: ObstacleDensityTable = {
-  opening: { chance: 0.55, oneLaneShare: 1 },
-  mid: { chance: 0.65, oneLaneShare: 0.85 },
-  late: { chance: 0.75, oneLaneShare: 0.7 },
+  opening: { chance: 0.7, oneLaneShare: ONE_LANE_SHARE },
+  mid: { chance: 0.9, oneLaneShare: ONE_LANE_SHARE },
+  late: { chance: 1, oneLaneShare: ONE_LANE_SHARE },
 };
 
-/** Touch-only curve: fewer obstacles and almost always a single occupied lane. */
+/**
+ * Touch keeps the same two-lane / one-lane split but a slightly softer chance of
+ * a row in the opening band, because a swipe needs a moment to read the lane.
+ */
 export const TOUCH_OBSTACLE_RULES: ObstacleDensityTable = {
-  opening: { chance: 0.42, oneLaneShare: 1 },
-  mid: { chance: 0.52, oneLaneShare: 1 },
-  late: { chance: 0.62, oneLaneShare: 0.9 },
+  opening: { chance: 0.55, oneLaneShare: ONE_LANE_SHARE },
+  mid: { chance: 0.8, oneLaneShare: ONE_LANE_SHARE },
+  late: { chance: 1, oneLaneShare: ONE_LANE_SHARE },
 };
 
 export interface ObstacleSpawnDecision {
@@ -113,7 +121,7 @@ export function resolveObstacleSpawn(
   if (rand() >= rule.chance) return { isObstacleSegment: false, laneCount: 0 };
 
   // Never occupy more than 2 of the 3 lanes: at least one escape route always
-  // stays open, including the two-lane late-game segments.
+  // stays open. The 70/30 split lives in oneLaneShare.
   const laneCount = rand() < rule.oneLaneShare ? 1 : 2;
   return { isObstacleSegment: true, laneCount };
 }
@@ -127,8 +135,8 @@ export interface CorridorSpawnDecision {
 
 /**
  * Places blockers so the open lane is never more than one lane away from the
- * previous segment's open lane. A 3-lane road with a 2-lane block therefore
- * always leaves a route the player can physically reach in one move.
+ * previous segment's open lane. With a 2-lane block that still leaves a route
+ * the player can physically reach in one move.
  *
  * `rand` is injected so the corridor can be simulated deterministically.
  */

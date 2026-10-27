@@ -3,9 +3,8 @@ import { GameStats } from '../game/types.ts';
 import { sounds } from '../game/SoundEngine.ts';
 import { RotateCcw, Home, Award, BatteryCharging } from 'lucide-react';
 import { LeaderboardAdvancedIcon } from './GameIcons.tsx';
-import { gradeFor } from '../game/grades.ts';
-import { buildCoachLine } from '../game/coach.ts';
 import type { MissionSummary } from '../game/dailyMissions.ts';
+import { t, useLanguage } from '../game/i18n.ts';
 
 interface GameOverModalProps {
   stats: GameStats;
@@ -290,6 +289,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   retryBoostLabel = '',
   onRetryWithBoost,
 }) => {
+  useLanguage();
   // The engine compares against the best captured before this run, so a tie with
   // the old record is not a new personal best.
   const isNewBest = stats.score > 0 && stats.isNewPersonalBest === true;
@@ -297,105 +297,31 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   const getReasonBadge = () => {
     if (stats.gameOverReason === 'BUSTED') {
       return {
-        label: 'STAMPEDE BUSTED!',
-        sub: 'Caught by the Enraged Stampede Mob!',
+        label: t('STAMPEDE BUSTED!'),
+        sub: t('Caught by the Enraged Stampede Mob!'),
         bg: 'from-[#EF4444] to-[#B91C1C]',
         border: 'border-[#FCA5A5]',
       };
     }
     if (stats.gameOverReason === 'EXHAUSTED') {
       return {
-        label: 'OUT OF ENERGY!',
-        sub: 'Tail-whip critters along the run to recharge stamina!',
+        label: t('OUT OF ENERGY!'),
+        sub: t('Tail-whip critters along the run to recharge stamina!'),
         bg: 'from-[#F59E0B] to-[#D97706]',
         border: 'border-[#FDE68A]',
       };
     }
     return {
-      label: 'RUN COMPLETED!',
-      sub: `Dashed ${Math.round(stats.distanceRun)} meters across the resort!`,
+      label: t('RUN COMPLETED!'),
+      sub: t('Dashed {meters} meters across the resort!', {
+        meters: Math.round(stats.distanceRun),
+      }),
       bg: 'from-[#10B981] to-[#047857]',
       border: 'border-[#A7F3D0]',
     };
   };
 
   const reasonInfo = getReasonBadge();
-
-  // Compute overall performance grade, rank, and metrics
-  const computeOverallRating = () => {
-    const dist = stats.distanceRun;
-    const slaps = stats.slapsCount;
-    const combo = stats.maxCombo;
-
-    // Grades are earned on survival distance plus whip chaining, not on raw
-    // score: the Roar multiplier can inflate points 16x, distance cannot.
-    if (gradeFor(dist, combo).grade === 'S+') {
-      return {
-        grade: 'S+',
-        title: 'APEX PRIMAL LEGEND',
-        stars: 5,
-        gradeColor: 'text-[#38BDF8]',
-        badgeBg: 'from-[#0284C7] to-[#0369A1]',
-        reflexGrade: 'GODLIKE',
-        slapGrade: `${slaps} Whips`,
-        survivalGrade: `${Math.round(dist)}m Sprint`,
-        summary: 'Flawless reflexes and total street mastery!',
-      };
-    }
-    if (gradeFor(dist, combo).grade === 'S') {
-      return {
-        grade: 'S',
-        title: 'MASTER DINO DRIFTER',
-        stars: 5,
-        gradeColor: 'text-[#34D399]',
-        badgeBg: 'from-[#059669] to-[#047857]',
-        reflexGrade: 'EXCELLENT',
-        slapGrade: `${slaps} Whips`,
-        survivalGrade: `${Math.round(dist)}m Sprint`,
-        summary: 'Incredible agility and ruthless tail attacks!',
-      };
-    }
-    if (gradeFor(dist, combo).grade === 'A') {
-      return {
-        grade: 'A',
-        title: 'SPEEDWAY CHAMPION',
-        stars: 4,
-        gradeColor: 'text-[#F97316]',
-        badgeBg: 'from-[#EA580C] to-[#C2410C]',
-        reflexGrade: 'GREAT',
-        slapGrade: `${slaps} Whips`,
-        survivalGrade: `${Math.round(dist)}m Sprint`,
-        summary: 'Smooth obstacle evasion with sharp reflexes!',
-      };
-    }
-    if (gradeFor(dist, combo).grade === 'B') {
-      return {
-        grade: 'B',
-        title: 'RISING ROARER',
-        stars: 3,
-        gradeColor: 'text-[#A855F7]',
-        badgeBg: 'from-[#7E22CE] to-[#6B21A8]',
-        reflexGrade: 'GOOD',
-        slapGrade: `${slaps} Whips`,
-        survivalGrade: `${Math.round(dist)}m Sprint`,
-        summary: 'Good momentum! Vault higher and dodge closer for maximum score.',
-      };
-    }
-    return {
-      grade: 'C',
-      title: 'STAMPEDE ROOKIE',
-      stars: 2,
-      gradeColor: 'text-[#94A3B8]',
-      badgeBg: 'from-[#475569] to-[#334155]',
-      reflexGrade: 'ROOKIE',
-      slapGrade: `${slaps} Slaps`,
-      survivalGrade: `${Math.round(dist)}m Sprint`,
-      summary: 'Keep practicing lane switches and jump vaulting!',
-    };
-  };
-
-  const rating = computeOverallRating();
-  const coachLine = buildCoachLine(stats, dailyMission);
 
   return (
     <div className="absolute inset-0 bg-black/65 backdrop-blur-md flex flex-col items-center overflow-y-auto z-50 pointer-events-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] select-none animate-fadeIn font-['Fredoka']">
@@ -420,50 +346,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         <div className="w-full bg-gradient-to-b from-[#2A1E14] via-[#1E1712] to-[#140F0C] border-3 border-[#F97316] rounded-3xl p-5 sm:p-6 shadow-[0_16px_40px_rgba(0,0,0,0.8)] flex flex-col items-center text-[#FFF8E7]">
           {/* Final Score */}
           <span className="text-[11px] text-[#FED7AA] uppercase font-bold tracking-widest mb-0.5">
-            Final Dinosaur Score
+            {t('Final Dinosaur Score')}
           </span>
-          <span className="font-['Lilita_One'] text-4xl sm:text-5xl text-white tracking-tight mb-2 drop-shadow">
+          <span className="font-['Lilita_One'] text-4xl sm:text-5xl text-white tracking-tight mb-3 drop-shadow">
             {stats.score.toLocaleString()}
           </span>
-
-          {/* Overall Performance Rating Badge */}
-          <div className="w-full bg-gradient-to-r from-black/60 via-black/40 to-black/60 border-2 border-white/20 rounded-2xl p-3 mb-3.5 flex items-center justify-between shadow-inner">
-            <div className="flex items-center gap-3">
-              {/* Big Gleaming Rank Stamp (logo lettering) */}
-              <GradeStamp grade={rating.grade} badgeBg={rating.badgeBg} />
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] text-white/70 uppercase font-bold tracking-wider">
-                  OVERALL RATING
-                </span>
-                <span className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide drop-shadow">
-                  {rating.title}
-                </span>
-                <div className="flex items-center gap-0.5 text-xs text-amber-400 mt-0.5">
-                  {'★'.repeat(rating.stars)}
-                  {'☆'.repeat(5 - rating.stars)}
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden sm:flex flex-col items-end text-right">
-              <span className="text-[9px] text-white/70 font-bold uppercase">Reflexes</span>
-              <span className="font-['Lilita_One'] text-xs text-[#38BDF8]">{rating.reflexGrade}</span>
-              <span className="text-[9px] text-white/50 text-right mt-0.5 max-w-[110px] truncate">{rating.summary}</span>
-            </div>
-          </div>
-
-          {/* Almost-there coaching: the one specific thing this run got close to */}
-          {coachLine && (
-            <p className="w-full text-center text-[11px] sm:text-xs font-['Lilita_One'] tracking-wide text-[#FEF08A] bg-[#F97316]/15 border border-[#F97316]/50 rounded-xl px-3 py-1.5 mb-3 leading-snug">
-              {coachLine}
-            </p>
-          )}
 
           {/* New Record Banner */}
           {isNewBest && (
             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black rounded-full text-xs font-['Lilita_One'] shadow-md animate-pulse mb-3 border border-white/40">
               <LeaderboardAdvancedIcon className="w-4 h-4 shrink-0 drop-shadow-xs" />
-              <span>NEW PERSONAL BEST!</span>
+              <span>{t('NEW PERSONAL BEST!')}</span>
             </div>
           )}
 
@@ -476,7 +369,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           {stats.leaderboardStatus === 'pending' && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/25 text-[#FED7AA] rounded-full text-xs font-['Lilita_One'] mb-3">
-              <span>Submitting score…</span>
+              <span>{t('Submitting score…')}</span>
             </div>
           )}
 
@@ -489,7 +382,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           {stats.leaderboardStatus === 'failed' && (
             <div className="w-full bg-[#7F1D1D]/40 border-2 border-[#EF4444]/60 rounded-2xl px-3 py-2 mb-3 text-center">
-              <p className="text-xs text-[#FECACA] font-medium">Saved locally — not submitted online.</p>
+              <p className="text-xs text-[#FECACA] font-medium">{t('Saved locally \u2014 not submitted online.')}</p>
               {onRetryLeaderboard && (
                 <button
                   type="button"
@@ -499,7 +392,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                   }}
                   className="mt-1.5 text-[11px] font-['Lilita_One'] tracking-wider uppercase underline underline-offset-2 text-[#FEF08A] cursor-pointer"
                 >
-                  Retry submission
+                  {t('Retry submission')}
                 </button>
               )}
             </div>
@@ -508,28 +401,28 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {/* 4 Stats Cards */}
           <div className="w-full bg-[#19110B] border-2 border-white/10 rounded-2xl p-3 grid grid-cols-4 gap-2 text-center mb-5">
             <div>
-              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">Tail-Whips</div>
+              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">{t('Tail-Whips')}</div>
               <div className="text-lg text-white font-['Lilita_One'] mt-0.5">
                 {stats.slapsCount}
               </div>
             </div>
 
             <div>
-              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">Max Roar</div>
+              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">{t('Max Roar')}</div>
               <div className="text-lg text-[#F43F5E] font-['Lilita_One'] mt-0.5">
                 {stats.maxCombo}x
               </div>
             </div>
 
             <div>
-              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">Dino Coins</div>
+              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">{t('Dino Coins')}</div>
               <div className="text-lg text-white font-['Lilita_One'] mt-0.5">
                 +{stats.coins}
               </div>
             </div>
 
             <div>
-              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">Distance</div>
+              <div className="text-[10px] text-[#FED7AA] font-bold uppercase">{t('Distance')}</div>
               <div className="text-lg text-[#38BDF8] font-['Lilita_One'] mt-0.5">
                 {Math.round(stats.distanceRun)}m
               </div>
@@ -547,7 +440,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               className="w-full py-3.5 px-5 bg-gradient-to-b from-[#FFA726] via-[#FB8C00] to-[#E65100] hover:from-[#FFB74D] hover:to-[#EF6C00] text-white font-['Lilita_One'] text-base sm:text-lg tracking-wider uppercase rounded-2xl border-3 border-[#FFE082] shadow-[0_5px_0px_#BF360C] active:translate-y-1 active:shadow-[0_1px_0px_#BF360C] cursor-pointer transition-all flex items-center justify-center gap-2 drop-shadow"
             >
               <RotateCcw className="w-5 h-5 stroke-[2.5]" />
-              <span>RUN AGAIN</span>
+              <span>{t('RUN AGAIN')}</span>
             </button>
 
             {onRetryWithBoost && retryBoostAvailable && (
@@ -560,13 +453,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 className="w-full py-2.5 px-4 bg-gradient-to-b from-[#10B981] to-[#047857] hover:from-[#34D399] hover:to-[#059669] text-white font-['Lilita_One'] text-sm tracking-wider uppercase rounded-2xl border-2 border-[#A7F3D0] shadow-[0_3px_0px_#064E3B] active:translate-y-0.5 cursor-pointer transition-all flex items-center justify-center gap-2"
               >
                 <BatteryCharging className="w-4 h-4" />
-                <span>RETRY WITH +20 STAMINA</span>
+                <span>{t('RETRY WITH +20 STAMINA')}</span>
               </button>
             )}
 
             {onRetryWithBoost && !retryBoostAvailable && retryBoostLabel && (
               <p className="text-center text-[10px] font-['Lilita_One'] tracking-wider uppercase text-[#FED7AA]/70">
-                Stamina boost back in {retryBoostLabel}
+                {t('Stamina boost back in {time}', { time: retryBoostLabel })}
               </p>
             )}
 
@@ -579,7 +472,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-[#FFF8E7] rounded-2xl font-['Lilita_One'] text-sm tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all border border-white/15 active:scale-95"
             >
               <Home className="w-4 h-4 text-[#FED7AA]" />
-              <span>MAIN MENU</span>
+              <span>{t('MAIN MENU')}</span>
             </button>
           </div>
         </div>

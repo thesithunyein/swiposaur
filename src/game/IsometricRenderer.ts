@@ -2325,7 +2325,7 @@ export class IsometricRenderer {
     x: number,
     y: number,
     scale: number,
-    type: 'soda' | 'soap',
+    type: 'soda' | 'soap' | 'fire',
     bobPhase: number
   ): void {
     ctx.save();
@@ -2337,6 +2337,28 @@ export class IsometricRenderer {
     ctx.beginPath();
     ctx.ellipse(0, 18 * s, 16 * s, 6 * s, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    if (type === 'fire') {
+      const pulse = 1 + Math.sin(bobPhase * 6) * 0.12;
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.22)';
+      ctx.beginPath();
+      ctx.arc(0, -3 * s, 22 * s * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#F97316';
+      ctx.beginPath();
+      ctx.roundRect(-9 * s, -8 * s, 18 * s, 22 * s, 3 * s);
+      ctx.fill();
+      ctx.fillStyle = '#FBBF24';
+      ctx.beginPath();
+      ctx.roundRect(-5 * s, -13 * s, 10 * s, 17 * s, 2 * s);
+      ctx.fill();
+      ctx.fillStyle = '#FEF08A';
+      ctx.beginPath();
+      ctx.roundRect(-2 * s, -16 * s, 4 * s, 9 * s, 1 * s);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
 
     if (type === 'soda') {
       // 1. Glowing Turbo Red Energy Halo

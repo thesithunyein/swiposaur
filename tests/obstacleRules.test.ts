@@ -31,8 +31,8 @@ describe('obstacle height rules', () => {
     expect(canClearObstacle('barrier', 22)).toBe(true);
     expect(canClearObstacle('barrier', 21)).toBe(false);
     // A boost arc is higher than a jump, so it can clear a cart roof.
-    expect(canClearObstacle('cart', 48)).toBe(true);
-    expect(canClearObstacle('cart', 40)).toBe(false);
+    expect(canClearObstacle('cart', 60)).toBe(true);
+    expect(canClearObstacle('cart', 48)).toBe(false);
   });
 
   it('keeps every jumpable prop far enough below the jump arc to time', () => {

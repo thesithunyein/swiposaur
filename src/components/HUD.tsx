@@ -4,6 +4,7 @@ import { sounds } from '../game/SoundEngine.ts';
 import { getMapById } from '../game/maps.ts';
 import { Volume2, VolumeX, Pause, Play, Coins, Flame, Zap, AlertTriangle, Heart } from 'lucide-react';
 import { DinoVectorIcon } from './GameIcons.tsx';
+import { t, useLanguage } from '../game/i18n.ts';
 
 interface HUDProps {
   stats: GameStats;
@@ -22,6 +23,7 @@ export const HUD: React.FC<HUDProps> = ({
   onTogglePause,
   hurtFlash = false,
 }) => {
+  useLanguage();
   const chaosPercent = Math.min(100, Math.max(0, stats.chaosLevel));
   // A boosted run starts above the usual 100, so the bar reads against the
   // run's own maximum instead of overflowing.
@@ -43,6 +45,22 @@ export const HUD: React.FC<HUDProps> = ({
         <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-[#F97316]/30 via-transparent to-[#FBBF24]/20 animate-pulse" />
       )}
 
+      {/* 2b. Flame Mode heat vignette + countdown */}
+      {stats.fireActive && (
+        <>
+          <div className="absolute inset-0 z-20 pointer-events-none bg-[radial-gradient(circle_at_50%_65%,rgba(249,115,22,0.16),transparent_60%)] animate-pulse" />
+          <div className="absolute top-[max(7rem,env(safe-area-inset-top)+6rem)] inset-x-0 z-30 flex justify-center pointer-events-none px-4">
+            <div className="bg-[#2A1006]/95 border-2 border-[#F97316] shadow-[0_6px_24px_rgba(249,115,22,0.55)] px-4 py-2 rounded-full flex items-center gap-2 text-[#FFEDD5] font-['Lilita_One'] text-sm uppercase tracking-wider">
+              <Flame className="w-4 h-4 text-[#FB923C] fill-[#FB923C] animate-bounce" />
+              <span>{t('Flame Mode')}</span>
+              <span className="bg-[#F97316] text-black rounded-full px-2 py-0.5 text-xs">
+                {stats.fireTimeLeft ?? 0}s
+              </span>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* 3. Dinosaur Stampede Alert Banner */}
       {stats.chaserOnScreen && !stats.feverActive && (
         <div className="absolute top-[max(4.2rem,env(safe-area-inset-top)+3.2rem)] inset-x-0 z-20 flex justify-center pointer-events-none px-4 animate-bounce">
@@ -53,7 +71,7 @@ export const HUD: React.FC<HUDProps> = ({
             </span>
             <AlertTriangle className="w-4 h-4 text-white fill-white shrink-0" />
             <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
-              STAMPEDE ON YOUR TAIL! RUN CLEAN TO SHAKE THEM OFF!
+              {t('STAMPEDE ON YOUR TAIL! RUN CLEAN TO SHAKE THEM OFF!')}
             </span>
           </div>
         </div>
@@ -67,7 +85,7 @@ export const HUD: React.FC<HUDProps> = ({
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="bg-[#19110B]/90 backdrop-blur-md border-2 border-white/20 shadow-[0_6px_16px_rgba(0,0,0,0.5)] rounded-2xl px-3.5 py-1.5 flex flex-col">
               <span className="text-[9px] font-bold text-[#E2E8F0] uppercase tracking-wider">
-                Score
+                {t('Score')}
               </span>
               <span className="font-['Lilita_One'] text-base sm:text-lg text-white leading-tight drop-shadow">
                 {stats.score.toLocaleString()}
@@ -77,7 +95,7 @@ export const HUD: React.FC<HUDProps> = ({
             {stats.comboStreak > 1 && (
               <div className="bg-[#2A1E14]/95 text-white border-2 border-[#F97316]/50 shadow-[0_6px_16px_rgba(0,0,0,0.5)] rounded-2xl px-3 py-1.5 font-['Lilita_One'] text-xs sm:text-sm flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-[#F97316] fill-[#F97316]" />
-                <span>{stats.comboStreak}x ROAR!</span>
+                <span>{stats.comboStreak}x {t('ROAR!')}</span>
               </div>
             )}
           </div>
@@ -96,7 +114,7 @@ export const HUD: React.FC<HUDProps> = ({
               />
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between text-[9px] font-bold text-[#E2E8F0]">
-                  <span>DINO ENERGY</span>
+                  <span>{t('DINO ENERGY')}</span>
                   <span className="text-white">
                     {stamina}%
                     {staminaBonus > 0 && (
@@ -126,9 +144,9 @@ export const HUD: React.FC<HUDProps> = ({
               <Zap className={`w-4 h-4 text-[#F97316] fill-[#F97316] shrink-0 ${stats.feverActive ? 'animate-bounce' : ''}`} />
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between text-[9px] font-bold text-[#E2E8F0]">
-                  <span>PRIMAL MAYHEM</span>
+                  <span>{t('PRIMAL MAYHEM')}</span>
                   <span className="text-white font-['Lilita_One']">
-                    {stats.feverActive ? 'PRIMAL ROAR 16x' : `${stats.chaosMultiplier}x`}
+                    {stats.feverActive ? `${t('PRIMAL ROAR')} 16x` : `${stats.chaosMultiplier}x`}
                   </span>
                 </div>
                 <div className="w-24 bg-black/60 h-3 rounded-full overflow-hidden border border-white/15 p-0.5 shadow-inner">
@@ -165,8 +183,8 @@ export const HUD: React.FC<HUDProps> = ({
                 sounds.playClick();
                 onToggleMute();
               }}
-              title="Toggle Audio"
-              aria-label="Toggle Sound"
+              title={t('Toggle Audio')}
+              aria-label={t('Toggle Audio')}
               className="w-9 h-9 bg-[#19110B]/90 hover:bg-[#2A1E14] text-white border-2 border-white/20 shadow-md active:scale-95 rounded-2xl flex items-center justify-center cursor-pointer transition-all"
             >
               {isMuted ? (
@@ -183,8 +201,8 @@ export const HUD: React.FC<HUDProps> = ({
                 sounds.playClick();
                 onTogglePause();
               }}
-              title="Pause"
-              aria-label="Pause"
+              title={t('Pause')}
+              aria-label={t('Pause')}
               className="w-9 h-9 bg-[#19110B]/90 hover:bg-[#2A1E14] text-white border-2 border-white/20 shadow-md active:scale-95 rounded-2xl flex items-center justify-center cursor-pointer transition-all"
             >
               {isPaused ? (

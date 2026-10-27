@@ -1,4 +1,7 @@
+import type { Language } from './i18n.ts';
+
 export interface GameSettings {
+  language: Language;
   soundEnabled: boolean;
   musicEnabled: boolean;
   cameraShake: boolean;
@@ -12,6 +15,7 @@ export interface GameSettings {
 const STORAGE_KEY = 'slap_run_game_settings';
 
 export const DEFAULT_SETTINGS: GameSettings = {
+  language: 'en',
   soundEnabled: true,
   musicEnabled: true,
   cameraShake: true,

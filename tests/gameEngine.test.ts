@@ -90,33 +90,58 @@ describe('GameEngine touch mode', () => {
     expect(desktopEngine.touchInputMode).toBe(false);
   });
 
-  it('uses the reduced touch obstacle rules', () => {
+  it('uses the two-lane touch rules', () => {
     setTouchEnvironment(true);
-    const engine = makeEngine();
-    const opening = sampleSegments(engine, 50, 2500);
-    const late = sampleSegments(engine, 400, 2500);
-
-    expect(opening.obstacleRate).toBeGreaterThan(0.36);
-    expect(opening.obstacleRate).toBeLessThan(0.48);
-    expect(late.obstacleRate).toBeGreaterThan(0.56);
-    expect(late.obstacleRate).toBeLessThan(0.68);
-    expect(late.doubleLaneShare).toBeGreaterThan(0.05);
-    expect(late.doubleLaneShare).toBeLessThan(0.15);
-  });
-
-  it('keeps the original desktop obstacle rules', () => {
-    setTouchEnvironment(false);
     const engine = makeEngine();
     const opening = sampleSegments(engine, 50, 2500);
     const late = sampleSegments(engine, 400, 2500);
 
     expect(opening.obstacleRate).toBeGreaterThan(0.49);
     expect(opening.obstacleRate).toBeLessThan(0.61);
-    expect(late.obstacleRate).toBeGreaterThan(0.69);
-    expect(late.obstacleRate).toBeLessThan(0.81);
-    // Desktop late game still uses two-lane blocks more often than touch.
-    expect(late.doubleLaneShare).toBeGreaterThan(0.22);
-    expect(late.doubleLaneShare).toBeLessThan(0.38);
+    expect(late.obstacleRate).toBeGreaterThan(0.97);
+    // Roughly seven rows in ten fill two lanes.
+    expect(late.doubleLaneShare).toBeGreaterThan(0.64);
+    expect(late.doubleLaneShare).toBeLessThan(0.76);
+  });
+
+  it('uses the same two-lane split on desktop with denser rows', () => {
+    setTouchEnvironment(false);
+    const engine = makeEngine();
+    const opening = sampleSegments(engine, 50, 2500);
+    const late = sampleSegments(engine, 400, 2500);
+
+    expect(opening.obstacleRate).toBeGreaterThan(0.64);
+    expect(opening.obstacleRate).toBeLessThan(0.76);
+    expect(late.obstacleRate).toBeGreaterThan(0.97);
+    expect(late.doubleLaneShare).toBeGreaterThan(0.64);
+    expect(late.doubleLaneShare).toBeLessThan(0.76);
+  });
+
+  it('drops coins in a single lane per row, and far fewer of them', () => {
+    setTouchEnvironment(false);
+    const engine = makeEngine();
+    engine.stats.distanceRun = 400;
+
+    let total = 0;
+    const lanesUsed = new Set<number>();
+    for (let row = 0; row < 12; row++) {
+      engine.obstacles = [];
+      engine.coins = [];
+      (engine as unknown as { spawnMarketSegment(y: number): void }).spawnMarketSegment(900 + row * 180);
+
+      // A row pays at most three coins, and they all sit in the same lane.
+      expect(engine.coins.length).toBeGreaterThan(0);
+      expect(engine.coins.length).toBeLessThanOrEqual(3);
+      expect(new Set(engine.coins.map((coin) => coin.x)).size).toBe(1);
+
+      total += engine.coins.length;
+      engine.coins.forEach((coin) => lanesUsed.add(Math.round(coin.x)));
+    }
+
+    // Twelve rows used to bank well over thirty coins; now it is a quarter of that.
+    expect(total).toBeLessThanOrEqual(30);
+    // The coin lane still moves, so it is never the same lane every time.
+    expect(lanesUsed.size).toBeGreaterThan(1);
   });
 });
 
@@ -173,6 +198,18 @@ describe('jump and ramp physics', () => {
 
   it('does not let the same jump clear a solid cart', () => {
     const engine = touchObstacle(setup(), 'cart', 34);
+    expect(engine.player.stamina).toBe(55);
+    expect(engine.obstacles[0].hit).toBe(true);
+  });
+
+  it('jumps high enough to clear a crate at a higher point of the arc', () => {
+    const engine = touchObstacle(setup(), 'crate', 40);
+    expect(engine.player.stamina).toBe(100);
+    expect(engine.obstacles[0].hit).toBe(false);
+  });
+
+  it('still treats solid props as walls at the raised apex', () => {
+    const engine = touchObstacle(setup(), 'cart', 40);
     expect(engine.player.stamina).toBe(55);
     expect(engine.obstacles[0].hit).toBe(true);
   });
@@ -272,6 +309,175 @@ describe('spawn cadence at speed', () => {
     state.update(1);
 
     expect(state.nextSpawnY).toBeGreaterThan(p.y + 900);
+  });
+});
+
+describe('flame mode', () => {
+  function fireSetup(): GameEngine {
+    const engine = makeEngine();
+    setTouchEnvironment(false);
+    engine.startGame();
+    engine.introState.active = false;
+    engine.obstacles = [];
+    engine.powerups = [];
+    const p = engine.player;
+    p.y = 100;
+    p.prevY = 100;
+    p.z = 0;
+    p.vz = 0;
+    p.x = 0;
+    p.prevX = 0;
+    p.stamina = 100;
+    engine.stats.distanceRun = 100;
+    return engine;
+  }
+
+  it('starts an eight-second flame mode from a flame pickup', () => {
+    const engine = fireSetup();
+    const p = engine.player;
+    engine.powerups = [
+      {
+        id: 7,
+        x: p.x,
+        y: p.y,
+        type: 'fire',
+        collected: false,
+        bobPhase: 0,
+      },
+    ];
+    (engine as unknown as { update(dtFactor: number): void }).update(1);
+
+    expect(p.fireTime).toBeGreaterThan(7_900);
+    expect(p.fireTime).toBeLessThanOrEqual(8_000);
+    expect(engine.stats.fireActive).toBe(true);
+    expect(engine.stats.fireTimeLeft).toBe(8);
+  });
+
+  it('burns an obstacle instead of costing stamina', () => {
+    const engine = fireSetup();
+    const p = engine.player;
+    p.fireTime = 8_000;
+    engine.obstacles = [
+      {
+        id: 1,
+        x: 0,
+        y: p.y + 12,
+        type: 'cart',
+        width: 52,
+        height: 34,
+        hit: false,
+        rollSpeed: 0,
+        vx: 0,
+        isShifting: false,
+        shiftMinX: -100,
+        shiftMaxX: 100,
+      },
+    ];
+    (engine as unknown as { update(dtFactor: number): void }).update(1);
+
+    expect(p.stamina).toBe(100);
+    expect(engine.obstacles[0].hit).toBe(true);
+    expect(engine.stats.fireActive).toBe(true);
+  });
+
+  it('breathes fire at an obstacle it reaches without jumping', () => {
+    const engine = fireSetup();
+    const p = engine.player;
+    p.fireTime = 6_000;
+    engine.obstacles = [
+      {
+        id: 1,
+        x: 0,
+        // Close enough to be burned, far enough that no body contact happens.
+        y: p.y + 60,
+        type: 'crate',
+        width: 46,
+        height: 34,
+        hit: false,
+        rollSpeed: 0,
+        vx: 0,
+        isShifting: false,
+        shiftMinX: -100,
+        shiftMaxX: 100,
+      },
+    ];
+    (engine as unknown as { update(dtFactor: number): void }).update(1);
+
+    expect(engine.obstacles[0].hit).toBe(true);
+    expect(p.stamina).toBe(100);
+    expect(engine.stats.fireActive).toBe(true);
+  });
+
+  it('holds the first flame pickup back until 45 seconds of running', () => {
+    const engine = fireSetup();
+    const state = engine as unknown as { spawnMarketSegment(y: number): void; runTimeSeconds: number };
+
+    state.runTimeSeconds = 44.9;
+    engine.powerups = [];
+    state.spawnMarketSegment(1_200);
+    expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(false);
+
+    state.runTimeSeconds = 45.1;
+    engine.powerups = [];
+    state.spawnMarketSegment(1_400);
+    expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(true);
+
+    // Then one every thirty seconds, and not before.
+    state.runTimeSeconds = 74.9;
+    engine.powerups = [];
+    state.spawnMarketSegment(1_600);
+    expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(false);
+
+    state.runTimeSeconds = 75.1;
+    engine.powerups = [];
+    state.spawnMarketSegment(1_800);
+    expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(true);
+  });
+});
+
+describe('first-run mobile tutorial', () => {
+  it('only arms the lesson on a touch device and only once', () => {
+    setTouchEnvironment(true);
+    const engine = makeEngine();
+    engine.startGame();
+    expect(engine.tutorialState.pending).toBe(true);
+
+    // Simulate finishing the lesson, then a second run starts clean.
+    engine.introState.active = false;
+    engine.tutorialState.active = true;
+    engine.tutorialState.pending = false;
+    engine.changeLane(1);
+    engine.startGame();
+    expect(engine.tutorialState.pending).toBe(false);
+
+    setTouchEnvironment(false);
+    const desktop = makeEngine();
+    desktop.startGame();
+    expect(desktop.tutorialState.pending).toBe(false);
+  });
+
+  it('accepts only the cued direction while the lesson is active', () => {
+    setTouchEnvironment(true);
+    const engine = makeEngine();
+    engine.startGame();
+    engine.introState.active = false;
+    engine.tutorialState.active = true;
+    engine.tutorialState.pending = false;
+    engine.tutorialState.direction = 1;
+    engine.currentLaneIndex = 1;
+    engine.stats.tutorialActive = true;
+
+    engine.changeLane(-1);
+    expect(engine.currentLaneIndex).toBe(1);
+    engine.requestJump();
+    expect(engine.player.vz).toBe(0);
+    engine.requestSlap();
+    expect(engine.input.slapRequested).toBe(false);
+
+    engine.changeLane(1);
+    expect(engine.currentLaneIndex).toBe(2);
+    expect(engine.stats.tutorialActive).toBe(false);
+    expect(engine.tutorialState.active).toBe(false);
   });
 });
 

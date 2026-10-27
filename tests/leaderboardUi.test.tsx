@@ -131,4 +131,26 @@ describe('game-over status', () => {
     expect(markup).toContain('Saved locally — not submitted online.');
     expect(markup).not.toContain('GLOBAL RANK');
   });
+
+  it('shows only the score, the run stats and the actions', () => {
+    const markup = renderGameOver({
+      score: 121080,
+      highScore: 1000,
+      coins: 682,
+      slapsCount: 24,
+      maxCombo: 12,
+      distanceRun: 11485,
+    });
+
+    expect(markup).toContain('Final Dinosaur Score');
+    expect(markup).toContain('RUN AGAIN');
+    expect(markup).toContain('MAIN MENU');
+
+    // Dropped as clutter: the rating card, its reflexes column and the
+    // daily-mission strip that sat between the score and the stats.
+    expect(markup).not.toContain('OVERALL RATING');
+    expect(markup).not.toContain('MASTER DINO DRIFTER');
+    expect(markup).not.toContain('Reflexes');
+    expect(markup).not.toContain('mission is done');
+  });
 });

@@ -53,6 +53,11 @@ export interface Player {
   slipTimer: number;
   invulnerableTimer?: number;
   feverTime: number;
+  /** Milliseconds of flame mode left; while > 0 the dino burns obstacles. */
+  fireTime: number;
+  /** Opening cinematic tail-whip swing. */
+  isWhipping: boolean;
+  whipProgress: number;
   skin: CharacterSkin;
   runCycle: number;
   stamina: number;
@@ -180,7 +185,7 @@ export interface Powerup {
   id: number;
   x: number;
   y: number;
-  type: 'soda' | 'soap';
+  type: 'soda' | 'soap' | 'fire';
   collected: boolean;
   bobPhase: number;
 }
@@ -264,6 +269,13 @@ export interface GameStats {
   chaosLevel: number;
   chaosMultiplier: number;
   feverActive: boolean;
+  /** True for the 10 seconds after a flame pickup. */
+  fireActive?: boolean;
+  /** Whole seconds of flame mode left, for the HUD. */
+  fireTimeLeft?: number;
+  /** Mobile-only guided first dodge; PC never sees this. */
+  tutorialActive?: boolean;
+  tutorialDirection?: -1 | 1;
   distanceRun: number;
   comboStreak: number;
   maxCombo: number;

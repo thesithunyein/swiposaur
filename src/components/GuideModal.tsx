@@ -2,12 +2,14 @@ import React from 'react';
 import { X, Heart, ShieldAlert, Zap, Compass, Keyboard, Flame, Coins, Smartphone } from 'lucide-react';
 import { sounds } from '../game/SoundEngine.ts';
 import { DinoVectorIcon } from './GameIcons.tsx';
+import { t, useLanguage } from '../game/i18n.ts';
 
 interface GuideModalProps {
   onClose: () => void;
 }
 
 export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
+  useLanguage();
   return (
     <div
       onClick={(e) => {
@@ -30,10 +32,10 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
             </div>
             <div>
               <h2 className="font-['Lilita_One'] text-xl text-[#FEF08A] tracking-wider leading-none">
-                DINO SURVIVAL GUIDE
+                {t('DINO SURVIVAL GUIDE')}
               </h2>
               <p className="text-xs text-[#FED7AA] font-medium mt-1">
-                How to tail-whip, dodge stampedes & trigger Primal Roars
+                {t('How to tail-whip, dodge stampedes & trigger Primal Roars')}
               </p>
             </div>
           </div>
@@ -45,7 +47,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
               sounds.playClick();
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-9 h-9 bg-[#EF4444] hover:bg-[#F87171] text-white border-2 border-white/40 shadow-md active:scale-95 rounded-2xl flex items-center justify-center cursor-pointer transition-all"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
@@ -59,40 +61,40 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
             <div className="p-3.5 bg-[#19110B] border-2 border-[#10B981]/50 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 font-['Lilita_One'] text-sm text-[#10B981] mb-1">
                 <Zap className="w-4 h-4 fill-[#10B981]" />
-                <span>TAIL-WHIP CRITTERS</span>
+                <span>{t('TAIL-WHIP CRITTERS')}</span>
               </div>
               <p className="text-xs text-[#FED7AA]/90 leading-relaxed">
-                Whack cheeky dodos, crabs & beach cavemen as you sprint past! Each hit boosts your Dino Energy and builds your Roar combo!
+                {t('Whack cheeky dodos, crabs & beach cavemen as you sprint past! Each hit boosts your Dino Energy and builds your Roar combo!')}
               </p>
             </div>
 
             <div className="p-3.5 bg-[#19110B] border-2 border-[#EF4444]/50 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 font-['Lilita_One'] text-sm text-[#EF4444] mb-1">
                 <DinoVectorIcon className="w-4 h-4" bodyColor="#EF4444" bellyColor="#FECACA" />
-                <span>ESCAPE STAMPEDES</span>
+                <span>{t('ESCAPE STAMPEDES')}</span>
               </div>
               <p className="text-xs text-[#FED7AA]/90 leading-relaxed">
-                Missing too many targets enrages the chasing stampede mob! Don't let them catch up to your tail or you'll get Busted!
+                {t("Missing too many targets enrages the chasing stampede mob! Don't let them catch up to your tail or you'll get Busted!")}
               </p>
             </div>
 
             <div className="p-3.5 bg-[#19110B] border-2 border-[#FBBF24]/50 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 font-['Lilita_One'] text-sm text-[#FEF08A] mb-1">
                 <Flame className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
-                <span>PRIMAL ROAR FEVER</span>
+                <span>{t('PRIMAL ROAR FEVER')}</span>
               </div>
               <p className="text-xs text-[#FED7AA]/90 leading-relaxed">
-                Fill the Mayhem Meter to ignite 16x score multiplier and invincible sprint boost with party fireworks!
+                {t('Fill the Mayhem Meter to ignite 16x score multiplier and invincible sprint boost with party fireworks!')}
               </p>
             </div>
 
             <div className="p-3.5 bg-[#19110B] border-2 border-[#38BDF8]/50 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 font-['Lilita_One'] text-sm text-[#38BDF8] mb-1">
                 <Coins className="w-4 h-4 fill-[#38BDF8] text-[#38BDF8]" />
-                <span>COLLECT DINO COINS</span>
+                <span>{t('COLLECT DINO COINS')}</span>
               </div>
               <p className="text-xs text-[#FED7AA]/90 leading-relaxed">
-                Grab golden fossils and coins across the track to unlock new party dinosaurs in the paddock!
+                {t('Grab golden fossils and coins across the track to unlock new party dinosaurs in the paddock!')}
               </p>
             </div>
           </div>
@@ -101,24 +103,24 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
           <div className="p-3.5 bg-[#19110B] border-2 border-white/10 rounded-2xl">
             <h3 className="font-['Lilita_One'] text-xs text-[#FEF08A] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Keyboard className="w-4 h-4 text-[#38BDF8]" />
-              <span>CONTROLS CHEAT SHEET</span>
+              <span>{t('CONTROLS CHEAT SHEET')}</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-[#FEF08A] font-['Lilita_One']">SPACE</kbd>
-                <span>Jump & Tail-Whip</span>
+                <span>{t('Jump & Tail-Whip')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-[#38BDF8] font-['Lilita_One']">A / D</kbd>
-                <span>Swerve Lanes</span>
+                <span>{t('Swerve Lanes')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-[#34D399] font-['Lilita_One']">W / ↑</kbd>
-                <span>Sprint Jump</span>
+                <span>{t('Sprint Jump')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#FED7AA] flex items-center gap-1"><Smartphone className="w-3.5 h-3.5 text-[#38BDF8]" /> Mobile:</span>
-                <span>Swipe & Tap buttons</span>
+                <span className="text-xs text-[#FED7AA] flex items-center gap-1"><Smartphone className="w-3.5 h-3.5 text-[#38BDF8]" /> {t('Mobile:')}</span>
+                <span>{t('Swipe & Tap buttons')}</span>
               </div>
             </div>
           </div>
@@ -133,7 +135,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
           }}
           className="w-full py-3 px-5 bg-gradient-to-b from-[#FFA726] to-[#E65100] hover:from-[#FFB74D] hover:to-[#EF6C00] text-white font-['Lilita_One'] text-base tracking-wider uppercase rounded-2xl border-2 border-[#FFE082] shadow-md cursor-pointer active:scale-95 transition-all text-center"
         >
-          READY FOR MAYHEM!
+          {t('READY FOR MAYHEM!')}
         </button>
       </div>
     </div>

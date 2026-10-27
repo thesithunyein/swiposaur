@@ -3,6 +3,7 @@ import { X, Sparkles, Wifi, HardDrive } from 'lucide-react';
 import { LeaderboardEntry } from '../game/types.ts';
 import { sounds } from '../game/SoundEngine.ts';
 import { LeaderboardAdvancedIcon, TournamentStandings3DIcon } from './GameIcons.tsx';
+import { t, useLanguage } from '../game/i18n.ts';
 
 interface LeaderboardModalProps {
   entries: LeaderboardEntry[];
@@ -20,9 +21,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   playerRank,
   onClose,
 }) => {
+  useLanguage();
   const isOnline = mode === 'online';
-  const title = isOnline ? 'GLOBAL LEADERBOARD' : 'HALL OF FAME';
-  const subtitle = isOnline ? 'Best score per player, saved online' : 'Saved on this device';
+  const title = isOnline ? t('GLOBAL LEADERBOARD') : t('HALL OF FAME');
+  const subtitle = isOnline ? t('Best score per player, saved online') : t('Saved on this device');
 
   return (
     <div
@@ -58,7 +60,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               sounds.playClick();
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-8 h-8 sm:w-9 sm:h-9 bg-[#EF4444] hover:bg-[#F87171] text-white border-2 border-white/40 shadow-md active:scale-95 rounded-2xl flex items-center justify-center cursor-pointer transition-all"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
@@ -70,7 +72,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 text-[#FEF08A] font-['Lilita_One']">
               <Sparkles className="w-4 h-4 text-[#FBBF24] shrink-0" />
-              <span className="truncate">Your Best</span>
+              <span className="truncate">{t('Your Best')}</span>
             </div>
             <span className="font-['Lilita_One'] text-sm tabular-nums text-white">
               {playerScore.toLocaleString()}
@@ -80,11 +82,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <div className="flex items-center justify-between text-[11px] text-[#FED7AA]/80 border-t border-white/10 pt-1.5">
             <span className="flex items-center gap-1.5">
               {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <HardDrive className="w-3.5 h-3.5" />}
-              {isOnline ? 'Saved on the server' : 'Saved on this device'}
+              {isOnline ? t('Saved on the server') : t('Saved on this device')}
             </span>
             {typeof playerRank === 'number' && playerRank > 0 && (
               <span className="font-['Lilita_One'] text-[#FEF08A]">
-                {isOnline ? 'GLOBAL' : 'LOCAL'} RANK #{playerRank}
+                {isOnline ? t('GLOBAL') : t('LOCAL')} RANK #{playerRank}
               </span>
             )}
           </div>
@@ -95,8 +97,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           {entries.length === 0 && (
             <p className="text-center text-sm text-[#FED7AA]/80 py-8">
               {isOnline
-                ? 'No scores on the online board yet — finish a run to be the first.'
-                : 'No saved runs yet — finish a run to set your local best.'}
+                ? t('No scores on the online board yet — finish a run to be the first.')
+                : t('No saved runs yet — finish a run to set your local best.')}
             </p>
           )}
 
@@ -182,10 +184,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         <div className="bg-[#140D08] border-t-2 border-[#F97316]/40 px-5 py-2.5 flex items-center justify-between gap-3 text-xs text-[#FED7AA] shrink-0 font-medium">
           <span className="flex items-center gap-2 min-w-0">
             <TournamentStandings3DIcon className="w-4 h-4 shrink-0" />
-            <span className="truncate">{isOnline ? 'All players' : 'Local Hall of Fame'}</span>
+            <span className="truncate">{isOnline ? t('All players') : t('Local Hall of Fame')}</span>
           </span>
           <span className="text-[#FED7AA]/80 font-['Lilita_One'] shrink-0">
-            {isOnline ? 'Self-reported' : 'This device only'}
+            {isOnline ? t('Self-reported') : t('This device only')}
           </span>
         </div>
       </div>

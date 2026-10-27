@@ -67,7 +67,7 @@ export function getMapForLevel(level: number): string {
   return 'market';
 }
 
-export function getObstaclesForLevel(levelNumber: number, mapIdOverride?: string): {
+function legacyObstaclesForLevel(levelNumber: number, mapIdOverride?: string): {
   obstacles: ObstacleType[];
   themeName: string;
 } {
@@ -201,6 +201,130 @@ export function getObstaclesForLevel(levelNumber: number, mapIdOverride?: string
       themeName: 'Imperial Blossom Floats & Sacred Torii Arches',
     };
   }
+}
+
+/**
+ * Obstacle pools per map, ordered gentle -> frightening. Every level draws its
+ * own combination out of the pool it belongs to, so no two levels of a map play
+ * the same way, and the moving or frightening props only enter the draw once a
+ * level has climbed far enough into the map.
+ */
+const MAP_PROP_POOLS: Record<string, ObstacleType[]> = {
+  market: ['crate', 'watermelon', 'planter', 'cafe_table', 'hydrant', 'barrier', 'barrel', 'cart', 'shifting_block'],
+  tropical_coast: ['coconut_crate', 'beach_lounger', 'watermelon', 'barrier', 'surf_rack', 'barrel', 'tiki_totem', 'shifting_block'],
+  sunset_desert: ['dino_skull', 'barrier', 'barrel', 'firewall', 'loop_boulder', 'cactus_cluster', 'canyon_mesa', 'shifting_block'],
+  neon_night: ['spikes', 'barrier', 'cyber_server', 'barrel', 'holo_barrier', 'drone_hazard', 'shifting_block'],
+  winter_peak: ['snow_bale', 'barrier', 'ice_spikes', 'barrel', 'timber_sled', 'loop_boulder', 'shifting_block'],
+  golden_temple: ['stone_lantern', 'planter', 'zen_barrier', 'barrier', 'torii_gate', 'cherry_wagon', 'shifting_block'],
+};
+
+/** First level of each map, matching getMapForLevel. */
+const MAP_START_LEVEL: Record<string, number> = {
+  market: 1,
+  tropical_coast: 5,
+  sunset_desert: 10,
+  neon_night: 18,
+  winter_peak: 25,
+  golden_temple: 35,
+};
+
+const PROP_LABELS: Record<string, string> = {
+  crate: 'Crates',
+  watermelon: 'Melon Stalls',
+  planter: 'Planters',
+  cafe_table: 'Café Tables',
+  hydrant: 'Hydrants',
+  barrier: 'Barriers',
+  barrel: 'Rolling Barrels',
+  cart: 'Pushcarts',
+  shifting_block: 'Shifting Blocks',
+  coconut_crate: 'Coconut Crates',
+  beach_lounger: 'Sun Loungers',
+  surf_rack: 'Surf Racks',
+  tiki_totem: 'Tiki Totems',
+  dino_skull: 'Dino Skulls',
+  firewall: 'Fire Braziers',
+  loop_boulder: 'Boulders',
+  cactus_cluster: 'Cacti',
+  canyon_mesa: 'Mesas',
+  spikes: 'Spikes',
+  cyber_server: 'Server Towers',
+  holo_barrier: 'Laser Barriers',
+  drone_hazard: 'Hover Drones',
+  snow_bale: 'Snow Forts',
+  ice_spikes: 'Ice Spikes',
+  timber_sled: 'Timber Sleds',
+  stone_lantern: 'Stone Lanterns',
+  zen_barrier: 'Bamboo Lattices',
+  torii_gate: 'Torii Gates',
+  cherry_wagon: 'Blossom Wagons',
+};
+
+const comboCache = new Map<string, ObstacleType[][]>();
+
+/** Every combination of `size` props from `pool`, in lexicographic order. */
+function combinationsOf(pool: ObstacleType[], size: number): ObstacleType[][] {
+  const key = `${pool.join(',')}|${size}`;
+  const cached = comboCache.get(key);
+  if (cached) return cached;
+
+  const out: ObstacleType[][] = [];
+  const pick: ObstacleType[] = [];
+  const walk = (start: number) => {
+    if (pick.length === size) {
+      out.push([...pick]);
+      return;
+    }
+    for (let i = start; i < pool.length; i++) {
+      pick.push(pool[i]);
+      walk(i + 1);
+      pick.pop();
+    }
+  };
+  walk(0);
+  comboCache.set(key, out);
+  return out;
+}
+
+/**
+ * The level-by-level draw for a map: every 3-, 4- and 5-prop combination, gentle
+ * sets first, so early levels stay readable and later ones get the movers and
+ * the frightening props.
+ */
+function levelComboList(pool: ObstacleType[]): ObstacleType[][] {
+  return [3, 4, 5]
+    .filter((size) => size <= pool.length)
+    .flatMap((size) => combinationsOf(pool, size));
+}
+
+function describeProps(props: ObstacleType[]): string {
+  const names = props.map((prop) => PROP_LABELS[prop] ?? prop);
+  if (names.length === 1) return names[0];
+  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
+}
+
+/**
+ * Unique obstacle set per level: each level of a map draws a different
+ * combination from that map's pool, plus a launch pad. The old per-band tables
+ * remain as the fallback for maps and level numbers outside that range.
+ */
+export function getObstaclesForLevel(levelNumber: number, mapIdOverride?: string): {
+  obstacles: ObstacleType[];
+  themeName: string;
+} {
+  const lvl = Math.max(1, levelNumber);
+  const mapId = mapIdOverride || getMapForLevel(lvl);
+  const pool = MAP_PROP_POOLS[mapId];
+  const startLevel = MAP_START_LEVEL[mapId];
+  if (!pool || startLevel === undefined) return legacyObstaclesForLevel(lvl, mapId);
+
+  const index = lvl - startLevel;
+  const combos = levelComboList(pool);
+  if (index < 0 || index >= combos.length) return legacyObstaclesForLevel(lvl, mapId);
+
+  const props = combos[index];
+  const obstacles: ObstacleType[] = [...props, index % 2 === 0 ? 'ramp' : 'terminal_ramp'];
+  return { obstacles, themeName: `${describeProps(props)} — Level ${lvl}` };
 }
 
 export function getLevel(levelNumber: number): LevelDefinition {

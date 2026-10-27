@@ -42,10 +42,10 @@ describe('obstacle density rule table', () => {
     }
   });
 
-  it('uses the gentler desktop curve', () => {
-    expect(DESKTOP_OBSTACLE_RULES.opening).toEqual({ chance: 0.55, oneLaneShare: 1 });
-    expect(DESKTOP_OBSTACLE_RULES.mid).toEqual({ chance: 0.65, oneLaneShare: 0.85 });
-    expect(DESKTOP_OBSTACLE_RULES.late).toEqual({ chance: 0.75, oneLaneShare: 0.7 });
+  it('uses the two-lane desktop curve', () => {
+    expect(DESKTOP_OBSTACLE_RULES.opening).toEqual({ chance: 0.7, oneLaneShare: 0.3 });
+    expect(DESKTOP_OBSTACLE_RULES.mid).toEqual({ chance: 0.9, oneLaneShare: 0.3 });
+    expect(DESKTOP_OBSTACLE_RULES.late).toEqual({ chance: 1, oneLaneShare: 0.3 });
     expect(getObstacleRule(50, false)).toEqual(DESKTOP_OBSTACLE_RULES.opening);
     expect(getObstacleRule(80, false)).toEqual(DESKTOP_OBSTACLE_RULES.opening);
     expect(getObstacleRule(80.1, false)).toEqual(DESKTOP_OBSTACLE_RULES.mid);
@@ -53,56 +53,79 @@ describe('obstacle density rule table', () => {
     expect(getObstacleRule(250.1, false)).toEqual(DESKTOP_OBSTACLE_RULES.late);
   });
 
-  it('uses the lighter touch curve', () => {
-    expect(TOUCH_OBSTACLE_RULES.opening).toEqual({ chance: 0.42, oneLaneShare: 1 });
-    expect(TOUCH_OBSTACLE_RULES.mid).toEqual({ chance: 0.52, oneLaneShare: 1 });
-    expect(TOUCH_OBSTACLE_RULES.late).toEqual({ chance: 0.62, oneLaneShare: 0.9 });
+  it('uses the touch curve with the same lane split', () => {
+    expect(TOUCH_OBSTACLE_RULES.opening).toEqual({ chance: 0.55, oneLaneShare: 0.3 });
+    expect(TOUCH_OBSTACLE_RULES.mid).toEqual({ chance: 0.8, oneLaneShare: 0.3 });
+    expect(TOUCH_OBSTACLE_RULES.late).toEqual({ chance: 1, oneLaneShare: 0.3 });
     expect(getObstacleRule(50, true)).toEqual(TOUCH_OBSTACLE_RULES.opening);
     expect(getObstacleRule(120, true)).toEqual(TOUCH_OBSTACLE_RULES.mid);
     expect(getObstacleRule(600, true)).toEqual(TOUCH_OBSTACLE_RULES.late);
   });
 
   it('rolls desktop thresholds on the new bands', () => {
-    // Opening band: one lane, 55% chance.
-    expect(resolveObstacleSpawn(50, false, sequence(0.54))).toEqual({ isObstacleSegment: true, laneCount: 1 });
-    expect(resolveObstacleSpawn(50, false, sequence(0.55))).toEqual({ isObstacleSegment: false, laneCount: 0 });
-
-    // Mid band: 65% chance, 85% of obstacle segments use one lane.
-    expect(resolveObstacleSpawn(100, false, sequence(0.64, 0.84))).toEqual({
+    // Opening band: 70% chance, 30% of obstacle rows use one lane.
+    expect(resolveObstacleSpawn(50, false, sequence(0.69, 0.29))).toEqual({
       isObstacleSegment: true,
       laneCount: 1,
     });
-    expect(resolveObstacleSpawn(100, false, sequence(0.64, 0.85))).toEqual({
+    expect(resolveObstacleSpawn(50, false, sequence(0.69, 0.3))).toEqual({
       isObstacleSegment: true,
       laneCount: 2,
     });
+    expect(resolveObstacleSpawn(50, false, sequence(0.7))).toEqual({
+      isObstacleSegment: false,
+      laneCount: 0,
+    });
 
-    // Late band: 75% chance, 70% one lane.
-    expect(resolveObstacleSpawn(300, false, sequence(0.74, 0.69))).toEqual({
+    // Mid band: 90% chance, same 30/70 single/double lane split.
+    expect(resolveObstacleSpawn(100, false, sequence(0.89, 0.29))).toEqual({
       isObstacleSegment: true,
       laneCount: 1,
     });
-    expect(resolveObstacleSpawn(300, false, sequence(0.74, 0.7))).toEqual({
+    expect(resolveObstacleSpawn(100, false, sequence(0.89, 0.3))).toEqual({
+      isObstacleSegment: true,
+      laneCount: 2,
+    });
+    expect(resolveObstacleSpawn(100, false, sequence(0.9))).toEqual({
+      isObstacleSegment: false,
+      laneCount: 0,
+    });
+
+    // Late band: every row blocks one or two lanes.
+    expect(resolveObstacleSpawn(300, false, sequence(0.29))).toEqual({
+      isObstacleSegment: true,
+      laneCount: 1,
+    });
+    expect(resolveObstacleSpawn(300, false, sequence(0.3))).toEqual({
       isObstacleSegment: true,
       laneCount: 2,
     });
   });
 
-  it('rolls touch thresholds with a single lane before 250m and 10% doubles after', () => {
-    expect(resolveObstacleSpawn(50, true, sequence(0.41))).toEqual({ isObstacleSegment: true, laneCount: 1 });
-    expect(resolveObstacleSpawn(50, true, sequence(0.42))).toEqual({ isObstacleSegment: false, laneCount: 0 });
-
-    // Mid band never uses two lanes, even if the lane roll is huge.
-    expect(resolveObstacleSpawn(150, true, sequence(0.51, 0.99))).toEqual({
+  it('rolls touch thresholds on the same lane split', () => {
+    expect(resolveObstacleSpawn(50, true, sequence(0.54, 0.29))).toEqual({
       isObstacleSegment: true,
       laneCount: 1,
     });
+    expect(resolveObstacleSpawn(50, true, sequence(0.54, 0.3))).toEqual({
+      isObstacleSegment: true,
+      laneCount: 2,
+    });
+    expect(resolveObstacleSpawn(50, true, sequence(0.55))).toEqual({
+      isObstacleSegment: false,
+      laneCount: 0,
+    });
 
-    expect(resolveObstacleSpawn(300, true, sequence(0.61, 0.89))).toEqual({
+    expect(resolveObstacleSpawn(150, true, sequence(0.79, 0.3))).toEqual({
+      isObstacleSegment: true,
+      laneCount: 2,
+    });
+
+    expect(resolveObstacleSpawn(300, true, sequence(0.29))).toEqual({
       isObstacleSegment: true,
       laneCount: 1,
     });
-    expect(resolveObstacleSpawn(300, true, sequence(0.61, 0.9))).toEqual({
+    expect(resolveObstacleSpawn(300, true, sequence(0.3))).toEqual({
       isObstacleSegment: true,
       laneCount: 2,
     });
@@ -122,12 +145,12 @@ describe('obstacle density rule table', () => {
 });
 
 describe('obstacle density distributions', () => {
-  it('desktop keeps roughly 55/65/75 percent obstacle coverage', () => {
+  it('desktop keeps roughly 70/90/100 percent obstacle coverage', () => {
     const rand = mulberry32(11);
     const bands = [
-      { distance: 50, chance: 0.55 },
-      { distance: 150, chance: 0.65 },
-      { distance: 400, chance: 0.75 },
+      { distance: 50, chance: 0.7 },
+      { distance: 150, chance: 0.9 },
+      { distance: 400, chance: 1 },
     ];
     for (const band of bands) {
       let obstacles = 0;
@@ -139,12 +162,12 @@ describe('obstacle density distributions', () => {
     }
   });
 
-  it('touch reduces coverage to roughly 42/52/62 percent', () => {
+  it('touch keeps coverage at roughly 55/80/100 percent', () => {
     const rand = mulberry32(13);
     const bands = [
-      { distance: 50, chance: 0.42 },
-      { distance: 150, chance: 0.52 },
-      { distance: 400, chance: 0.62 },
+      { distance: 50, chance: 0.55 },
+      { distance: 150, chance: 0.8 },
+      { distance: 400, chance: 1 },
     ];
     for (const band of bands) {
       let obstacles = 0;
@@ -156,17 +179,19 @@ describe('obstacle density distributions', () => {
     }
   });
 
-  it('touch late game uses two lanes about 10% of the time', () => {
-    const rand = mulberry32(17);
-    let obstacleSegments = 0;
-    let doubleLaneSegments = 0;
-    for (let i = 0; i < 60_000; i++) {
-      const decision = resolveObstacleSpawn(400, true, rand);
-      if (!decision.isObstacleSegment) continue;
-      obstacleSegments++;
-      if (decision.laneCount === 2) doubleLaneSegments++;
+  it('uses two lanes on about seven obstacle rows in ten', () => {
+    for (const touch of [false, true]) {
+      const rand = mulberry32(touch ? 17 : 19);
+      let obstacleSegments = 0;
+      let doubleLaneSegments = 0;
+      for (let i = 0; i < 60_000; i++) {
+        const decision = resolveObstacleSpawn(400, touch, rand);
+        if (!decision.isObstacleSegment) continue;
+        obstacleSegments++;
+        if (decision.laneCount === 2) doubleLaneSegments++;
+      }
+      expect(doubleLaneSegments / obstacleSegments).toBeCloseTo(0.7, 1);
     }
-    expect(doubleLaneSegments / obstacleSegments).toBeCloseTo(0.1, 1);
   });
 });
 

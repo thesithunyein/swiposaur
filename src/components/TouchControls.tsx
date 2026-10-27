@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { InputState } from '../game/types.ts';
 import { isTouchEnvironment } from '../game/settings.ts';
 import { Hand, ArrowUp, ArrowLeft, ArrowRight, ArrowUpLeft, ArrowUpRight, Crosshair, Zap } from 'lucide-react';
+import { t, useLanguage } from '../game/i18n.ts';
 
 interface TouchControlsProps {
   input: InputState;
@@ -30,6 +31,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   showLaneButtonsSetting = 'auto',
   onScreenControlsSetting = 'auto',
 }) => {
+  useLanguage();
   const [isSlapPressed, setIsSlapPressed] = useState<boolean>(false);
   const [isJumpPressed, setIsJumpPressed] = useState<boolean>(false);
   const [isLeftPressed, setIsLeftPressed] = useState<boolean>(false);
@@ -181,7 +183,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }}
                 onPointerUp={() => setIsJumpLeftPressed(false)}
                 onPointerCancel={() => setIsJumpLeftPressed(false)}
-                aria-label="Jump left into left lane"
+                aria-label={t('Jump left into left lane')}
                 className={`w-11 h-10 sm:w-12 sm:h-11 rounded-xl font-ui font-bold text-xs flex flex-col items-center justify-center border-2 border-black/80 transition-all cursor-pointer ${
                   isJumpLeftPressed
                     ? 'bg-[#059669] text-white translate-y-0.5 shadow-none'
@@ -189,7 +191,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }`}
               >
                 <ArrowUpLeft className="w-4 h-4 stroke-[3]" />
-                <span className="text-[7px] leading-none uppercase font-bold mt-0.5">Jmp L</span>
+                <span className="text-[7px] leading-none uppercase font-bold mt-0.5">{t('Jump L')}</span>
               </button>
 
               {/* Straight Vault Jump Button */}
@@ -204,7 +206,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }}
                 onPointerUp={() => setIsJumpPressed(false)}
                 onPointerCancel={() => setIsJumpPressed(false)}
-                aria-label="Vault jump"
+                aria-label={t('Vault jump')}
                 className={`w-12 h-10 sm:w-14 sm:h-11 rounded-xl font-ui font-bold text-xs flex flex-col items-center justify-center border-2 border-black/80 transition-all cursor-pointer ${
                   isJumpPressed
                     ? 'bg-[#059669] text-white translate-y-0.5 shadow-none'
@@ -212,7 +214,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }`}
               >
                 <ArrowUp className="w-4 h-4 stroke-[3]" />
-                <span className="text-[7px] leading-none uppercase font-bold mt-0.5">Vault</span>
+                <span className="text-[7px] leading-none uppercase font-bold mt-0.5">{t('Vault')}</span>
               </button>
 
               {/* Jump Right Button */}
@@ -231,7 +233,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }}
                 onPointerUp={() => setIsJumpRightPressed(false)}
                 onPointerCancel={() => setIsJumpRightPressed(false)}
-                aria-label="Jump right into right lane"
+                aria-label={t('Jump right into right lane')}
                 className={`w-11 h-10 sm:w-12 sm:h-11 rounded-xl font-ui font-bold text-xs flex flex-col items-center justify-center border-2 border-black/80 transition-all cursor-pointer ${
                   isJumpRightPressed
                     ? 'bg-[#059669] text-white translate-y-0.5 shadow-none'
@@ -257,7 +259,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }}
                 onPointerUp={() => setIsLeftPressed(false)}
                 onPointerCancel={() => setIsLeftPressed(false)}
-                aria-label="Dodge left lane"
+                aria-label={t('Dodge left lane')}
                 className={`w-18 h-12 sm:w-20 sm:h-13 rounded-xl font-ui font-bold text-xs flex items-center justify-center gap-1 border-2 border-black/80 transition-all cursor-pointer ${
                   isLeftPressed
                     ? 'bg-[#2563EB] text-white translate-y-0.5 shadow-none'
@@ -265,7 +267,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }`}
               >
                 <ArrowLeft className="w-4 h-4 stroke-[3]" />
-                <span className="font-pixel text-[9px] font-bold">LEFT</span>
+                <span className="font-pixel text-[9px] font-bold">{t('LEFT')}</span>
               </button>
 
               {/* Dodge Right */}
@@ -280,14 +282,14 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 }}
                 onPointerUp={() => setIsRightPressed(false)}
                 onPointerCancel={() => setIsRightPressed(false)}
-                aria-label="Dodge right lane"
+                aria-label={t('Dodge right lane')}
                 className={`w-18 h-12 sm:w-20 sm:h-13 rounded-xl font-ui font-bold text-xs flex items-center justify-center gap-1 border-2 border-black/80 transition-all cursor-pointer ${
                   isRightPressed
                     ? 'bg-[#2563EB] text-white translate-y-0.5 shadow-none'
                     : 'bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-slate-950 shadow-[0_3px_0_#0369A1]'
                 }`}
               >
-                <span className="font-pixel text-[9px] font-bold">RIGHT</span>
+                <span className="font-pixel text-[9px] font-bold">{t('RIGHT')}</span>
                 <ArrowRight className="w-4 h-4 stroke-[3]" />
               </button>
             </div>
@@ -335,7 +337,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             }}
             className="text-[8px] font-ui font-bold text-white/60 hover:text-white bg-black/60 px-2 py-0.5 rounded-md border border-white/10 tracking-wider uppercase"
           >
-            Switch to {controlMode === 'dpad' ? 'Joystick' : 'D-Pad'}
+            {controlMode === 'dpad' ? t('Switch to Joystick') : t('Switch to D-Pad')}
           </button>
         )}
 
@@ -351,12 +353,12 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <div className="w-[1px] h-3.5 bg-white/20 mx-1" />
             <div className="flex items-center gap-1">
               <kbd className="bg-slate-800 px-1.5 py-0.5 border border-slate-600 rounded text-[9px] text-[#10B981] font-mono">W / ↑</kbd>
-              <span className="text-[#10B981]">Vault</span>
+              <span className="text-[#10B981]">{t('Vault')}</span>
             </div>
             <div className="w-[1px] h-3.5 bg-white/20 mx-1" />
             <div className="flex items-center gap-1">
               <kbd className="bg-slate-800 px-1.5 py-0.5 border border-slate-600 rounded text-[9px] text-[#F43F5E] font-mono">SPACE</kbd>
-              <span className="text-[#F43F5E]">Whip!</span>
+              <span className="text-[#F43F5E]">{t('WHIP!')}</span>
             </div>
           </div>
         )}
@@ -391,11 +393,11 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             >
               <ArrowUp className="w-5 h-5 text-white stroke-[3] mb-0.5" />
               <span className="font-['Lilita_One'] text-[9px] sm:text-[10px] text-white tracking-wider">
-                JUMP
+                {t('JUMP')}
               </span>
             </button>
             <span className="text-[8px] font-['Fredoka'] font-bold text-[#10B981] uppercase tracking-wider">
-              Vault
+              {t('Vault')}
             </span>
           </div>
         )}
@@ -417,7 +419,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
               setIsSlapPressed(false);
             }}
             onPointerCancel={() => setIsSlapPressed(false)}
-            aria-label="Tail-whip slap button"
+            aria-label={t('Tail-whip slap button')}
             className={`w-18 h-18 sm:w-22 sm:h-22 rounded-2xl sm:rounded-3xl border-3 border-[#FFE082] flex flex-col items-center justify-center cursor-pointer touch-none select-none transition-all ${
               isIntroActive
                 ? 'bg-gradient-to-b from-[#FFA726] to-[#D97706] animate-pulse shadow-[0_0_28px_#F59E0B]'
@@ -431,11 +433,11 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <Hand className="w-6 h-6 sm:w-8 sm:h-8 text-white stroke-[2.5] -rotate-12 mb-0.5 filter drop-shadow" />
             <span className="font-['Lilita_One'] text-xs sm:text-sm font-bold text-white tracking-wider drop-shadow flex items-center gap-1">
               {isIntroActive && <Zap className="w-3.5 h-3.5 fill-white text-white" />}
-              <span>WHIP!</span>
+              <span>{t('WHIP!')}</span>
             </span>
           </button>
           <span className="text-[8px] font-['Fredoka'] font-bold text-white/90 uppercase tracking-wider">
-            {isIntroActive ? 'Hit Target' : 'Tail-Whip'}
+            {t(isIntroActive ? 'Hit Target' : 'Tail-Whip')}
           </span>
         </div>
       </div>

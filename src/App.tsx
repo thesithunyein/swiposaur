@@ -43,6 +43,7 @@ import { loadLevelProgress, LevelProgress, getMapForLevel } from './game/levels.
 import { GAME_MAPS, MapDefinition, getMapById } from './game/maps.ts';
 import { Achievement, loadAchievementStorage, ACHIEVEMENTS_LIST } from './game/achievements.ts';
 import { loadSettings, saveSettings, GameSettings } from './game/settings.ts';
+import { setLanguage, t, useLanguage } from './game/i18n.ts';
 import { trackGameEvent } from './game/analytics.ts';
 import type { ValidRun } from './game/leaderboardCore.ts';
 import {
@@ -58,7 +59,7 @@ import {
   submitOnlineRun,
   type LeaderboardMode,
 } from './game/leaderboard.ts';
-import { Play, Settings as SettingsIcon } from 'lucide-react';
+import { Play, Settings as SettingsIcon, ArrowRight } from 'lucide-react';
 
 /**
  * Leaderboard modes:
@@ -128,6 +129,12 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSkinsOpen, setIsSkinsOpen] = useState<boolean>(false);
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings());
+  // Subscribing re-renders the shell (pause overlay, tutorial, intro prompt) on switch.
+  useLanguage();
+
+  useEffect(() => {
+    setLanguage(settings.language);
+  }, [settings.language]);
   const [activeToastAchievement, setActiveToastAchievement] = useState<Achievement | null>(null);
 
   const [levelProgress, setLevelProgress] = useState<LevelProgress>(() => loadLevelProgress());
@@ -731,6 +738,9 @@ export default function App() {
   const handleToggleMute = () => {
     const newMuted = sounds.toggleMute();
     setIsMuted(newMuted);
+    if (!newMuted && gameState === 'PLAYING' && settings.musicEnabled) {
+      sounds.startArcadeBeat();
+    }
     setSettings((prev) => {
       const up = { ...prev, isMuted: newMuted };
       saveSettings(up);
@@ -1030,17 +1040,51 @@ export default function App() {
         <div className="absolute top-[24%] inset-x-0 z-30 flex flex-col items-center pointer-events-none px-4 animate-bounce">
           <div className="bg-[#19110B]/95 border-2 border-[#F97316] shadow-[0_8px_24px_rgba(0,0,0,0.6)] px-4 py-2.5 rounded-2xl flex flex-col items-center gap-1 backdrop-blur-sm text-center max-w-sm">
             <span className="font-['Lilita_One'] text-xs sm:text-sm text-[#FACC15] tracking-wider uppercase">
-              WHIP {engineRef.current?.introState.victim?.name || 'THE BOSS'}!
+              {t('WHIP {name}!', { name: engineRef.current?.introState.victim?.name || 'THE BOSS' })}
             </span>
             <span className="font-['Fredoka'] text-xs text-[#38BDF8] font-bold">
-              TAP WHIP OR PRESS SPACE FOR MEGA TAIL-WHIP!
+              {t('TAP WHIP OR PRESS SPACE FOR MEGA TAIL-WHIP!')}
             </span>
           </div>
         </div>
       )}
 
+      {/* First-run mobile lesson: one cued direction, every other input locked */}
+      {gameState === 'PLAYING' && stats.tutorialActive && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center px-5 bg-black/45 backdrop-blur-[2px] select-none">
+          <div className="w-full max-w-xs bg-gradient-to-b from-[#1B2333] via-[#141A26] to-[#0F131C] border-2 border-[#38BDF8] rounded-3xl p-5 text-center shadow-[0_18px_48px_rgba(0,0,0,0.75)] animate-fadeIn">
+            <span className="inline-block bg-[#38BDF8] text-black font-['Lilita_One'] text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full mb-3">
+              {t('First Run')}
+            </span>
+            <h3 className="font-['Lilita_One'] text-2xl text-white tracking-wide uppercase">
+              {t('Dodge Right')}
+            </h3>
+            <p className="text-[#CBD5E1] text-xs mt-1 mb-4">
+              {t('Tap the arrow to whip into the open lane.')}
+            </p>
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                sounds.playWhoosh();
+                engineRef.current?.changeLane(1);
+              }}
+              aria-label={t('Dodge right')}
+              className="mx-auto w-28 h-28 rounded-3xl bg-gradient-to-b from-[#38BDF8] to-[#0284C7] border-4 border-[#BAE6FD] text-white flex flex-col items-center justify-center gap-1 shadow-[0_8px_0_#075985] active:translate-y-1 active:shadow-[0_3px_0_#075985] animate-pulse"
+            >
+              <ArrowRight className="w-12 h-12 stroke-[3]" />
+              <span className="font-['Lilita_One'] text-sm tracking-wider">{t('RIGHT')}</span>
+            </button>
+            <p className="text-[#64748B] text-[10px] mt-4 uppercase tracking-wider">
+              {t('Other controls are paused for this lesson')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Touch Controls - On PC, left/right buttons are automatically hidden */}
-      {gameState === 'PLAYING' && engineRef.current && (
+      {gameState === 'PLAYING' && engineRef.current && !stats.tutorialActive && (
         <TouchControls
           input={engineRef.current.input}
           onSlap={handleSlap}
@@ -1067,10 +1111,10 @@ export default function App() {
         <div className="absolute inset-0 z-40 flex items-center justify-center p-4 bg-[#0F121C]/80 backdrop-blur-md select-none animate-fadeIn">
           <div className="bg-[#1B1D2A] border-3 border-black rounded-2xl p-6 text-center max-w-xs w-full shadow-[6px_6px_0px_#000000]">
             <span className="font-ui text-[9px] uppercase font-bold tracking-wider text-[#FACC15] block mb-1">
-              Sprint Paused
+              {t('Sprint Paused')}
             </span>
             <h3 className="font-pixel text-lg font-bold text-white mb-5 tracking-wide">
-              PAUSED
+              {t('PAUSED')}
             </h3>
             <div className="flex flex-col gap-2.5">
               <button
@@ -1078,7 +1122,7 @@ export default function App() {
                 className="w-full py-3 px-4 bg-[#10B981] hover:bg-[#34D399] text-black font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer transition-transform"
               >
                 <Play className="w-4 h-4 fill-black" />
-                <span>RESUME SPRINT</span>
+                <span>{t('RESUME SPRINT')}</span>
               </button>
 
               <button
@@ -1088,7 +1132,7 @@ export default function App() {
                 }}
                 className="w-full py-2.5 px-4 bg-[#FACC15] hover:bg-[#FDE047] text-black font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer transition-transform"
               >
-                <span>RESTART</span>
+                <span>{t('RESTART')}</span>
               </button>
 
               <button
@@ -1099,7 +1143,7 @@ export default function App() {
                 className="w-full py-2.5 px-4 bg-[#25283B] hover:bg-[#31354D] text-white font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 flex items-center justify-center gap-1.5 cursor-pointer transition-transform"
               >
                 <SettingsIcon className="w-3.5 h-3.5 text-[#A78BFA]" />
-                <span>SETTINGS</span>
+                <span>{t('Settings')}</span>
               </button>
 
               <button
@@ -1114,7 +1158,9 @@ export default function App() {
                 }`}
               >
                 <span>
-                  {unclaimedMissions > 0 ? `DAILY MISSIONS · ${unclaimedMissions} CLAIM` : 'DAILY MISSIONS'}
+                  {unclaimedMissions > 0
+                    ? `${t('DAILY MISSIONS')} · ${unclaimedMissions} ${t('CLAIM')}`
+                    : t('DAILY MISSIONS')}
                 </span>
               </button>
 
@@ -1125,7 +1171,7 @@ export default function App() {
                 }}
                 className="w-full py-2.5 px-4 bg-[#12131C] hover:bg-[#1B1D2A] text-[#94A3B8] hover:text-white font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black cursor-pointer transition-colors"
               >
-                <span>MAIN MENU</span>
+                <span>{t('MAIN MENU')}</span>
               </button>
             </div>
           </div>
@@ -1198,10 +1244,18 @@ export default function App() {
           onClose={() => setIsSettingsOpen(false)}
           settings={settings}
           onUpdateSettings={(newSettings) => {
+            if (newSettings.language) setLanguage(newSettings.language);
             setSettings(newSettings);
             saveSettings(newSettings);
             setIsMuted(newSettings.isMuted);
             engineRef.current?.setCharacterFocus(newSettings.characterFocus !== 'classic');
+            sounds.setSfxVolume(newSettings.soundEnabled ? 0.8 : 0);
+            sounds.setMusicVolume(newSettings.musicEnabled ? 0.55 : 0);
+            if (!newSettings.musicEnabled || newSettings.isMuted) {
+              sounds.stopArcadeBeat();
+            } else if (gameState === 'PLAYING') {
+              sounds.startArcadeBeat();
+            }
           }}
           onResetProgress={handleResetProgress}
           onPlayerNameSaved={refreshOnlineBoard}
