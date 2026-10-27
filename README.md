@@ -28,8 +28,9 @@ charge the Primal Roar and outrun the stampede.
 ## What it is
 
 Swiposaur is a one-thumb endless runner that runs entirely in the browser: no plugins,
-no server, no asset downloads. The whole world (dinosaur, critters, biomes, weather and
-soundtrack) is generated in code at runtime.
+no sprite sheets, no audio files and no server requirement. The whole world (dinosaur,
+critters, biomes, weather and soundtrack) is generated in code at runtime; the only
+binary files in the build are the app icons and favicons.
 
 | | |
 | --- | --- |
@@ -37,7 +38,7 @@ soundtrack) is generated in code at runtime.
 | **Live build** | <https://swiposaur.sithunyein.com/> |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
-| **Footprint** | ~2.4 MB production build, zero image/audio files |
+| **Footprint** | ~2.4 MB on disk · ~295 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
 
 ---
 
@@ -50,6 +51,19 @@ soundtrack) is generated in code at runtime.
 ---
 
 ## How it works
+
+### Boot, then a fair first run
+
+Launch passes through a short loading gate before the title menu: the logo, one progress
+bar and one rotating tip over a daylight sky with drifting clouds and pollen. The bar is
+gated by three real stages (typeface, arena, progress), so it parks at 96% until the work
+actually reports in rather than faking a finish. The first load in a browser session takes
+about 5 seconds; reloads in the same session take about 2, because the player has already
+seen the brand moment. An ease-out curve, not a linear tick, drives the fill; a guard
+releases the screen if a stage stalls, and `prefers-reduced-motion` drops the animation.
+
+The run then opens gently: a 6-second clear runway, a first obstacle that can never be a
+blind death, and three hits' worth of stamina before the stampede can end it.
 
 ### The loop
 
@@ -82,17 +96,18 @@ flowchart LR
 
 ### Scoring and grades
 
-Score is `distance + coins + vaults + near-misses`, multiplied by the current roar tier.
-The grade stamp on the game-over card is derived from that run, not from the multiplier
-alone:
+Score mixes distance, coins, whips, vaults, near-misses and escaped chasers, all scaled by
+the current roar tier, so a clean 16× chain can out-score a much longer run. The grade is
+deliberately separate: it is earned on distance **and** whip chaining in the same run, so
+points cannot buy a better letter.
 
-| Grade | Title | Threshold |
+| Grade | Title | Threshold (in one run) |
 | :---: | --- | --- |
-| **S+** | Apex Primal Legend | 24,000 pts, or 1,100 m with a 12× combo |
-| **S** | Master Dino Drifter | 14,000 pts, or 800 m with an 8× combo |
-| **A** | Speedway Champion | 7,000 pts |
-| **B** | Rising Roarer | 3,000 pts |
-| **C** | Stampede Rookie | anything below |
+| **S+** | Apex Primal Legend | 2,000 m and a 15× roar |
+| **S** | Master Dino Drifter | 1,400 m and a 10× roar |
+| **A** | Speedway Champion | 800 m |
+| **B** | Rising Roarer | 350 m |
+| **C** | Stampede Rookie | under 350 m |
 
 ### Systems map
 
@@ -175,6 +190,10 @@ npm run typecheck
 npm test
 ```
 
+The suite covers the run rules, obstacle spacing, mission rotation and boosts, leaderboard
+validation, storage and API behaviour, and the copy the UI renders. It runs headless — no
+browser, no network and no saved state required.
+
 The optional Express/leaderboard server is not needed to play. To run the full-stack dev
 server (API + Vite middleware) instead:
 
@@ -221,15 +240,18 @@ ever creates one record.
 - Custom Three.js renderer: voxel dinosaur built from primitives, 6 skins, 6 biomes,
   dynamic shadows, weather and camera shake.
 - Procedural Web Audio soundtrack and SFX, with no audio files and no sample licensing.
-- Persistence: high score, coins, skins, levels, achievements, daily rewards and missions
-  are stored locally (`localStorage`).
+- A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
+  pollen, eased over 5 seconds on the first load and 2 seconds on reloads.
+- Persistence: high score, coins, skins, levels, achievements, daily rewards, missions and
+  banked stamina are stored locally (`localStorage`).
 - Five daily missions, drawn from a rotating twelve-mission pool and reset at 00:00
   Myanmar time (UTC+06:30). Each one covers a different skill, pays 80-150 coins and
   banks **+20 stamina on the next run** when claimed.
 - Login eggs grow on consecutive days and step back a single stage after a missed day
   instead of resetting the streak.
-- The results card names the one thing that was close (next grade, next Roar tier or the
-  daily mission) and offers a **+20 stamina retry** once every 3.5 hours.
+- The results card names the one thing that was close — the next grade in metres, the next
+  Roar tier, or the daily mission — instead of a generic "good job", and offers a **+20
+  stamina retry** once every 3.5 hours.
 - Mobile-first layout: safe-area insets, 360×640 minimum viewport, large touch targets.
 - Touch input uses a gentler obstacle curve than desktop (42/52/62% coverage instead of
   55/65/75%) so swipes get more reaction room.
@@ -272,6 +294,9 @@ ever creates one record.
 - External font requests to `fonts.googleapis.com`; if the network blocks them the game
   falls back to system sans-serif.
 - Very old low-end Android devices with weak GPUs may drop below 30 FPS at 2× pixel ratio.
+- The app icons ship at full export size (~1.2 MB of the 2.4 MB build), which is most of
+  the bytes a first-time visitor downloads; they are cached afterwards. The playable code
+  is ~280 KB gzipped.
 
 ---
 
@@ -282,10 +307,16 @@ index.html                      page shell, fonts, meta tags
 src/main.tsx                    React entry
 src/App.tsx                     screen state, persistence, HUD wiring
 src/components/                 Start screen, HUD, rating stamp, modals
+src/components/BootScreen.tsx   loading gate shown once before the title menu
+src/game/useBootSequence.ts     staged boot progress, 5 s first load / 2 s reloads
 src/game/GameEngine.ts          run loop, collisions, whip, stamina, chase, scoring
 src/game/ThreeGameRenderer.ts   scene, camera, track and world rendering
 src/game/DinoMeshBuilder.ts     voxel dinosaur construction
 src/game/SoundEngine.ts         Web Audio synthesis
+src/game/grades.ts              grade tiers shared by the results card, missions and coach
+src/game/dailyMissions.ts       deterministic five-a-day missions on Myanmar time
+src/game/runBoosts.ts           banked stamina and the retry-boost cooldown
+src/game/coach.ts               the single actionable line on the results card
 src/game/obstacleDensity.ts     desktop vs touch obstacle curve
 src/game/leaderboard.ts         local Hall of Fame storage and online client
 src/game/leaderboardCore.ts     shared validation and ranking rules
@@ -295,6 +326,7 @@ api/leaderboard.ts              optional serverless endpoint (disabled without a
 server.ts                       optional Express dev server with the same endpoints
 tests/                          Vitest coverage for rules, storage, API and UI copy
 docs/brand/                     README logo and seal artwork
+docs/screenshots/               screenshots used by this README
 ```
 
 ---
