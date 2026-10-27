@@ -137,6 +137,13 @@ export class GameEngine {
   /** High score as it stood when the current run began, captured before saving. */
   private previousHighScore: number = 0;
   public paceMultiplier: number = 1.0;
+
+  /**
+   * Extra stamina for the run that is about to start, banked by a daily mission
+   * reward or the "retry with +20 stamina" button. The engine consumes it on
+   * start, so one boost can never leak into a second run.
+   */
+  public staminaBonus: number = 0;
   private hitFreezeMs: number = 0;
   private passiveRunTimer: number = 0;
   /** Lane kept open by the previous obstacle segment, for a reachable corridor. */
@@ -309,8 +316,7 @@ export class GameEngine {
     this.stats.distanceRun = 0;
     this.stats.comboStreak = 0;
     this.stats.maxCombo = 0;
-    this.stats.stamina = 100;
-    this.stats.maxStamina = 100;
+    this.applyStaminaBonus();
     this.stats.chaserOnScreen = false;
     this.stats.chaserAlertTimer = 0;
     this.stats.mobDistance = 180;
@@ -509,9 +515,19 @@ export class GameEngine {
     this.stats.score += 500;
     this.stats.slapsCount += 1;
     this.stats.comboStreak = 1;
-    this.stats.stamina = 100;
+    this.stats.stamina = this.stats.maxStamina;
     this.stats.introPhase = 'SLAP_IMPACT';
     if (this.onStatsUpdate) this.onStatsUpdate(this.stats, this.state);
+  }
+
+  /** Applies any stamina banked for this run; the plain run starts at 100. */
+  private applyStaminaBonus(): void {
+    const bonus = Math.max(0, Math.min(40, Math.floor(this.staminaBonus) || 0));
+    const max = 100 + bonus;
+    this.stats.maxStamina = max;
+    this.stats.stamina = max;
+    this.player.stamina = max;
+    this.staminaBonus = 0;
   }
 
   private initPlayer(): void {
@@ -1072,7 +1088,7 @@ export class GameEngine {
         if (pu.type === 'soda') {
           // Espresso Turbo Fuel
           this.addChaos(35);
-          p.stamina = Math.min(100, p.stamina + 45);
+          p.stamina = Math.min(this.stats.maxStamina, p.stamina + 45);
           this.stats.stamina = Math.round(p.stamina);
           this.addFloatingText(p.x, p.y + 20, 'POWER BOOST!', '#F59E0B', 22);
           this.spawnParticleExplosion(pu.x, pu.y, '#F59E0B', 14, 'star');
@@ -1328,7 +1344,7 @@ export class GameEngine {
       }
 
       // REPLENISH STAMINA / HEALTH:
-      p.stamina = Math.min(100, p.stamina + 35);
+      p.stamina = Math.min(this.stats.maxStamina, p.stamina + 35);
       this.stats.stamina = Math.round(p.stamina);
       sounds.playStaminaRefill();
       this.addFloatingText(b.x, b.y + 70, '+35 STAMINA!', '#10B981', 20);

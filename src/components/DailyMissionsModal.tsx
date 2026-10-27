@@ -1,32 +1,41 @@
 import React, { useState } from 'react';
 import {
   DailyMission,
-  loadDailyMissions,
   claimDailyMission,
-  getNextUtcResetIn,
+  formatMissionProgress,
+  getNextResetLabel,
+  loadDailyMissions,
+  MISSIONS_PER_DAY,
 } from '../game/dailyMissions.ts';
 import { sounds } from '../game/SoundEngine.ts';
-import { Target, Coins, Check, X, Footprints, Flame, Clock, Zap, Gift } from 'lucide-react';
+import { Target, Coins, Check, X, Footprints, Flame, Clock, Zap, BatteryCharging } from 'lucide-react';
 import { DinoVectorIcon, Missions3DIcon } from './GameIcons.tsx';
 
 interface DailyMissionsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRewardClaimed: (coinsAdded: number) => void;
+  onRewardClaimed: (coinsAdded: number, staminaAdded: number) => void;
 }
 
+/**
+ * Five rotating missions per day, reset at midnight Myanmar time.
+ *
+ * Every mission can be claimed on its own, so finishing the hard one does not
+ * wait on the easy one, and the five objectives cover different play styles.
+ */
 export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
   isOpen,
   onClose,
   onRewardClaimed,
 }) => {
   const [missions, setMissions] = useState<DailyMission[]>(() => loadDailyMissions());
-  const [resetCountdown, setResetCountdown] = useState<string>(() => getNextUtcResetIn());
+  const [resetCountdown, setResetCountdown] = useState<string>(() => getNextResetLabel());
 
   React.useEffect(() => {
     if (!isOpen) return;
-    setResetCountdown(getNextUtcResetIn());
-    const timer = window.setInterval(() => setResetCountdown(getNextUtcResetIn()), 30000);
+    setMissions(loadDailyMissions());
+    setResetCountdown(getNextResetLabel());
+    const timer = window.setInterval(() => setResetCountdown(getNextResetLabel()), 30000);
     return () => window.clearInterval(timer);
   }, [isOpen]);
 
@@ -38,11 +47,12 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
     const result = claimDailyMission(missionId);
     if (result.success) {
       setMissions([...result.missions]);
-      onRewardClaimed(result.rewardCoins);
+      onRewardClaimed(result.rewardCoins, result.bonusStamina);
     }
   };
 
-  const completedCount = missions.filter((m) => m.completed).length;
+  const completedCount = missions.filter((mission) => mission.completed).length;
+  const claimedCount = missions.filter((mission) => mission.claimed).length;
 
   const renderIcon = (type: DailyMission['iconType']) => {
     switch (type) {
@@ -76,11 +86,11 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
                   DAILY MISSIONS
                 </h2>
                 <span className="text-xs font-['Lilita_One'] text-[#FED7AA]">
-                  ({completedCount}/{missions.length})
+                  ({completedCount}/{MISSIONS_PER_DAY})
                 </span>
               </div>
               <span className="text-xs text-[#FED7AA] font-medium block">
-                Complete daily runs to earn free coin bounties
+                Five bounties a day, resetting at midnight
               </span>
             </div>
           </div>
@@ -98,72 +108,72 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
           </button>
         </div>
 
-        {/* Clean Missions List */}
+        {/* Mission list */}
         <div className="p-4 sm:p-5 overflow-y-auto space-y-2.5">
-          {missions.map((m) => {
-            const percent = Math.min(100, Math.round((m.current / m.target) * 100));
+          {missions.map((mission) => {
+            const percent = Math.min(100, Math.round((mission.current / mission.target) * 100));
 
             return (
               <div
-                key={m.id}
+                key={mission.id}
                 className={`p-3.5 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all ${
-                  m.completed && !m.claimed
+                  mission.completed && !mission.claimed
                     ? 'bg-gradient-to-r from-[#1E2B1E] to-[#142015] border-[#10B981] ring-1 ring-[#10B981]/50 shadow-sm'
-                    : m.claimed
+                    : mission.claimed
                     ? 'bg-[#150E09]/70 border-white/10 opacity-70'
                     : 'bg-[#1D140D] border-white/15'
                 }`}
               >
-                {/* Left: Icon */}
                 <div className="w-10 h-10 bg-[#2D1B0F] border border-white/20 rounded-xl flex items-center justify-center shrink-0 shadow-inner">
-                  {renderIcon(m.iconType)}
+                  {renderIcon(mission.iconType)}
                 </div>
 
-                {/* Center: Mission info & progress */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide">
-                      {m.title}
+                    <h3 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide truncate">
+                      {mission.title}
                     </h3>
-                    <div className="flex items-center gap-1 font-['Lilita_One'] text-xs text-[#FACC15] shrink-0">
-                      <Coins className="w-3.5 h-3.5 fill-[#FACC15]" />
-                      <span>+{m.rewardCoins}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="flex items-center gap-0.5 font-['Lilita_One'] text-[11px] text-[#FACC15]">
+                        <Coins className="w-3 h-3 fill-[#FACC15]" />+{mission.rewardCoins}
+                      </span>
+                      <span className="flex items-center gap-0.5 font-['Lilita_One'] text-[11px] text-[#34D399]">
+                        <BatteryCharging className="w-3 h-3" />+{mission.bonusStamina}
+                      </span>
                     </div>
                   </div>
 
                   <p className="text-[11px] sm:text-xs text-[#FED7AA]/90 font-medium leading-snug mb-1.5">
-                    {m.description}
+                    {mission.description}
                   </p>
 
-                  {/* Clean Progress Line */}
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          m.completed
+                          mission.completed
                             ? 'bg-gradient-to-r from-[#10B981] to-[#34D399]'
                             : 'bg-gradient-to-r from-[#FFA726] to-[#FB8C00]'
                         }`}
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <span className="font-['Lilita_One'] text-xs text-white shrink-0">
-                      {m.current}/{m.target}
+                    <span className="font-['Lilita_One'] text-[11px] text-white shrink-0 tabular-nums">
+                      {formatMissionProgress(mission)}
                     </span>
                   </div>
                 </div>
 
-                {/* Right: Action Button */}
                 <div className="shrink-0 pl-1">
-                  {m.claimed ? (
+                  {mission.claimed ? (
                     <div className="flex items-center gap-1 font-['Lilita_One'] text-[11px] text-[#10B981] bg-[#10B981]/15 px-2.5 py-1 rounded-xl border border-[#10B981]/40">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
                       <span>DONE</span>
                     </div>
-                  ) : m.completed ? (
+                  ) : mission.completed ? (
                     <button
                       type="button"
-                      onClick={() => handleClaim(m.id)}
+                      onClick={() => handleClaim(mission.id)}
                       className="px-3.5 py-1.5 bg-gradient-to-b from-[#10B981] to-[#047857] hover:from-[#34D399] hover:to-[#059669] text-white border border-[#A7F3D0] shadow-sm active:scale-95 rounded-xl font-['Lilita_One'] text-xs flex items-center gap-1 cursor-pointer transition-all animate-pulse"
                     >
                       <span>CLAIM</span>
@@ -183,13 +193,11 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
         <div className="bg-[#140D08] border-t-2 border-[#F97316]/40 px-5 py-3 flex items-center justify-between text-xs text-[#FED7AA] font-medium shrink-0">
           <span className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-[#38BDF8]" />
-            Resets Daily at Midnight UTC
+            Resets at midnight (Myanmar)
           </span>
-          {resetCountdown && (
-            <span className="text-[#38BDF8] font-['Lilita_One'] text-xs tracking-wider">
-              {resetCountdown} remaining
-            </span>
-          )}
+          <span className="text-[#38BDF8] font-['Lilita_One'] text-xs tracking-wider">
+            {claimedCount}/{MISSIONS_PER_DAY} claimed · {resetCountdown} left
+          </span>
         </div>
       </div>
     </div>

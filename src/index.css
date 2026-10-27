@@ -11,3 +11,109 @@
   scrollbar-width: none;
 }
 
+/* ---------------------------------------------------------------- *
+ * Boot / loading screen
+ * ---------------------------------------------------------------- */
+
+@keyframes boot-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.boot-rise {
+  animation: boot-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Slow parallax clouds: one long translate, GPU-only. */
+@keyframes boot-cloud-drift {
+  from {
+    transform: translate3d(-32vw, 0, 0);
+  }
+  to {
+    transform: translate3d(118vw, 0, 0);
+  }
+}
+
+.boot-cloud {
+  animation-name: boot-cloud-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Gentle vertical breathing on top of the drift, so clouds are not rigid. */
+@keyframes boot-cloud-bob {
+  0%,
+  100% {
+    transform: translateY(-3px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.boot-cloud-bob {
+  animation-name: boot-cloud-bob;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Pollen specks rising with a slight sideways drift. */
+@keyframes boot-mote-float {
+  0% {
+    transform: translate3d(0, 12vh, 0) scale(0.7);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate3d(var(--boot-drift, 12px), -96vh, 0) scale(1.15);
+    opacity: 0;
+  }
+}
+
+.boot-mote {
+  opacity: 0;
+  animation-name: boot-mote-float;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.boot-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-shell {
+  transition: opacity 480ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-rise {
+    animation: none;
+  }
+  .boot-cloud {
+    display: none;
+  }
+  .boot-cloud-bob {
+    animation: none;
+  }
+  .boot-mote {
+    animation: none;
+  }
+  .boot-shell {
+    transition: opacity 200ms linear;
+  }
+}

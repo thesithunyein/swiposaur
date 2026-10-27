@@ -2,8 +2,8 @@ import React from 'react';
 import { GameStats } from '../game/types.ts';
 import { sounds } from '../game/SoundEngine.ts';
 import { getMapById } from '../game/maps.ts';
-import { Volume2, VolumeX, Pause, Play, Coins, Flame, Zap, AlertTriangle } from 'lucide-react';
-import { DinoVectorIcon, DinoMeatIcon } from './GameIcons.tsx';
+import { Volume2, VolumeX, Pause, Play, Coins, Flame, Zap, AlertTriangle, Heart } from 'lucide-react';
+import { DinoVectorIcon } from './GameIcons.tsx';
 
 interface HUDProps {
   stats: GameStats;
@@ -23,7 +23,12 @@ export const HUD: React.FC<HUDProps> = ({
   hurtFlash = false,
 }) => {
   const chaosPercent = Math.min(100, Math.max(0, stats.chaosLevel));
-  const stamina = stats.stamina ?? 100;
+  // A boosted run starts above the usual 100, so the bar reads against the
+  // run's own maximum instead of overflowing.
+  const maxStamina = Math.max(1, stats.maxStamina ?? 100);
+  const staminaRaw = Math.max(0, stats.stamina ?? 100);
+  const stamina = Math.min(100, Math.round((staminaRaw / maxStamina) * 100));
+  const staminaBonus = Math.max(0, maxStamina - 100);
   const isLowStamina = stamina <= 25;
 
   return (
@@ -81,11 +86,23 @@ export const HUD: React.FC<HUDProps> = ({
           <div className="hidden sm:flex items-center gap-3.5 bg-[#19110B]/90 backdrop-blur-md border-2 border-white/20 shadow-[0_6px_20px_rgba(0,0,0,0.5)] rounded-2xl px-4 py-2 pointer-events-auto">
             {/* Stamina Meter */}
             <div className="flex items-center gap-2">
-              <DinoMeatIcon className="w-4 h-4 shrink-0" isExhausted={isLowStamina} />
+              <Heart
+                className={`w-4 h-4 shrink-0 ${
+                  isLowStamina ? 'text-[#EF4444] animate-pulse' : 'text-[#34D399]'
+                }`}
+                fill="currentColor"
+                strokeWidth={1.5}
+                aria-hidden
+              />
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between text-[9px] font-bold text-[#E2E8F0]">
                   <span>DINO ENERGY</span>
-                  <span className="text-white">{Math.round(stamina)}%</span>
+                  <span className="text-white">
+                    {stamina}%
+                    {staminaBonus > 0 && (
+                      <span className="text-[#34D399] font-bold"> +{staminaBonus}</span>
+                    )}
+                  </span>
                 </div>
                 <div className="w-24 bg-black/60 h-3 rounded-full overflow-hidden border border-white/15 p-0.5 shadow-inner">
                   <div
@@ -183,7 +200,14 @@ export const HUD: React.FC<HUDProps> = ({
         <div className="sm:hidden flex items-center gap-2 bg-[#19110B]/90 backdrop-blur-md border-2 border-white/20 shadow-md rounded-2xl px-3 py-2 pointer-events-auto">
           {/* Energy */}
           <div className="flex-1 flex items-center gap-1.5">
-            <DinoMeatIcon className="w-3.5 h-3.5 shrink-0" isExhausted={isLowStamina} />
+            <Heart
+              className={`w-4 h-4 shrink-0 ${
+                isLowStamina ? 'text-[#EF4444] animate-pulse' : 'text-[#34D399]'
+              }`}
+              fill="currentColor"
+              strokeWidth={1.5}
+              aria-hidden
+            />
             <div className="w-full bg-black/60 h-2.5 rounded-full overflow-hidden border border-white/10 p-0.5">
               <div
                 className={`h-full rounded-full transition-all duration-150 ${

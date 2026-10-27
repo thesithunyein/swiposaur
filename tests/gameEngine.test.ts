@@ -298,3 +298,20 @@ describe('personal best banner', () => {
     expect(engine.stats.isNewPersonalBest).toBe(true);
   });
 });
+
+describe('stamina boost', () => {
+  it('applies the banked boost to one run only', () => {
+    const engine = makeEngine();
+    engine.staminaBonus = 20;
+    engine.startGame();
+
+    expect(engine.stats.maxStamina).toBe(120);
+    expect(engine.stats.stamina).toBe(120);
+    expect(engine.player.stamina).toBe(120);
+
+    // The next run starts plain unless another boost is banked.
+    engine.startGame();
+    expect(engine.stats.maxStamina).toBe(100);
+    expect(engine.stats.stamina).toBe(100);
+  });
+});

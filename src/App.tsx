@@ -22,8 +22,23 @@ import { SettingsModal } from './components/SettingsModal.tsx';
 import { SkinsModal } from './components/SkinsModal.tsx';
 import { DailyRewardsModal } from './components/DailyRewardsModal.tsx';
 import { DailyMissionsModal } from './components/DailyMissionsModal.tsx';
+import { BootScreen } from './components/BootScreen.tsx';
+import { useBootSequence } from './game/useBootSequence.ts';
 import { isDailyRewardAvailable } from './game/dailyRewards.ts';
-import { getUnclaimedMissionsCount, updateMissionsOnRun } from './game/dailyMissions.ts';
+import {
+  getMissionSummaries,
+  getUnclaimedMissionsCount,
+  pickClosestMission,
+  updateMissionsOnRun,
+  type MissionSummary,
+} from './game/dailyMissions.ts';
+import {
+  consumeStaminaBoost,
+  grantStaminaBoost,
+  retryBoostRemainingMs,
+  useRetryBoost as claimRetryBoost,
+} from './game/runBoosts.ts';
+import { formatCountdown } from './game/clock.ts';
 import { loadLevelProgress, LevelProgress, getMapForLevel } from './game/levels.ts';
 import { GAME_MAPS, MapDefinition, getMapById } from './game/maps.ts';
 import { Achievement, loadAchievementStorage, ACHIEVEMENTS_LIST } from './game/achievements.ts';
@@ -58,6 +73,8 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<GameEngine | null>(null);
 
+  const boot = useBootSequence();
+
   const [gameState, setGameState] = useState<GameState>('MENU');
   const [selectedSkin, setSelectedSkin] = useState<CharacterSkin>(() => {
     try {
@@ -79,6 +96,30 @@ export default function App() {
   const [isDailyMissionsOpen, setIsDailyMissionsOpen] = useState<boolean>(false);
   const [isDailyAvailable, setIsDailyAvailable] = useState<boolean>(() => isDailyRewardAvailable());
   const [unclaimedMissions, setUnclaimedMissions] = useState<number>(() => getUnclaimedMissionsCount());
+  const [dailyMissions, setDailyMissions] = useState<MissionSummary[]>(() => getMissionSummaries());
+  const [retryBoostMs, setRetryBoostMs] = useState<number>(() => retryBoostRemainingMs());
+
+  // The menu can sit open across midnight, so refresh the daily state while it
+  // is visible instead of trusting whatever was loaded at mount.
+  useEffect(() => {
+    if (gameState !== 'MENU') return;
+    const refresh = () => {
+      setDailyMissions(getMissionSummaries());
+      setUnclaimedMissions(getUnclaimedMissionsCount());
+      setIsDailyAvailable(isDailyRewardAvailable());
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60_000);
+    return () => window.clearInterval(timer);
+  }, [gameState]);
+
+  // Keep the retry-boost cooldown label honest while the results card is open.
+  useEffect(() => {
+    if (gameState !== 'GAMEOVER') return;
+    setRetryBoostMs(retryBoostRemainingMs());
+    const timer = window.setInterval(() => setRetryBoostMs(retryBoostRemainingMs()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [gameState]);
 
   // Levels, Maps, and Achievements State
   const [isLevelSelectOpen, setIsLevelSelectOpen] = useState<boolean>(false);
@@ -187,21 +228,57 @@ export default function App() {
     loadPlayerName();
   }, []);
 
+  // Boot stage 1: hold the loading screen until the display faces are usable, so
+  // the menu never flashes a fallback face first.
+  useEffect(() => {
+    let cancelled = false;
+    const finish = () => {
+      if (!cancelled) boot.complete('typeface');
+    };
+    const guard = window.setTimeout(finish, 3000);
+
+    (async () => {
+      try {
+        if (typeof document !== 'undefined' && document.fonts) {
+          await Promise.all([
+            document.fonts.load('400 16px "Lilita One"'),
+            document.fonts.load('400 16px "Fredoka"'),
+          ]);
+          await document.fonts.ready;
+        }
+      } catch {}
+      finish();
+    })();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(guard);
+    };
+  }, [boot.complete]);
+
   // Probe the optional endpoint once. Only a durable, healthy response turns the
   // board into an online board; anything else stays a local Hall of Fame.
   useEffect(() => {
-    if (!isLeaderboardApiConfigured()) return;
+    if (!isLeaderboardApiConfigured()) {
+      boot.complete('progress');
+      return;
+    }
     let cancelled = false;
-    fetchOnlineBoard().then((result) => {
-      if (cancelled || !result.online) return;
-      leaderboardModeRef.current = 'online';
-      setLeaderboardMode('online');
-      setLeaderboardEntries(markPlayerEntry(result.entries, getPlayerId()));
-    });
+    fetchOnlineBoard()
+      .then((result) => {
+        if (cancelled || !result.online) return;
+        leaderboardModeRef.current = 'online';
+        setLeaderboardMode('online');
+        setLeaderboardEntries(markPlayerEntry(result.entries, getPlayerId()));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) boot.complete('progress');
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [boot.complete]);
 
   /** Reloads the global board after a rename, so the name shows immediately. */
   const refreshOnlineBoard = useCallback(() => {
@@ -322,18 +399,23 @@ export default function App() {
           combo: newStats.maxCombo,
         });
 
-        const completedBounties = updateMissionsOnRun(newStats);
-        if (completedBounties.length > 0) {
+        const { completed: completedMissions } = updateMissionsOnRun(newStats);
+        setDailyMissions(getMissionSummaries());
+        if (completedMissions.length > 0) {
+          const first = completedMissions[0];
           setUnclaimedMissions(getUnclaimedMissionsCount());
           sounds.playAchievement();
           setActiveToastAchievement({
-            id: completedBounties[0].id,
-            title: `Bounty: ${completedBounties[0].title}`,
-            description: `Earned +${completedBounties[0].rewardCoins} Coins!`,
+            id: first.id,
+            title: `Mission: ${first.title}`,
+            description:
+              completedMissions.length > 1
+                ? `${completedMissions.length} missions ready — claim +${first.rewardCoins} Coins and more!`
+                : `Claim +${first.rewardCoins} Coins and +${first.bonusStamina} stamina!`,
             icon: 'target',
             category: 'slap',
             unlocked: true,
-            rewardCoins: completedBounties[0].rewardCoins,
+            rewardCoins: first.rewardCoins,
           });
         }
 
@@ -405,11 +487,19 @@ export default function App() {
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    // Boot stage 2: the arena is genuinely up once it has painted a frame.
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => boot.complete('arena'));
+    });
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame) cancelAnimationFrame(secondFrame);
       engine.destroy();
     };
-  }, [handleStatsUpdate, handleHurtFlash]);
+  }, [handleStatsUpdate, handleHurtFlash, boot.complete]);
 
   // Keep engine settings in sync with user preferences
   useEffect(() => {
@@ -546,6 +636,7 @@ export default function App() {
         engineRef.current.isLevelMode = false;
         engineRef.current.setMap(currentMap);
       }
+      engineRef.current.staminaBonus = consumeStaminaBoost();
       engineRef.current.startGame();
     }
   };
@@ -579,6 +670,7 @@ export default function App() {
       engineRef.current.paceMultiplier = selectedPace.multiplier;
       engineRef.current.setSkin(selectedSkin);
       engineRef.current.setLevel(levelNumber, true);
+      engineRef.current.staminaBonus = consumeStaminaBoost();
       engineRef.current.startGame();
     }
   };
@@ -607,8 +699,21 @@ export default function App() {
         engineRef.current.isLevelMode = false;
         engineRef.current.setMap(currentMap);
       }
+      engineRef.current.staminaBonus = consumeStaminaBoost();
       engineRef.current.restartGame();
     }
+  };
+
+  /**
+   * One-shot comeback boost. Claiming starts the cooldown before the run begins,
+   * so a double tap cannot hand out two free runs.
+   */
+  const handleRetryWithBoost = () => {
+    const result = claimRetryBoost();
+    setRetryBoostMs(result.remainingMs);
+    if (!result.granted) return;
+    sounds.playStart();
+    handleRestart();
   };
 
   const handleHome = () => {
@@ -618,6 +723,8 @@ export default function App() {
       engineRef.current.setMap(activeMap);
       setGameState('MENU');
       setLevelProgress(loadLevelProgress());
+      setDailyMissions(getMissionSummaries());
+      setUnclaimedMissions(getUnclaimedMissionsCount());
     }
   };
 
@@ -735,9 +842,11 @@ export default function App() {
     setIsDailyAvailable(isDailyRewardAvailable());
   };
 
-  const handleBountyClaimed = (coinsAdded: number) => {
+  const handleBountyClaimed = (coinsAdded: number, staminaAdded: number) => {
     handleCoinsClaimed(coinsAdded);
+    if (staminaAdded > 0) grantStaminaBoost(staminaAdded);
     setUnclaimedMissions(getUnclaimedMissionsCount());
+    setDailyMissions(getMissionSummaries());
   };
 
   // Smooth, responsive mobile runner touch & swipe gestures
@@ -996,6 +1105,22 @@ export default function App() {
               <button
                 onClick={() => {
                   sounds.playClick();
+                  setIsDailyMissionsOpen(true);
+                }}
+                className={`w-full py-2.5 px-4 font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-transform cursor-pointer flex items-center justify-center gap-1.5 ${
+                  unclaimedMissions > 0
+                    ? 'bg-[#10B981] hover:bg-[#34D399] text-black'
+                    : 'bg-[#25283B] hover:bg-[#31354D] text-white'
+                }`}
+              >
+                <span>
+                  {unclaimedMissions > 0 ? `DAILY MISSIONS · ${unclaimedMissions} CLAIM` : 'DAILY MISSIONS'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  sounds.playClick();
                   handleHome();
                 }}
                 className="w-full py-2.5 px-4 bg-[#12131C] hover:bg-[#1B1D2A] text-[#94A3B8] hover:text-white font-ui text-xs font-bold uppercase tracking-wider rounded-xl border-2 border-black cursor-pointer transition-colors"
@@ -1016,6 +1141,10 @@ export default function App() {
           onHome={handleHome}
           onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
           onRetryLeaderboard={handleRetryLeaderboard}
+          dailyMission={pickClosestMission(dailyMissions)}
+          retryBoostAvailable={retryBoostMs <= 0}
+          retryBoostLabel={formatCountdown(retryBoostMs)}
+          onRetryWithBoost={handleRetryWithBoost}
         />
       )}
 
@@ -1111,6 +1240,11 @@ export default function App() {
           onClose={() => setIsDailyMissionsOpen(false)}
           onRewardClaimed={handleBountyClaimed}
         />
+      )}
+
+      {/* Boot / loading gate: sits over the menu until the game is ready */}
+      {boot.visible && (
+        <BootScreen progress={boot.progress} label={boot.label} leaving={boot.leaving} />
       )}
 
     </div>

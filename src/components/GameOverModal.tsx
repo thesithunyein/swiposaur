@@ -1,8 +1,11 @@
 import React from 'react';
 import { GameStats } from '../game/types.ts';
 import { sounds } from '../game/SoundEngine.ts';
-import { RotateCcw, Home, Award } from 'lucide-react';
+import { RotateCcw, Home, Award, BatteryCharging } from 'lucide-react';
 import { LeaderboardAdvancedIcon } from './GameIcons.tsx';
+import { gradeFor } from '../game/grades.ts';
+import { buildCoachLine } from '../game/coach.ts';
+import type { MissionSummary } from '../game/dailyMissions.ts';
 
 interface GameOverModalProps {
   stats: GameStats;
@@ -11,6 +14,10 @@ interface GameOverModalProps {
   onHome: () => void;
   onOpenLeaderboard: () => void;
   onRetryLeaderboard?: () => void;
+  dailyMission?: MissionSummary | null;
+  retryBoostAvailable?: boolean;
+  retryBoostLabel?: string;
+  onRetryWithBoost?: () => void;
 }
 
 /**
@@ -278,6 +285,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onRestart,
   onHome,
   onRetryLeaderboard,
+  dailyMission = null,
+  retryBoostAvailable = false,
+  retryBoostLabel = '',
+  onRetryWithBoost,
 }) => {
   // The engine compares against the best captured before this run, so a tie with
   // the old record is not a new personal best.
@@ -318,7 +329,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
     // Grades are earned on survival distance plus whip chaining, not on raw
     // score: the Roar multiplier can inflate points 16x, distance cannot.
-    if (dist >= 2000 && combo >= 15) {
+    if (gradeFor(dist, combo).grade === 'S+') {
       return {
         grade: 'S+',
         title: 'APEX PRIMAL LEGEND',
@@ -331,7 +342,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         summary: 'Flawless reflexes and total street mastery!',
       };
     }
-    if (dist >= 1400 && combo >= 10) {
+    if (gradeFor(dist, combo).grade === 'S') {
       return {
         grade: 'S',
         title: 'MASTER DINO DRIFTER',
@@ -344,7 +355,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         summary: 'Incredible agility and ruthless tail attacks!',
       };
     }
-    if (dist >= 800) {
+    if (gradeFor(dist, combo).grade === 'A') {
       return {
         grade: 'A',
         title: 'SPEEDWAY CHAMPION',
@@ -357,7 +368,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         summary: 'Smooth obstacle evasion with sharp reflexes!',
       };
     }
-    if (dist >= 350) {
+    if (gradeFor(dist, combo).grade === 'B') {
       return {
         grade: 'B',
         title: 'RISING ROARER',
@@ -384,6 +395,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   };
 
   const rating = computeOverallRating();
+  const coachLine = buildCoachLine(stats, dailyMission);
 
   return (
     <div className="absolute inset-0 bg-black/65 backdrop-blur-md flex flex-col items-center overflow-y-auto z-50 pointer-events-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] select-none animate-fadeIn font-['Fredoka']">
@@ -439,6 +451,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <span className="text-[9px] text-white/50 text-right mt-0.5 max-w-[110px] truncate">{rating.summary}</span>
             </div>
           </div>
+
+          {/* Almost-there coaching: the one specific thing this run got close to */}
+          {coachLine && (
+            <p className="w-full text-center text-[11px] sm:text-xs font-['Lilita_One'] tracking-wide text-[#FEF08A] bg-[#F97316]/15 border border-[#F97316]/50 rounded-xl px-3 py-1.5 mb-3 leading-snug">
+              {coachLine}
+            </p>
+          )}
 
           {/* New Record Banner */}
           {isNewBest && (
@@ -530,6 +549,26 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <RotateCcw className="w-5 h-5 stroke-[2.5]" />
               <span>RUN AGAIN</span>
             </button>
+
+            {onRetryWithBoost && retryBoostAvailable && (
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playCoin();
+                  onRetryWithBoost();
+                }}
+                className="w-full py-2.5 px-4 bg-gradient-to-b from-[#10B981] to-[#047857] hover:from-[#34D399] hover:to-[#059669] text-white font-['Lilita_One'] text-sm tracking-wider uppercase rounded-2xl border-2 border-[#A7F3D0] shadow-[0_3px_0px_#064E3B] active:translate-y-0.5 cursor-pointer transition-all flex items-center justify-center gap-2"
+              >
+                <BatteryCharging className="w-4 h-4" />
+                <span>RETRY WITH +20 STAMINA</span>
+              </button>
+            )}
+
+            {onRetryWithBoost && !retryBoostAvailable && retryBoostLabel && (
+              <p className="text-center text-[10px] font-['Lilita_One'] tracking-wider uppercase text-[#FED7AA]/70">
+                Stamina boost back in {retryBoostLabel}
+              </p>
+            )}
 
             <button
               type="button"

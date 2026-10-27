@@ -223,6 +223,13 @@ ever creates one record.
 - Procedural Web Audio soundtrack and SFX, with no audio files and no sample licensing.
 - Persistence: high score, coins, skins, levels, achievements, daily rewards and missions
   are stored locally (`localStorage`).
+- Five daily missions, drawn from a rotating twelve-mission pool and reset at 00:00
+  Myanmar time (UTC+06:30). Each one covers a different skill, pays 80-150 coins and
+  banks **+20 stamina on the next run** when claimed.
+- Login eggs grow on consecutive days and step back a single stage after a missed day
+  instead of resetting the streak.
+- The results card names the one thing that was close (next grade, next Roar tier or the
+  daily mission) and offers a **+20 stamina retry** once every 3.5 hours.
 - Mobile-first layout: safe-area insets, 360×640 minimum viewport, large touch targets.
 - Touch input uses a gentler obstacle curve than desktop (42/52/62% coverage instead of
   55/65/75%) so swipes get more reaction room.
