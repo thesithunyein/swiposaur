@@ -2,8 +2,9 @@ name: CI
 
 # The suite is the only thing standing between a tuning tweak and a broken
 # build, and a jam submission gets judged on the deployed commit. Run the same
-# two checks locally and here: tsc for types, Vitest for the 148 gameplay,
-# leaderboard, i18n and boot tests.
+# checks locally and here: tsc for types, Vitest for the 148 gameplay,
+# leaderboard, i18n and boot tests, and a real production bundle so a bundling
+# failure is caught on push instead of at deploy time.
 on:
   push:
 
@@ -31,3 +32,6 @@ jobs:
 
       - name: Run the test suite
         run: npm test
+
+      - name: Build the production bundle
+        run: npm run build
