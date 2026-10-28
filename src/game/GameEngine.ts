@@ -67,6 +67,22 @@ const BURN_MS = 620;
 const STAMINA_PER_WHIP = 22;
 /** Frames between whips, so a crowd cannot be farmed frame by frame. */
 const SLAP_COOLDOWN_FRAMES = 18;
+/**
+ * A whip pressed while the previous swing is still on cooldown is remembered
+ * for this long. Without it a fast tap on a walker entering the strike window
+ * was silently swallowed, which read as "this bystander can't be whipped".
+ */
+const SLAP_BUFFER_FRAMES = 20;
+/**
+ * Forward/backward extent of the whip. The old 90-unit front edge was only
+ * ~0.19 s of travel late in a run, shorter than human reaction time, and a
+ * sidewalk walker could drift out of it between the cue and the tap.
+ */
+const SLAP_FRONT_WINDOW = 112;
+// Where the cue lights up. The strike itself reaches a little further back so
+// the final glowing frame, which is struck one frame later, still connects.
+const SLAP_BACK_WINDOW = -80;
+const SLAP_STRIKE_BACK_WINDOW = -104;
 /** Stamina lost per second before the ramp, once fatigue starts. */
 const STAMINA_DRAIN_BASE = 0.6;
 /** Extra drain per second of running, per second past the fatigue start. */
@@ -213,6 +229,8 @@ export class GameEngine {
   public staminaBonus: number = 0;
   private hitFreezeMs: number = 0;
   private passiveRunTimer: number = 0;
+  /** Frames a whip pressed during cooldown stays queued. */
+  private slapBufferFrames: number = 0;
   /** Lane kept open by the previous obstacle segment, for a reachable corridor. */
   private lastFreeLaneIndex: number | null = null;
   // Opening grace window (seconds) after the intro cinematic. While it runs the
@@ -402,6 +420,7 @@ export class GameEngine {
     this.stats.mobDistance = 180;
     this.stats.gameOverReason = undefined;
     this.passiveRunTimer = 0;
+    this.slapBufferFrames = 0;
     this.graceTimer = 0;
     this.boostJumpsCount = 0;
     this.nearMissesCount = 0;
@@ -956,7 +975,26 @@ export class GameEngine {
 
     if (this.input.slapRequested || this.input.keys.slap) {
       this.input.slapRequested = false;
-      this.executeSlap();
+      if (p.slapCooldown > 0) {
+        // Too early: queue the intent instead of dropping it on the floor.
+        this.slapBufferFrames = SLAP_BUFFER_FRAMES;
+      } else {
+        this.slapBufferFrames = 0;
+        this.executeSlap();
+      }
+    } else if (this.slapBufferFrames > 0) {
+      if (p.slapCooldown <= 0) {
+        // Only spend the queued swing on a real target; otherwise let it lapse.
+        if (this.findWhipTarget()) {
+          this.slapBufferFrames = 0;
+          this.executeSlap();
+        } else {
+          this.slapBufferFrames = 0;
+        }
+      } else {
+        this.slapBufferFrames -= dtFactor;
+        if (this.slapBufferFrames < 0) this.slapBufferFrames = 0;
+      }
     }
 
     // Progress active whip / slap animation
@@ -991,10 +1029,9 @@ export class GameEngine {
       }
 
       if (!b.slapped) {
-        const dy = b.y - p.y;
-        const dx = Math.abs(b.x - p.x);
-        b.inStrikeRange = dy >= -35 && dy <= 90 && dx <= SLAP_REACH;
-
+        // Same test the whip itself uses, so the glow never promises a hit the
+        // strike cannot deliver.
+        b.inStrikeRange = this.isWhipReachable(b);
       } else {
         b.inStrikeRange = false;
         if (b.wobble > 0) {
@@ -1537,6 +1574,36 @@ export class GameEngine {
   }
 
   /**
+   * True when a bystander sits inside the whip's reach: alongside the tail or
+   * a little ahead of the snout, within the arm-plus-tail radius.
+   * `inStrikeRange` and the strike itself both call this, so the cue is exact.
+   */
+  private isWhipReachable(b: Bystander, backWindow = SLAP_BACK_WINDOW): boolean {
+    if (b.slapped) return false;
+    const dx = b.x - this.player.x;
+    const dy = b.y - this.player.y;
+    if (dy < backWindow || dy > SLAP_FRONT_WINDOW) return false;
+    return Math.sqrt(dx * dx + dy * dy) <= SLAP_REACH;
+  }
+
+  /** Closest bystander the current whip would connect with, if any. */
+  private findWhipTarget(): Bystander | null {
+    let target: Bystander | null = null;
+    let bestDistance = Infinity;
+    for (const b of this.bystanders) {
+      if (!this.isWhipReachable(b, SLAP_STRIKE_BACK_WINDOW)) continue;
+      const dx = b.x - this.player.x;
+      const dy = b.y - this.player.y;
+      const distance = dx * dx + dy * dy;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        target = b;
+      }
+    }
+    return target;
+  }
+
+  /**
    * Execute the signature SLAP mechanic
    */
   private executeSlap(): void {
@@ -1549,23 +1616,9 @@ export class GameEngine {
     this.passiveRunTimer = 0;
 
     // Detect closest bystander in slap reach
-    let hitBystander: Bystander | null = null;
-    let minDistance = SLAP_REACH;
-
-    for (const b of this.bystanders) {
-      if (b.slapped) continue;
-
-      const dy = b.y - p.y;
-      // Valid slap window is alongside or slightly ahead of player
-      if (dy >= -35 && dy <= 90) {
-        const dx = b.x - p.x;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < minDistance) {
-          minDistance = dist;
-          hitBystander = b;
-          p.slapHand = dx < 0 ? 'left' : 'right';
-        }
-      }
+    const hitBystander = this.findWhipTarget();
+    if (hitBystander) {
+      p.slapHand = hitBystander.x < p.x ? 'left' : 'right';
     }
 
     if (hitBystander) {

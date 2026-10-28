@@ -166,5 +166,9 @@ export const COMIC_WORDS = ['TAIL-WHIP!', 'JUICY!', 'CRUNCH!', 'WHACK!', 'BONK!'
 export const ROAD_WIDTH = 280; // Fast 3-lane market road (-140 to 140)
 export const ROAD_LANES = [-90, 0, 90]; // 3 cleanly aligned lanes: Left (-90), Center (0), Right (90)
 export const SIDEWALK_EDGES = [-140, 140]; // Curb edge hazards
-export const SLAP_REACH = 190; // Reach across a lane so the whip lands from the centre lane too
+// The whip has to cross two lanes when the runner hugs one curb: a walker on
+// the far sidewalk can stand 253 units sideways (x = ±163 against lane ±90),
+// and at the front of the cue (dy = 112) that is ~277 away. 282 covers the
+// whole cue window from every lane, so no glowing walker is out of reach.
+export const SLAP_REACH = 282;
 export const MOB_SAFE_DISTANCE = 45; // Minimum distance before mob catches player

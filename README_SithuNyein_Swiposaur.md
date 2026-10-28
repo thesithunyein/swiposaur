@@ -149,7 +149,9 @@ flowchart TD
 
 ## 12. Special testing instructions
 
-- Test both a desktop browser and a phone; touch controls are swipe + a 72 px whip button.
+- Test both a desktop browser and a phone; touch controls are four buttons
+  (LEFT, RIGHT, JUMP, 80 px WHIP) plus swipes anywhere on screen: left/right to
+  change lane, up to jump, down to whip.
 - Touch devices intentionally spawn fewer obstacles (55/80/100% of rows by distance band)
   than desktop (70/90/100%). In both modes 70% of obstacle rows fill two lanes and 30% fill
   one, so a clear lane always exists. Compare the same distance on both if a run feels off.

@@ -869,7 +869,7 @@ export default function App() {
   const pointerStartTimeRef = useRef<number>(0);
   const totalSwipesInGestureRef = useRef<number>(0);
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
     if (gameState !== 'PLAYING') return;
     isPointerDownRef.current = true;
     pointerStartXRef.current = e.clientX;
@@ -878,7 +878,7 @@ export default function App() {
     totalSwipesInGestureRef.current = 0;
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
     if (!isPointerDownRef.current || !engineRef.current || gameState !== 'PLAYING') return;
 
     const deltaX = e.clientX - pointerStartXRef.current;
@@ -886,10 +886,12 @@ export default function App() {
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
 
-    const SWIPE_THRESHOLD = 26; // Crisp, comfortable gesture threshold for mobile fingers
+    // Short thresholds and a forgiving axis ratio: a fast thumb flick has to
+    // register as a whip before the target leaves the strike window.
+    const SWIPE_THRESHOLD = 22;
 
     // 1. Horizontal Swipe (Left / Right) - Switches smoothly between Left (0), Middle (1), and Right (2)
-    if (absX >= SWIPE_THRESHOLD && absX > absY * 0.70) {
+    if (absX >= SWIPE_THRESHOLD && absX > absY * 0.62) {
       if (deltaX < 0) {
         // Swiping Left: Moves right lane -> middle, or middle -> left
         engineRef.current.changeLane(-1);
@@ -908,7 +910,7 @@ export default function App() {
     }
 
     // 2. Vertical Swipe UP -> Vault Jump!
-    if (deltaY <= -30 && absY > absX * 0.75) {
+    if (deltaY <= -26 && absY > absX * 0.65) {
       engineRef.current.requestJump();
       totalSwipesInGestureRef.current++;
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -920,7 +922,7 @@ export default function App() {
     }
 
     // 3. Vertical Swipe DOWN -> Tail-Whip Slap!
-    if (deltaY >= 34 && absY > absX * 0.75) {
+    if (deltaY >= 28 && absY > absX * 0.65) {
       handleSlap();
       totalSwipesInGestureRef.current++;
       pointerStartXRef.current = e.clientX;
@@ -929,7 +931,7 @@ export default function App() {
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLElement>) => {
     if (!isPointerDownRef.current) return;
     isPointerDownRef.current = false;
 
@@ -975,11 +977,19 @@ export default function App() {
       {/* 3D WebGL Canvas */}
       <canvas
         ref={canvasRef}
+        className="w-full h-full block touch-none cursor-pointer pixel-canvas"
+      />
+
+      {/* Gesture catcher above the canvas and below the HUD: swiping works on
+          the road, the HUD chrome and the empty space around the touch pad,
+          not just on the canvas. Buttons sit above it and keep their taps. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-10 touch-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="w-full h-full block touch-none cursor-pointer pixel-canvas"
       />
 
       {/* Achievement Unlocked Toast Notification */}
@@ -1094,14 +1104,6 @@ export default function App() {
           onJump={() => engineRef.current?.requestJump()}
           onLaneLeft={() => engineRef.current?.changeLane(-1)}
           onLaneRight={() => engineRef.current?.changeLane(1)}
-          onJumpLeft={() => {
-            engineRef.current?.changeLane(-1);
-            engineRef.current?.requestJump();
-          }}
-          onJumpRight={() => {
-            engineRef.current?.changeLane(1);
-            engineRef.current?.requestJump();
-          }}
           isPaused={false}
           isIntroActive={stats.introActive}
           showLaneButtonsSetting={settings.showLaneButtons}
