@@ -29,10 +29,10 @@ Sithu Nyein, sithunyein.mailto@gmail.com, Telegram: @sithunyein
 ## 4. Short game description
 
 Swiposaur is a 3D voxel arcade runner. You play a party-sunglasses dinosaur sprinting
-through prehistoric streets: change lanes, jump barriers, slide under obstacles and
-**tail-whip** pedestrians to refill stamina and charge the Primal Roar. One mistake brings
-the stampede onto your heels; three mistakes end the run. Skins, biomes, daily missions
-and a local Hall of Fame keep runs coming.
+through prehistoric streets: change lanes, vault barriers and **tail-whip** pedestrians to
+refill stamina and charge the Primal Roar. One mistake brings the stampede onto your heels;
+three mistakes end the run. Skins, biomes, daily missions and a local Hall of Fame keep runs
+coming.
 
 ## 5. How to open and play
 
@@ -57,15 +57,21 @@ Best on a phone in portrait (360×640 and up) or any desktop window (1280×720 a
 
 ## 8. Controls and gameplay
 
-- **Lane change:** `A`/`D` or `←`/`→`; swipe left/right on touch.
-- **Jump:** `W`, `↑`, `Space` when not beside a critter; swipe up.
-- **Slide:** `S`, `↓`; swipe down.
-- **Tail-whip:** `Space`, `F`, `Enter`, whip button, or tap the screen.
+- **Lane change:** `A`/`D` or `←`/`→`; on touch the LEFT/RIGHT buttons, a swipe
+  left/right, or a tap on the left/right third.
+- **Jump:** `W`, `↑`, `Space` when not beside a critter; on touch the JUMP button or a
+  swipe up.
+- **Tail-whip:** `Space`, `F`, `Enter`, or the whip button; on touch the 96 px WHIP
+  button, a swipe down, or a tap in the centre.
 - **Pause:** `P` / `Esc` or the pause button.
+
+On touch the engine auto-whips a glowing critter only while the dino is airborne, covering
+the moment one thumb has to jump and whip at once. Ground whips stay manual, so stamina
+can still run out and a run can still end; touch whips refund +26 stamina instead of +22.
 
 Scoring: distance + coins + vaults + near-misses + whip combos, multiplied by the Roar
 meter (1×–16×). Stamina falls to fatigue while running and is partly refunded by a landed
-whip (+22), so every run has a ceiling.
+whip (+22 on keyboard, +26 on touch), so every run has a ceiling.
 
 Grades are read off the run itself, not the score: the tier comes from distance plus the
 roar combo reached in the same run — **C** under 350 m · **B** 350 m · **A** 800 m ·
@@ -76,7 +82,7 @@ roar combo reached in the same run — **C** under 350 m · **B** 350 m · **A**
 ```mermaid
 flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter in<br/>whip reach?"}
-    range -- yes --> hit["WHIP LANDS<br/>+22 stamina · combo +1"]
+    range -- yes --> hit["WHIP LANDS<br/>+22 / +26 touch · combo +1"]
     range -- no --> whiff["WHIFF<br/>no refund"]
     hit --> roar["Roar charges<br/>1x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}

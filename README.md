@@ -27,7 +27,7 @@ charge the Primal Roar and outrun the stampede.
 
 ## What it is
 
-Swiposaur is a one-thumb endless runner that runs entirely in the browser: no plugins,
+Swiposaur is a three-lane endless runner that runs entirely in the browser: no plugins,
 no sprite sheets, no audio files and no server requirement. The whole world (dinosaur,
 critters, biomes, weather and sound effects) is generated in code at runtime; the only
 binary files in the build are the app icons and favicons.
@@ -38,7 +38,7 @@ binary files in the build are the app icons and favicons.
 | **Live build** | <https://swiposaur.sithunyein.com/> |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
-| **Footprint** | ~1.3 MB on disk · ~410 KB gzipped (280 KB JS, 14 KB CSS) · no sprite, texture or audio files |
+| **Footprint** | ~1.4 MB on disk · ~306 KB gzipped (286 KB JS, 14 KB CSS) · no sprite, texture or audio files |
 
 ---
 
@@ -58,8 +58,8 @@ Launch passes through a short loading gate before the title menu: the logo, one 
 bar and one rotating tip over a daylight sky with drifting clouds and pollen. The bar is
 gated by three real stages (typeface, arena, progress), so it parks at 96% until the work
 actually reports in rather than faking a finish. The first load in a browser session holds
-for 8 seconds — about 8.35 s including the hold and fade — so the wordmark is fully painted
-before the menu; reloads in the same session take about 3, because the player has already
+for 8 seconds — about 8.8 s including the hold and fade — so the wordmark is fully painted
+before the menu; reloads in the same session take about 2.8 s, because the player has already
 seen the brand moment. An ease-out curve, not a linear tick, drives the fill; a guard
 releases the screen if a stage stalls, and `prefers-reduced-motion` drops the animation.
 
@@ -71,7 +71,7 @@ blind death, and three hits' worth of stamina before the stampede can end it.
 ```mermaid
 flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter inside<br/>whip reach?"}
-    range -- yes --> hit["TAIL WHIP LANDS<br/>+22 stamina · combo +1"]
+    range -- yes --> hit["TAIL WHIP LANDS<br/>+22 stamina (+26 touch) · combo +1"]
     range -- no --> whiff["WHIFF<br/>no stamina refund"]
     hit --> roar["Roar meter charges<br/>1x → 2x → 4x → 8x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}
@@ -91,9 +91,9 @@ flowchart LR
 3. **Three-hit stamina.** A stumble costs 35–45 stamina and each hit spawns the chasing
    stampede for 6 seconds unless you run clean. Running also burns stamina once the
    opening is over, and the drain climbs with the clock, so no run is infinite.
-4. **Whip to survive.** A landed whip refunds +22 stamina, has an 18-frame cooldown and
-   charges the roar meter — enough to keep the loop alive, never enough to erase the
-   fatigue clock on its own.
+4. **Whip to survive.** A landed whip refunds +22 stamina (+26 on touch), has an
+   18-frame cooldown and charges the roar meter — enough to keep the loop alive, never
+   enough to erase the fatigue clock on its own.
 5. **Roar multiplier.** The meter steps `1x → 2x → 4x → 8x → 16x`; every point of score
    rides on it, so chaining whips is worth more than surviving passively.
 
@@ -164,11 +164,14 @@ canvas runs at full speed.
 
 | Action | Desktop | Mobile |
 | --- | --- | --- |
-| Change lane | `A` / `D`, `←` / `→` | Swipe left / right |
-| Jump | `W`, `↑`, or `Space` when not near a critter | Swipe up |
-| Slide | `S`, `↓` | Swipe down |
-| Tail-whip | `Space`, `F`, `Enter`, or the whip button | Tap the whip button / tap screen |
+| Change lane | `A` / `D`, `←` / `→` | LEFT / RIGHT buttons, swipe left / right, or tap the left / right third |
+| Jump | `W`, `↑`, or `Space` when not near a critter | JUMP button or swipe up |
+| Tail-whip | `Space`, `F`, `Enter`, or the whip button | 96 px WHIP button, swipe down, or tap the middle 40% |
 | Pause | `P` / `Esc` | Pause button |
+
+On touch the engine also auto-whips a glowing critter **only while the dino is airborne**,
+so the one-thumb jump-and-whip clash never costs a target. Ground whips stay manual, which
+keeps stamina meaningful — a run can still end.
 
 ---
 
@@ -256,9 +259,14 @@ ever creates one record.
 - The results card names the one thing that was close — the next grade in metres, the next
   Roar tier, or the daily mission — instead of a generic "good job", and offers a **+20
   stamina retry** once every 3.5 hours.
-- Mobile-first layout: safe-area insets, 360×640 minimum viewport, large touch targets.
-- Touch input uses a gentler obstacle curve than desktop (42/52/62% coverage instead of
-  55/65/75%) so swipes get more reaction room.
+- Mobile-first layout: safe-area insets, 360×640 minimum viewport, four thumb-sized
+  controls (96 px whip) and a full-screen swipe layer.
+- Touch runs get a 12% wider three-lane street, a camera that sits higher and further back
+  to show more of the road ahead, +26 stamina per whip (desktop +22), and a gentler
+  obstacle curve — 55/80/100% of rows by distance band instead of 70/90/100%.
+- Airborne-only auto-whip on touch: the engine swings at a glowing critter while the dino
+  is in the air (where one thumb cannot jump and whip), never on the ground, so the run
+  still has a failure state.
 - Jumping clears low street clutter (crates, barrels, barriers, spikes). Carts, shifting
   blocks, gates and other solid props must be dodged instead.
 - Ramps are optional boost pads in the open lane and only launch a grounded runner.
