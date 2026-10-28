@@ -14,7 +14,9 @@ function readLanguage(): Language {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'my' || saved === 'en') return saved;
   } catch {}
-  return 'en';
+  // Burmese ships as the default: the game is built for Myanmar players, and
+  // anyone who wants English picks it once in Settings.
+  return 'my';
 }
 
 let currentLanguage: Language = typeof window === 'undefined' ? 'en' : readLanguage();
@@ -96,8 +98,8 @@ const BURMESE: Record<string, string> = {
   'DINO ENERGY': 'ဒိုင်နို စွမ်းအင်',
   'PRIMAL MAYHEM': 'ရှေးဦး ရန်အား',
   'Flame Mode': 'မီးမုဒ်',
-  'STAMPEDE ON YOUR TAIL! RUN CLEAN TO SHAKE THEM OFF!':
-    'အမြီးနောက် လူအုပ်လိုက်နေသည်! သန့်ရှင်းစွာ ပြေးပြီး လွတ်မြောက်ပါ!',
+  'STAMPEDE ON YOUR TAIL! RUN FAST TO SHAKE THEM OFF!':
+    'အမြီးနောက် လူအုပ်လိုက်နေသည်! လွတ်မြောက်ရန် အမြန်ပြေးပါ!',
   'Toggle Audio': 'အသံ ဖွင့်/ပိတ်',
   Pause: 'ခေတ္တရပ်',
 
@@ -329,6 +331,162 @@ const BURMESE: Record<string, string> = {
   'Local Hall of Fame': 'စက်ထဲက ဂုဏ်ထူးဆောင်စာရင်း',
   'Self-reported': 'ကိုယ်တိုင် ဖော်ပြထား',
   'This device only': 'ဤစက်တွင်သာ',
+  'LOCAL RANK #{rank}': 'စက် အဆင့် #{rank}',
+  'GLOBAL RANK #{rank}': 'ကမ္ဘာ့ အဆင့် #{rank}',
+
+  // Gameplay toasts (mission cleared during a run, achievement popups)
+  'ACHIEVEMENT UNLOCKED!': 'ဂုဏ်ပြုဆု ဖွင့်ပြီး!',
+  'Mission: {title}': 'တာဝန်: {title}',
+  '{count} missions ready — claim +{coins} Coins and more!':
+    'တာဝန် {count} ခု ပြီးဆုံးပါပြီ — +{coins} ဒင်္ဂါးနှင့် အခြားဆုများ ရယူပါ!',
+  'Claim +{coins} Coins and +{stamina} stamina!': '+{coins} ဒင်္ဂါးနှင့် +{stamina} စွမ်းအင် ရယူပါ!',
+
+  // Trophies & badges screen
+  'DINO TROPHIES & BADGES': 'ဒိုင်နို ဆုဖလားနှင့် တံဆိပ်များ',
+  'Unlock achievements to earn bonus Dino Gold Coins':
+    'ဆုအောင်မြင်မှုများ ဖွင့်ပြီး ဒိုင်နို ရွှေဒင်္ဂါး ရယူပါ',
+  'All Trophies': 'ဆုဖလား အားလုံး',
+  'Tail Slaps': 'အမြီးရိုက်ချက်',
+  Survival: 'အသက်ရှင်ခြင်း',
+  'Speed & Combo': 'အမြန်နှုန်းနှင့် ဆက်တိုက်မှု',
+  Milestones: 'မှတ်တိုင်များ',
+  CLAIMED: 'ရယူပြီး',
+  'Complete trophies during runs to claim Dino Gold':
+    'ပြေးနေစဉ်တွင် ဆုဖလား ပြီးအောင်လုပ်ပြီး ဒိုင်နို ရွှေ ရယူပါ',
+  'Total Gold Bank: {coins}': 'စုစုပေါင်း ရွှေဘဏ်: {coins}',
+
+  // Achievements
+  'First Dino Slap!': 'ပထမဆုံး ဒိုင်နို ရိုက်ချက်!',
+  'Land your first goofy critter tail-slap': 'ပထမဆုံး ရယ်ဖွယ်ကောင်းသော သတ္တဝါကို အမြီးဖြင့် ရိုက်ပါ',
+  'Tail Whirlwind': 'အမြီး လေနာဟာရီ',
+  'Reach a x5 Slap Combo streak': 'ရိုက်ချက် ဆက်တိုက် ၅ ခု စုရန်',
+  'Unstoppable Dino': 'မရပ်နိုင်သော ဒိုင်နို',
+  'Reach a blistering x15 Slap Combo streak': 'ရိုက်ချက် ဆက်တိုက် ၁၅ ခု စုရန်',
+  'Primal Berserker': 'ရှေးဦး စစ်သည်ကြမ်း',
+  'Reach an insane x25 Slap Combo streak': 'ရိုက်ချက် ဆက်တိုက် ၂၅ ခု စုရန်',
+  'Warm-up Lap': 'လေ့ကျင့်ခန်း တစ်ပတ်',
+  'Sprint 100 meters down the beach track': 'ကမ်းခြေလမ်းတွင် ၁၀၀ မီတာ ပြေးပါ',
+  'Long-Distance Saurian': 'အဝေးပြေး ဆိုရီယန်',
+  'Sprint 500 meters without getting caught': 'မဖမ်းမိဘဲ ၅၀၀ မီတာ ပြေးပါ',
+  'Prehistoric Marathon': 'ရှေးဟောင်း မာရသွန်',
+  'Survive a 1,000 meter wild sprint': '၁,၀၀၀ မီတာ ပြေးပြီး အသက်ရှင်ပါ',
+  'Pocket Change': 'အနည်းငယ်သော ဒင်္ဂါး',
+  'Collect 100 total shiny gold coins': 'ရွှေဒင်္ဂါး ၁၀၀ ခု စုဆောင်းပါ',
+  'Dino Gold Hoarder': 'ဒိုင်နို ရွှေ သိမ်းဆည်းသူ',
+  'Collect 500 total shiny gold coins': 'ရွှေဒင်္ဂါး ၅၀၀ ခု စုဆောင်းပါ',
+  'Primal Roar Frenzy!': 'ရှေးဦး ဟိန်းသံ ကြွယ်ဝမှု!',
+  'Max out the Chaos Meter and unleash Fever Mode':
+    'Chaos တိုင်း ပြည့်အောင်လုပ်ပြီး Fever မုဒ် ဖွင့်ပါ',
+  'Party Crasher': 'ပါတီ ဖျက်သူ',
+  'Tail-slap 50 prehistoric bystanders in total': 'ရှေးဟောင်း လူများကို အမြီးဖြင့် ၅၀ ကောင် ရိုက်ပါ',
+  'Master Tail Whipper': 'အမြီးရိုက် ပညာရှင်',
+  'Tail-slap 150 prehistoric bystanders in total': 'ရှေးဟောင်း လူများကို အမြီးဖြင့် ၁၅၀ ကောင် ရိုက်ပါ',
+  'Narrow Escape': 'ချောင်းကြား လွတ်မြောက်မှု',
+  'Flee with the angry mob less than 50m behind you':
+    'ဒေါသထွက်နေသော လူအုပ် ၅၀ မီတာအတွင်း နောက်ကျိုက်နေစဉ် ထွက်ပြေးပါ',
+  'Airborne Raptor': 'ပျံသန်းသော ရက်ပ်တာ',
+  'Perform 5 jump ramp boosts in a single sprint': 'တစ်ခေါက်တည်းတွင် ခုန်တက်ဘုတ် ၅ ခု အသုံးပြုပါ',
+  'Island Hopper': 'ကျွန်း ခုန်ကျော်သူ',
+  'Unlock Level 5 and reach the Lagoon Surf Boardwalk':
+    'အဆင့် ၅ ဖွင့်ပြီး လဂ်ရေကူး စားပွဲလမ်းသို့ ရောက်ပါ',
+  'Volcano Survivor': 'မီးတောင် ရှင်သန်သူ',
+  'Unlock Level 10 and cross Rumble Volcano Canyon':
+    'အဆင့် ၁၀ ဖွင့်ပြီး မီးတောင် ကျောက်ညှပ်ကို ဖြတ်ပါ',
+  'Star Collector': 'ကြယ် စုဆောင်းသူ',
+  'Earn 15 total golden stage stars': 'ရွှေကြယ် ၁၅ ပွင့် ရရှိပါ',
+  'Fashion Wardrobe': 'ဖက်ရှင် အဝတ်ဗီဒို',
+  'Unlock 3 distinct Dino character skins': 'ဒိုင်နို အသွင်အပြင် ၃ မျိုး ဖွင့်ပါ',
+  'Close Shave': 'ချောင်းကြား လွတ်မြောက်မှု',
+  'Graze past 10 obstacles with near-miss reflexes': 'အတားအဆီး ၁၀ ခုကို နီးကပ်စွာ ရှောင်ကျဉ်ပါ',
+  'Arcade Legend': 'အာကိတ် ဒဏ္ဍာရီ',
+  'Score over 10,000 points in a single run': 'တစ်ခေါက်တည်းတွင် ၁၀,၀၀၀ မှတ်အထက် ရရှိပါ',
+  'Prehistoric God': 'ရှေးဟောင်း နတ်ဘုရား',
+  'Score over 25,000 points in a single run': 'တစ်ခေါက်တည်းတွင် ၂၅,၀၀၀ မှတ်အထက် ရရှိပါ',
+
+  // Map select modal (Maps menu)
+  'Prehistoric Dino Havens': 'ရှေးဟောင်း ဒိုင်နို ခိုလှုံရာများ',
+  'EXPLORE ISLAND BIOMES': 'ကျွန်းဇုန်များ စူးစမ်းရန်',
+  'Run through 6 tropical prehistoric habitats with dynamic weather & obstacles':
+    'ရာသီဥတုပြောင်းလဲမှုနှင့် အတားအဆီးများရှိ အပူပိုင်း ရှေးဟောင်းဒိုင်နို နေရာ ၆ ခုကို ဖြတ်ပြေးပါ',
+  'Lv. {level} Explorer': 'အဆင့် {level} စူးစမ်းသူ',
+  'Unlock at Level {level}': 'အဆင့် {level} တွင် ဖွင့်ပါ',
+  'CURRENT BIOME': 'လက်ရှိ ဇုန်',
+  'ACTIVE HABITAT': 'လက်ရှိ နေရာ',
+  'TRAVEL HERE': 'ဤနေရာသို့ သွားရန်',
+  'LOCKED BIOME': 'ပိတ်ထားသော ဇုန်',
+
+  // Map names, themes & taglines
+  'Bazaar Boulevard': 'ဈေးလမ်းမကြီး',
+  'Traditional Daylight Market': 'ရှေးဟောင်း နေ့လယ်ဈေး',
+  'Sun-drenched bustling market street with fruit stalls & fresh pavement':
+    'သစ်သီးဈေးဆိုင်များနှင့် လတ်ဆတ်သော လမ်းကြား ပြည့်နှက်နေသော နေရောင်ထိုး ဈေးလမ်း',
+  'Sunny Palm Bay': 'နေသာ ရေမြောကမ်းခြေ',
+  'Tropical Ocean Promenade': 'အပူပိုင်း ပင်လယ်ကမ်းလမ်း',
+  'Azure ocean skies, golden sand sidewalks, and swaying coconut palms':
+    'ပြာနက်သော ပင်လယ်မိုး၊ ရွှေရောင်သဲလမ်းဘေးနှင့် လှုပ်ရှားနေသော ရေမြောပင်များ',
+  'Mirage Canyon': 'တာမီး ကျောက်ကြား',
+  'Sunset Terracotta Desert': 'နေဝင်ချိန် နီညိုရောင် သဲကန္တာရ',
+  'Blazing twilight sunset through towering red canyons and desert cacti':
+    'နီရင့်သော ကျောက်သင်းပြင်နှင့် သဲကန္တာရအုတ်ကောင်များကြား မီးနေဝင်ချိန်',
+  'Cyber Shibuya': 'ဆိုက်ဘာ ရှိဘျူး',
+  'Synthwave Night Metropolis': 'စင်းဝိုင်း ညမြို့ကြီး',
+  'Rain-slicked neon highways flanked by holographic skyscrapers & violet haze':
+    'မိုးရွာပြီး တောက်ပနေသော နီယွန်လမ်းမကြီးများနှင့် ဟိုလိုဂရပ် အဆောက်အအုံများ',
+  'Frosty Alps': 'ဆီးနှင်း အယ်လ်ပ်တောင်',
+  'Snowbound Alpine Expressway': 'ဆီးနှင်းဖုံး တောင်ဆင်း လမ်းမကြီး',
+  'Sub-zero frosted highways lined with snow-covered pines and swirling flurries':
+    'အေးခဲသော လမ်းမကြီးဘေးတွင် ဆီးနှင်းဖုံး ထင်းရှူးပင်များနှင့် ဝဲလွင့်နေသော နှင်းမှုန်များ',
+  'Sacred Lantern Way': 'ရှေးဟောင်း မီးအိမ်လမ်း',
+  'Cherry Blossom Sanctuary': 'ချယ်ရီပန်း ဘုရားတော',
+  'Moonlit cobblestone path guided by glowing crimson lanterns & pink sakura blossoms':
+    'လမင်းရောင် ကျောက်ခင်းလမ်းပေါ် နီရောင်မီးအိမ်များနှင့် ပန်းရောင် စံချိမ်းပန်းများ',
+
+  // Biome preview captions inside the map cards
+  'BAZAAR BOULEVARD & TOWNHOUSES': 'ဈေးလမ်းမကြီးနှင့် အိမ်များ',
+  'CORAL REEF & SURFBOARD': 'သန္တာလင်္ကပ်နှင့် ရိုက်စ်ဘုတ်',
+  'VOLCANO & MAGMA CHASM': 'မီးတောင်နှင့် မဂ္ဂာမီးကျောက်ချိုင့်',
+  'SYNTHWAVE NEON METROPOLIS': 'စင်းဝိုင်း နီယွန်မြို့ကြီး',
+  'FROSTBITE GLACIER PASS': 'ဆီးနှင်း ကျောက်တောင်ကြား',
+  'ANCIENT BLOSSOM SANCTUM': 'ရှေးဟောင်း ပန်းပွင့် ဘုရားတော',
+
+  // Dino skins modal (Wardrobe menu)
+  '3D DINO PADDOCK': '၃D ဒိုင်နို ဝိုင်း',
+  'Select your 3D dinosaur runner for live gameplay':
+    'တိုက်ရိုက် ကစားရန် သင့် ၃D ဒိုင်နို ပြေးသမားကို ရွေးပါ',
+  'PLAYING AS THIS DINO': 'ဤဒိုင်နိုဖြင့် ကစားနေသည်',
+  'SELECT {name}': '{name} ကို ရွေးမည်',
+  'Drag to rotate': 'လှည့်ရန် ဆွဲပါ',
+  'UNLOCK · {cost} COINS': '{cost} ဒင်္ဂါးဖြင့် ဖွင့်ရန်',
+  '+{pct}% Speed': '+{pct}% အမြန်နှုန်း',
+  'Base Speed': 'မူလ အမြန်နှုန်း',
+  ACTIVE: 'ရွေးထားသည်',
+
+  // Dino skin names & taglines
+  'Red Rex': 'နီရောင် ရက်စ်',
+  'Fiery crimson T-Rex with a furious party tail-whip':
+    'ပြင်းထန်သော အမြီးရိုက်ချက်ရှိ မီးရောင် တီ-ရက်စ်',
+  'Blue Spino': 'ပြာရောင် စပိုင်နို',
+  'Ocean azure Spinosaurus with super hydro agility':
+    'ပင်လယ်ပြာရောင် စပိုင်းနိုဆောရပ်စ်၊ ရေထဲ လျင်မြန်မှု အလွန်ကောင်းသည်',
+  'Sunny Raptor': 'နေသာ ရက်ပ်တာ',
+  'Speedy golden velociraptor with lightning reflexes':
+    'လျှပ်စစ်ကဲ့သို့ တုံ့ပြန်မှုရှိ အမြန် ရွှေရောင် ဗဲလိုစီရာပ်တာ',
+  'Emerald Dino': 'စိမ်းပြာ ဒိုင်နို',
+  'Jungle-trotting Swiposaur with powerful tail smash':
+    'အားကောင်းသော အမြီးရိုက်ချက်ရှိ သစ်တောထဲ ပြေးလွှားသော ဆွီပိုဆောရပ်စ်',
+  'Cyber Rex': 'ဆိုက်ဘာ ရက်စ်',
+  'High-voltage synthwave brawler with neon purple scales':
+    'နီယွန် မဲရောင် အစေ့ပါ စွမ်းအင်မြင့် စင်းဝိုင်း တိုက်ခိုက်သူ',
+  'Midnight Rex': 'သြတ်နံနက် ရက်စ်',
+  'Obsidian stealth predator that strikes like a phantom':
+    'နတ်ဆိုးကဲ့သို့ တိတ်ဆိတ်စွာ ရိုက်ချိုးသော နက်မည်း လိုက်စ်ဘာ',
+  'Red Rex Classic': 'ရှေးဟောင်း နီရောင် ရက်စ်',
+  'Classic crimson runner': 'ရှေးဟောင်း နီရောင် ပြေးသမား',
+  'White Phantom Dino': 'ဖြူဖြူဝါ သရဲဒိုင်နို',
+  'Crisp white techwear dino with emerald band':
+    'စိမ်းပြာ ခါးပတ်ပါ ဖြူသော နည်းပညာအဝတ် ဒိုင်နို',
+  'Golden Rex King': 'ရွှေရောင် ရက်စ် ဘုရင်',
+  'Championship gold with crown': 'မြတ်စိုးရာဇာ ပါသော ရွှေရောင်',
 };
 
 export function t(english: string, vars?: Record<string, string | number>): string {

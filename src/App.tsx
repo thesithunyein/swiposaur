@@ -414,11 +414,17 @@ export default function App() {
           sounds.playAchievement();
           setActiveToastAchievement({
             id: first.id,
-            title: `Mission: ${first.title}`,
+            title: t('Mission: {title}', { title: t(first.title) }),
             description:
               completedMissions.length > 1
-                ? `${completedMissions.length} missions ready — claim +${first.rewardCoins} Coins and more!`
-                : `Claim +${first.rewardCoins} Coins and +${first.bonusStamina} stamina!`,
+                ? t('{count} missions ready — claim +{coins} Coins and more!', {
+                    count: completedMissions.length,
+                    coins: first.rewardCoins,
+                  })
+                : t('Claim +{coins} Coins and +{stamina} stamina!', {
+                    coins: first.rewardCoins,
+                    stamina: first.bonusStamina,
+                  }),
             icon: 'target',
             category: 'slap',
             unlocked: true,
@@ -738,9 +744,6 @@ export default function App() {
   const handleToggleMute = () => {
     const newMuted = sounds.toggleMute();
     setIsMuted(newMuted);
-    if (!newMuted && gameState === 'PLAYING' && settings.musicEnabled) {
-      sounds.startArcadeBeat();
-    }
     setSettings((prev) => {
       const up = { ...prev, isMuted: newMuted };
       saveSettings(up);
@@ -1251,10 +1254,10 @@ export default function App() {
             engineRef.current?.setCharacterFocus(newSettings.characterFocus !== 'classic');
             sounds.setSfxVolume(newSettings.soundEnabled ? 0.8 : 0);
             sounds.setMusicVolume(newSettings.musicEnabled ? 0.55 : 0);
+            // Runs play no background music at all, so the only thing the
+            // music switch can do is stop whatever might still be scheduled.
             if (!newSettings.musicEnabled || newSettings.isMuted) {
               sounds.stopArcadeBeat();
-            } else if (gameState === 'PLAYING') {
-              sounds.startArcadeBeat();
             }
           }}
           onResetProgress={handleResetProgress}

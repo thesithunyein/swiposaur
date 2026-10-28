@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Trophy, X } from 'lucide-react';
 import { Achievement } from '../game/achievements.ts';
+import { t, useLanguage } from '../game/i18n.ts';
 import { AchievementVectorIcon } from './GameIcons.tsx';
 
 interface AchievementToastProps {
@@ -12,6 +13,9 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
   achievement,
   onDismiss,
 }) => {
+  // Re-renders the popup when the player flips the language mid-session.
+  useLanguage();
+
   useEffect(() => {
     if (!achievement) return;
     const timer = setTimeout(() => {
@@ -32,14 +36,14 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({
         <div className="flex-1 pr-2">
           <div className="flex items-center gap-1.5 text-[10px] uppercase font-['Lilita_One'] tracking-wider text-[#FBBF24]">
             <Trophy className="w-3 h-3 fill-[#FBBF24]" />
-            <span>ACHIEVEMENT UNLOCKED!</span>
+            <span>{t('ACHIEVEMENT UNLOCKED!')}</span>
           </div>
           <h4 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide leading-tight">
-            {achievement.title}
+            {t(achievement.title)}
           </h4>
           {achievement.description && (
             <p className="text-[11px] text-[#FED7AA] line-clamp-1 leading-tight">
-              {achievement.description}
+              {t(achievement.description)}
             </p>
           )}
         </div>

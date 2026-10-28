@@ -332,7 +332,7 @@ describe('flame mode', () => {
     return engine;
   }
 
-  it('starts an eight-second flame mode from a flame pickup', () => {
+  it('starts a five-second flame mode from a flame pickup', () => {
     const engine = fireSetup();
     const p = engine.player;
     engine.powerups = [
@@ -347,16 +347,16 @@ describe('flame mode', () => {
     ];
     (engine as unknown as { update(dtFactor: number): void }).update(1);
 
-    expect(p.fireTime).toBeGreaterThan(7_900);
-    expect(p.fireTime).toBeLessThanOrEqual(8_000);
+    expect(p.fireTime).toBeGreaterThan(4_900);
+    expect(p.fireTime).toBeLessThanOrEqual(5_000);
     expect(engine.stats.fireActive).toBe(true);
-    expect(engine.stats.fireTimeLeft).toBe(8);
+    expect(engine.stats.fireTimeLeft).toBe(5);
   });
 
   it('burns an obstacle instead of costing stamina', () => {
     const engine = fireSetup();
     const p = engine.player;
-    p.fireTime = 8_000;
+    p.fireTime = 5_000;
     engine.obstacles = [
       {
         id: 1,
@@ -408,6 +408,50 @@ describe('flame mode', () => {
     expect(engine.stats.fireActive).toBe(true);
   });
 
+  it('burns the prop in place instead of kicking it away', () => {
+    const engine = fireSetup();
+    const p = engine.player;
+    p.fireTime = 5_000;
+    const startY = p.y;
+    engine.obstacles = [
+      {
+        id: 1,
+        x: 0,
+        y: startY + 60,
+        type: 'crate',
+        width: 46,
+        height: 34,
+        hit: false,
+        rollSpeed: 0,
+        vx: 0,
+        isShifting: false,
+        shiftMinX: -100,
+        shiftMaxX: 100,
+      },
+    ];
+    const state = engine as unknown as { update(dtFactor: number): void };
+    state.update(1);
+
+    const obs = engine.obstacles[0];
+    expect(obs.hit).toBe(true);
+    expect(obs.burning).toBe(true);
+    // No launch velocity: fire burns it, it does not throw it.
+    expect(obs.hitVy).toBeUndefined();
+    expect(obs.hitVx).toBeUndefined();
+    expect(obs.burnProgress).toBeCloseTo(0, 2);
+    // The jet is streamed from the mouth by the renderer.
+    expect(engine.fireBreath.active).toBe(true);
+    expect(engine.fireBreath.targetY).toBeCloseTo(startY + 60, 5);
+
+    // It burns all the way down, then the cleanup pass takes it away.
+    for (let i = 0; i < 45; i++) {
+      engine.obstacles = engine.obstacles.filter((o) => o.id === 1);
+      state.update(1);
+    }
+    expect(engine.obstacles.some((o) => o.id === 1)).toBe(false);
+    expect(engine.fireBreath.active).toBe(false);
+  });
+
   it('holds the first flame pickup back until 45 seconds of running', () => {
     const engine = fireSetup();
     const state = engine as unknown as { spawnMarketSegment(y: number): void; runTimeSeconds: number };
@@ -422,13 +466,13 @@ describe('flame mode', () => {
     state.spawnMarketSegment(1_400);
     expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(true);
 
-    // Then one every thirty seconds, and not before.
-    state.runTimeSeconds = 74.9;
+    // Then one every sixty seconds, and not before.
+    state.runTimeSeconds = 104.9;
     engine.powerups = [];
     state.spawnMarketSegment(1_600);
     expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(false);
 
-    state.runTimeSeconds = 75.1;
+    state.runTimeSeconds = 105.1;
     engine.powerups = [];
     state.spawnMarketSegment(1_800);
     expect(engine.powerups.some((pickup) => pickup.type === 'fire')).toBe(true);

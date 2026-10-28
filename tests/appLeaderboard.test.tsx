@@ -4,6 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameStats } from '../src/game/types.ts';
+import { setLanguage } from '../src/game/i18n.ts';
 
 // React reads this flag (normally set by @testing-library) to allow act().
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -121,6 +122,10 @@ function finishRun(stats: GameStats): void {
 beforeEach(() => {
   engineInstances.length = 0;
   localStorage.clear();
+  // Burmese ships as the default; this suite asserts the English copy, so it
+  // configures the device for English the same way a player would.
+  localStorage.setItem('slap_run_game_settings', JSON.stringify({ language: 'en' }));
+  setLanguage('en');
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     writable: true,

@@ -102,8 +102,8 @@ afterEach(() => {
 });
 
 describe('useBootSequence', () => {
-  it('ships a 5s first-load window and a 2s repeat window', () => {
-    expect(BOOT_FIRST_LOAD_MS).toBe(5000);
+  it('ships an 8s first-load window and a 2s repeat window', () => {
+    expect(BOOT_FIRST_LOAD_MS).toBe(8000);
     expect(BOOT_REPEAT_LOAD_MS).toBe(2000);
   });
 

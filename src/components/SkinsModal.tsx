@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CharacterSkin } from '../game/types.ts';
 import { CHARACTER_SKINS } from '../game/constants.ts';
 import { sounds } from '../game/SoundEngine.ts';
+import { t } from '../game/i18n.ts';
 import { Check, Lock, Coins, X, Zap, Sparkles } from 'lucide-react';
 import { Dino3DPreview } from './Dino3DPreview.tsx';
 import { Paddock3DIcon, DinoAvatar3DIcon } from './GameIcons.tsx';
@@ -49,10 +50,10 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
             </div>
             <div>
               <h2 className="font-['Lilita_One'] text-lg sm:text-2xl text-[#FEF08A] tracking-wider uppercase drop-shadow">
-                3D DINO PADDOCK
+                {t('3D DINO PADDOCK')}
               </h2>
               <span className="text-[11px] sm:text-xs text-[#FED7AA] font-medium block">
-                Select your 3D dinosaur runner for live gameplay
+                {t('Select your 3D dinosaur runner for live gameplay')}
               </span>
             </div>
           </div>
@@ -70,7 +71,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                 sounds.playClick();
                 onClose();
               }}
-              aria-label="Close"
+              aria-label={t('Close')}
               className="w-8 h-8 sm:w-9 sm:h-9 bg-[#EF4444] hover:bg-[#F87171] text-white border-2 border-white/40 shadow-md active:scale-95 rounded-2xl cursor-pointer flex items-center justify-center transition-all"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
@@ -85,16 +86,18 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
             {/* Active Species Badge & Stats */}
             <div className="w-full flex items-center justify-between mb-1">
               <span className="font-['Lilita_One'] text-base sm:text-lg text-white">
-                {previewSkin.name}
+                {t(previewSkin.name)}
               </span>
               <span className="flex items-center gap-1 text-[11px] font-bold text-[#FACC15] bg-[#2D1B0F] border border-[#F59E0B]/50 px-2 py-0.5 rounded-lg">
                 <Zap className="w-3 h-3 fill-[#FACC15]" />
-                {previewSkin.speedBonus > 0 ? `+${Math.round(previewSkin.speedBonus * 100)}% Speed` : 'Base Speed'}
+                {previewSkin.speedBonus > 0
+                  ? t('+{pct}% Speed', { pct: Math.round(previewSkin.speedBonus * 100) })
+                  : t('Base Speed')}
               </span>
             </div>
 
             <p className="text-[11px] text-[#FED7AA]/80 text-left w-full line-clamp-2 mb-2">
-              {previewSkin.tagline}
+              {t(previewSkin.tagline)}
             </p>
 
             {/* 3D WebGL Canvas */}
@@ -107,7 +110,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
               {isPreviewSelected ? (
                 <div className="w-full py-2.5 bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] font-['Lilita_One'] text-xs sm:text-sm tracking-wider uppercase rounded-2xl flex items-center justify-center gap-2 shadow-sm">
                   <Check className="w-4 h-4 stroke-[3]" />
-                  <span>PLAYING AS THIS DINO</span>
+                  <span>{t('PLAYING AS THIS DINO')}</span>
                 </div>
               ) : isPreviewUnlocked ? (
                 <button
@@ -119,7 +122,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                   className="w-full py-2.5 bg-gradient-to-b from-[#FFA726] to-[#E65100] hover:from-[#FFB74D] hover:to-[#EF6C00] text-white font-['Lilita_One'] text-xs sm:text-sm tracking-wider uppercase rounded-2xl border-2 border-[#FFE082] shadow-[0_4px_12px_rgba(230,81,0,0.5)] active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4 stroke-[3]" />
-                  <span>SELECT {previewSkin.name.toUpperCase()}</span>
+                  <span>{t('SELECT {name}', { name: t(previewSkin.name) })}</span>
                 </button>
               ) : (
                 <button
@@ -138,7 +141,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                   }`}
                 >
                   <Coins className="w-4 h-4 fill-current" />
-                  <span>UNLOCK · {previewSkin.cost.toLocaleString()} COINS</span>
+                  <span>{t('UNLOCK · {cost} COINS', { cost: previewSkin.cost.toLocaleString() })}</span>
                 </button>
               )}
             </div>
@@ -196,16 +199,18 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <h4 className="font-['Lilita_One'] text-sm text-white truncate">
-                          {skin.name}
+                          {t(skin.name)}
                         </h4>
                         {isSelected && (
                           <span className="text-[9px] font-['Lilita_One'] bg-[#10B981] text-black px-1.5 py-0.2 rounded-full">
-                            ACTIVE
+                            {t('ACTIVE')}
                           </span>
                         )}
                       </div>
                       <span className="text-[10px] text-[#FED7AA]/70 block truncate mt-0.5">
-                        {skin.speedBonus > 0 ? `+${Math.round(skin.speedBonus * 100)}% Speed` : 'Base Speed'}
+                        {skin.speedBonus > 0
+                          ? t('+{pct}% Speed', { pct: Math.round(skin.speedBonus * 100) })
+                          : t('Base Speed')}
                       </span>
                       {!isUnlocked && (
                         <div className="flex items-center gap-1 text-[11px] font-['Lilita_One'] text-[#FACC15] mt-1">

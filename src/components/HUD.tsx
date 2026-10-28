@@ -71,7 +71,7 @@ export const HUD: React.FC<HUDProps> = ({
             </span>
             <AlertTriangle className="w-4 h-4 text-white fill-white shrink-0" />
             <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
-              {t('STAMPEDE ON YOUR TAIL! RUN CLEAN TO SHAKE THEM OFF!')}
+              {t('STAMPEDE ON YOUR TAIL! RUN FAST TO SHAKE THEM OFF!')}
             </span>
           </div>
         </div>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="my">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -20,6 +20,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800;900&family=Lilita+One&family=Titan+One&family=Sniglet:wght@400;800&family=Press+Start+2P&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Burmese leads every font stack (and the logo wordmark), so fetch Aka 08
+         alongside the Google CSS instead of waiting for first paint to ask. -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link
+      rel="preload"
+      as="font"
+      type="font/ttf"
+      crossorigin="anonymous"
+      href="https://cdn.jsdelivr.net/gh/saturngod/myanmar-unicode-fonts@master/docs/Aka/Aka08-Regular.ttf"
+    >
   </head>
   <body class="overflow-hidden select-none bg-[#181A24] text-[#FDFBF7] touch-none overscroll-none">
     <div id="root"></div>

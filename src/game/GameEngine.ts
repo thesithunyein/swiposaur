@@ -44,13 +44,26 @@ import {
 
 /**
  * Flame pickup cadence: the first one only after 45 s of running, then one every
- * 30 s, and each collection burns for 8 s.
+ * 60 s, and each collection burns for 5 s.
  */
-const FIRE_SPAWN_INTERVAL_SECONDS = 30;
+const FIRE_SPAWN_INTERVAL_SECONDS = 60;
 const FIRE_FIRST_SPAWN_SECONDS = 45;
-const FIRE_DURATION_MS = 8_000;
+const FIRE_DURATION_MS = 5_000;
 /** How far ahead of the runner the fire breath catches an obstacle. */
 const FIRE_BREATH_LEAD = 72;
+/** How long the visible jet streams from the mouth to the prop. */
+const FIRE_BREATH_MS = 560;
+/** How long a prop keeps burning before it is nothing but ash. */
+const BURN_MS = 620;
+/** Loud, stupid lines for the moment the dino breathes fire at a prop. */
+const FIRE_BREATH_LINES = [
+  'TOASTY!',
+  'HOT BREATH!',
+  '*BURRRP*',
+  'SMOKIN\'!',
+  'SNEEZE OF DOOM!',
+  'EXCUSE ME?!',
+];
 const MOBILE_TUTORIAL_KEY = 'slap_run_mobile_tutorial_done';
 
 function hasSeenMobileTutorial(): boolean {
@@ -97,6 +110,17 @@ export class GameEngine {
   public powerups: Powerup[] = [];
   public particles: Particle[] = [];
   public floatingTexts: FloatingText[] = [];
+  /**
+   * The visible jet of flame between the dino's mouth and the prop it is
+   * burning. Rendered by the 3D renderer for the few hundred milliseconds it
+   * streams, so the attack reads as breath instead of a body-check.
+   */
+  public fireBreath = {
+    active: false,
+    timeLeft: 0,
+    targetX: 0,
+    targetY: 0,
+  };
   public shockwaves: Shockwave[] = [];
 
   // Procedural Spawning
@@ -715,7 +739,6 @@ export class GameEngine {
   public resumeGame(): void {
     if (this.state === 'PAUSED') {
       this.state = 'PLAYING';
-      sounds.startArcadeBeat();
       this.lastTime = performance.now();
       if (this.onStatsUpdate) this.onStatsUpdate(this.stats, this.state);
     }
@@ -800,6 +823,10 @@ export class GameEngine {
     }
 
     // 1b. Flame Mode Timer
+    if (this.fireBreath.active) {
+      this.fireBreath.timeLeft = Math.max(0, this.fireBreath.timeLeft - 16.66 * dtFactor * 0.001);
+      if (this.fireBreath.timeLeft <= 0) this.fireBreath.active = false;
+    }
     if (p.fireTime > 0) {
       p.fireTime = Math.max(0, p.fireTime - 16.66 * dtFactor);
       this.stats.fireActive = p.fireTime > 0;
@@ -1085,6 +1112,13 @@ export class GameEngine {
 
       // Tumbling physics for hit obstacles
       if (obs.hit) {
+        // A prop on fire never gets kicked away: it burns down in place and is
+        // removed by the cleanup pass once there is nothing left of it.
+        if (obs.burning) {
+          obs.burnTime = Math.max(0, (obs.burnTime ?? 0) - 16.66 * dtFactor);
+          obs.burnProgress = 1 - (obs.burnTime ?? 0) / BURN_MS;
+          continue;
+        }
         if (obs.hitVx || obs.hitVy || obs.hitVz) {
           obs.x += (obs.hitVx || 0) * dtFactor;
           obs.y += (obs.hitVy || 0) * dtFactor;
@@ -1115,21 +1149,8 @@ export class GameEngine {
       if (p.fireTime > 0 && !obs.hit && !isRampType(obs.type)) {
         const gap = obs.y - pMaxY;
         if (gap >= -6 && gap <= FIRE_BREATH_LEAD && Math.abs(obs.x - p.x) < 62) {
-          obs.hit = true;
-          obs.hitVx = (Math.random() - 0.5) * 8;
-          obs.hitVy = 16 + Math.random() * 6;
-          obs.hitVz = 10 + Math.random() * 4;
-          obs.rotVx = 0.45;
-          obs.rotVy = 0.3;
-          obs.rotVz = 0.2;
-          sounds.playFireBlast();
-          this.renderer.triggerShake(5);
-          // Forward burst from the mouth, so the flame has a direction.
-          this.spawnParticleExplosion(p.x, p.y + 14, '#F97316', 14, 'star');
-          this.spawnParticleExplosion((p.x + obs.x) / 2, (p.y + obs.y) / 2, '#FBBF24', 10, 'sparkle');
-          this.spawnParticleExplosion(obs.x, obs.y, '#F59E0B', 8, 'sparkle');
-          this.addFloatingText(obs.x, obs.y, 'FIRE BREATH!', '#F97316', 22);
-          this.stats.score += 120 * this.stats.chaosMultiplier;
+          const line = FIRE_BREATH_LINES[Math.floor(Math.random() * FIRE_BREATH_LINES.length)];
+          this.igniteObstacle(obs, line);
           continue;
         }
       }
@@ -1157,19 +1178,7 @@ export class GameEngine {
         // contact, with no stamina cost and no stumble. Ramps stay friendly
         // (handled above).
         if (p.fireTime > 0) {
-          obs.hit = true;
-          obs.hitVx = (Math.random() - 0.5) * 8;
-          obs.hitVy = 16 + Math.random() * 6;
-          obs.hitVz = 10 + Math.random() * 4;
-          obs.rotVx = 0.45;
-          obs.rotVy = 0.3;
-          obs.rotVz = 0.2;
-          sounds.playFireBlast();
-          this.renderer.triggerShake(6);
-          this.spawnParticleExplosion(obs.x, obs.y, '#F97316', 18, 'star');
-          this.spawnParticleExplosion(obs.x, obs.y, '#FBBF24', 10, 'sparkle');
-          this.addFloatingText(obs.x, obs.y, 'BURNED!', '#F97316', 24);
-          this.stats.score += 120 * this.stats.chaosMultiplier;
+          this.igniteObstacle(obs, 'BURNED!');
           continue;
         }
 
@@ -1313,7 +1322,7 @@ export class GameEngine {
       if (dy < 26 && dx < 26) {
         pu.collected = true;
         if (pu.type === 'fire') {
-          // Flame Mode: ten seconds of burning through anything ahead.
+          // Flame Mode: five seconds of burning through anything ahead.
           p.fireTime = FIRE_DURATION_MS;
           this.stats.fireActive = true;
           this.stats.fireTimeLeft = Math.ceil(FIRE_DURATION_MS / 1000);
@@ -1355,7 +1364,9 @@ export class GameEngine {
     // 14. Cleanup off-screen entities behind player (lead chaser is always preserved)
     const cleanupY = p.y - 350;
     this.bystanders = this.bystanders.filter((b) => b.y > cleanupY);
-    this.obstacles = this.obstacles.filter((o) => o.y > cleanupY);
+    this.obstacles = this.obstacles.filter(
+      (o) => o.y > cleanupY && !(o.burning && (o.burnTime ?? 0) <= 0)
+    );
     this.coins = this.coins.filter((c) => c.y > cleanupY);
     this.powerups = this.powerups.filter((pu) => pu.y > cleanupY);
     this.chasers = this.chasers.filter((c) => c.id === 9001 || c.y > cleanupY);
@@ -1437,7 +1448,8 @@ export class GameEngine {
         this.stats.introActive = false;
         this.stats.introPhase = 'DONE';
 
-        sounds.startArcadeBeat();
+        // No arcade beat during a run: the sequencer is silent so the sound
+        // effects — whips, coins, blasts — carry the run on their own.
         sounds.updateBeatChaos(1);
 
         this.addFloatingText(0, 50, 'RUN FOR YOUR LIFE!', '#EF4444', 28);
@@ -1879,7 +1891,7 @@ export class GameEngine {
       });
     }
 
-    // 6. Flame pickup: first one after 45 seconds of running, then one every 30
+    // 6. Flame pickup: first one after 45 seconds of running, then one every 60
     // seconds. It sits in an open lane, slightly past the row so it reads as a
     // prize, not a trap, and is collected the same way coins are: run into it.
     if (this.runTimeSeconds >= this.nextFireAt) {
@@ -1895,6 +1907,33 @@ export class GameEngine {
       });
       this.nextFireAt += FIRE_SPAWN_INTERVAL_SECONDS;
     }
+  }
+
+  /**
+   * Flame Mode's answer to a prop: the dino breathes it out and the prop burns
+   * down where it stands. Deliberately no launch velocities — being kicked
+   * away read as a hit, being set alight reads as fire.
+   */
+  private igniteObstacle(obs: Obstacle, line: string): void {
+    obs.hit = true;
+    obs.burning = true;
+    obs.burnTime = BURN_MS;
+    obs.burnProgress = 0;
+
+    sounds.playFireBlast();
+    this.renderer.triggerShake(6);
+    this.stats.score += 120 * this.stats.chaosMultiplier;
+
+    this.fireBreath = {
+      active: true,
+      timeLeft: FIRE_BREATH_MS / 1000,
+      targetX: obs.x,
+      targetY: obs.y,
+    };
+
+    // Embers at the mouth, so the rendered jet has a visible origin.
+    this.spawnParticleExplosion(this.player.x, this.player.y + 14, '#F97316', 6, 'star');
+    this.addFloatingText(obs.x, obs.y, line, '#F97316', 24);
   }
 
   private spawnParticleExplosion(
@@ -2008,7 +2047,8 @@ export class GameEngine {
       mobDistance,
       this.introState.victim,
       this.introState.active,
-      this.introState.phase
+      this.introState.phase,
+      this.fireBreath
     );
   }
 

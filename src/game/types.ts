@@ -171,6 +171,12 @@ export interface Obstacle {
   rotVx?: number;
   rotVy?: number;
   rotVz?: number;
+  /** Set when flame mode burns it: it turns to ash in place, never launches. */
+  burning?: boolean;
+  /** Milliseconds of burning left before it is gone. */
+  burnTime?: number;
+  /** 0 → 1 burn progress, for the renderer to shrink the mesh with. */
+  burnProgress?: number;
 }
 
 export interface Coin {

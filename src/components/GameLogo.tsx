@@ -1,4 +1,50 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+
+/**
+ * The wordmark is SVG <text> set in Lilita One (and, under Burmese, led by
+ * Aka 08), and those faces only exist once their font files have arrived —
+ * before that the letters paint in a fallback and visibly flip, which reads as
+ * "the logo isn't there yet". Hold the banner until the logo faces are really
+ * available, with a hard timeout so a blocked font CDN can never leave the
+ * logo hidden.
+ */
+function useLogoFontsReady(): boolean {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || !document.fonts || typeof document.fonts.load !== 'function') {
+      setReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    const reveal = () => {
+      if (!cancelled) setReady(true);
+    };
+    const failsafe = window.setTimeout(reveal, 1500);
+
+    // Under Burmese, Aka 08 leads every font stack (including the SVG
+    // wordmark), so its Latin glyphs are what the logo first paints with.
+    const wanted: Array<Promise<unknown>> = [
+      document.fonts.load("900 68px 'Lilita One'", 'SWIPOSAUR'),
+      document.fonts.load("700 24px 'Fredoka'", 'TAIL FRENZY'),
+    ];
+    if (document.documentElement.lang === 'my') {
+      wanted.push(document.fonts.load("400 48px 'Aka08'", 'SWIPOSAUR'));
+    }
+
+    Promise.all(wanted)
+      .then(reveal)
+      .catch(reveal);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(failsafe);
+    };
+  }, []);
+
+  return ready;
+}
 
 interface LogoProps {
   className?: string;
@@ -147,6 +193,7 @@ export const Swiposaur3DLogo: React.FC<LogoProps> = ({
   showSubtitle = true,
   interactive = true,
 }) => {
+  const fontsReady = useLogoFontsReady();
   const containerRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState<{ x: number; y: number; isHover: boolean }>({
     x: 0,
@@ -185,6 +232,10 @@ export const Swiposaur3DLogo: React.FC<LogoProps> = ({
       className={`relative flex flex-col items-center select-none w-full ${bannerSizes[size]} ${className}`}
       style={{
         perspective: '1000px',
+        // Hidden for the few hundred ms it takes the wordmark face to load, so
+        // the full logo — letters included — appears in one piece.
+        opacity: fontsReady ? 1 : 0,
+        transition: 'opacity 320ms ease-out',
       }}
     >
       {/* 3D Extruded Transform Container */}

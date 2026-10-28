@@ -3,6 +3,7 @@ import { X, Trophy, Coins, Check, Lock } from 'lucide-react';
 import { GameStats } from '../game/types.ts';
 import { ACHIEVEMENTS_LIST, Achievement, loadAchievementStorage } from '../game/achievements.ts';
 import { sounds } from '../game/SoundEngine.ts';
+import { t, useLanguage } from '../game/i18n.ts';
 import { AchievementVectorIcon } from './GameIcons.tsx';
 
 interface AchievementsModalProps {
@@ -42,6 +43,8 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
   onCoinsClaimed,
   onClose,
 }) => {
+  // Subscribing re-renders the screen when the language changes.
+  useLanguage();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [unlockedMap, setUnlockedMap] = useState<Record<string, boolean>>(() => loadAchievementStorage());
   const [claimedMap, setClaimedMap] = useState<Record<string, boolean>>(() => loadClaimedAchievements());
@@ -81,14 +84,14 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-['Lilita_One'] text-xl sm:text-2xl font-bold text-[#FEF08A] tracking-wider">
-                  DINO TROPHIES & BADGES
+                  {t('DINO TROPHIES & BADGES')}
                 </h2>
                 <span className="text-xs font-['Lilita_One'] bg-[#10B981] text-white px-2 py-0.5 rounded-full border border-white/40">
                   {unlockedCount} / {ACHIEVEMENTS_LIST.length}
                 </span>
               </div>
               <span className="text-xs text-[#FED7AA] font-medium block">
-                Unlock achievements to earn bonus Dino Gold Coins
+                {t('Unlock achievements to earn bonus Dino Gold Coins')}
               </span>
             </div>
           </div>
@@ -120,7 +123,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                   : 'bg-[#24170E] text-[#FED7AA] hover:bg-[#322013] border-white/10'
               }`}
             >
-              {c.label}
+              {t(c.label)}
             </button>
           ))}
         </div>
@@ -157,15 +160,15 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
 
                   <div>
                     <h3 className="font-['Lilita_One'] text-base text-white flex items-center gap-2">
-                      <span>{ach.title}</span>
+                      <span>{t(ach.title)}</span>
                       {isUnlocked && (
                         <span className="text-[10px] bg-[#10B981] text-white px-1.5 py-0.2 rounded-md font-sans font-bold">
-                          DONE
+                          {t('DONE')}
                         </span>
                       )}
                     </h3>
                     <p className="text-xs text-[#FED7AA]/80 leading-snug">
-                      {ach.description}
+                      {t(ach.description)}
                     </p>
                   </div>
                 </div>
@@ -182,14 +185,14 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                       className="px-3 py-1.5 bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#34D399] hover:to-[#10B981] text-white font-['Lilita_One'] text-xs rounded-xl flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer border border-white/20 animate-pulse"
                     >
                       <Trophy className="w-3.5 h-3.5 text-[#FEF08A] fill-[#FEF08A]" />
-                      <span>CLAIM</span>
+                      <span>{t('CLAIM')}</span>
                     </button>
                   )}
 
                   {isUnlocked && isClaimed && (
                     <div className="flex items-center gap-1 font-['Lilita_One'] text-xs text-[#10B981] bg-[#10B981]/15 px-2.5 py-1 rounded-xl border border-[#10B981]/40">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>CLAIMED</span>
+                      <span>{t('CLAIMED')}</span>
                     </div>
                   )}
                 </div>
@@ -202,9 +205,11 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
         <div className="px-5 py-3 bg-[#160E08] border-t border-white/10 flex items-center justify-between text-xs text-[#FED7AA]">
           <span className="flex items-center gap-1.5">
             <Trophy className="w-3.5 h-3.5 text-[#FBBF24] fill-[#FBBF24] shrink-0" />
-            <span>Complete trophies during runs to claim Dino Gold</span>
+            <span>{t('Complete trophies during runs to claim Dino Gold')}</span>
           </span>
-          <span className="font-['Lilita_One'] text-[#FBBF24]">Total Gold Bank: {totalCoins}</span>
+          <span className="font-['Lilita_One'] text-[#FBBF24]">
+            {t('Total Gold Bank: {coins}', { coins: totalCoins })}
+          </span>
         </div>
       </div>
     </div>

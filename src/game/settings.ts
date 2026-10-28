@@ -15,7 +15,7 @@ export interface GameSettings {
 const STORAGE_KEY = 'slap_run_game_settings';
 
 export const DEFAULT_SETTINGS: GameSettings = {
-  language: 'en',
+  language: 'my',
   soundEnabled: true,
   musicEnabled: true,
   cameraShake: true,

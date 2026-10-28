@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../game/i18n.ts';
 
 interface BiomeGraphicPreviewProps {
   mapId: string;
@@ -29,7 +30,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <polygon points="150,118 170,118 160,85" fill="#EF4444" stroke="#FFF" strokeWidth="2" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-white">
-            CORAL REEF & SURFBOARD
+            {t('CORAL REEF & SURFBOARD')}
           </div>
         </div>
       );
@@ -50,7 +51,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <rect x="0" y="125" width="320" height="15" fill="#1C1917" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-[#F97316]">
-            VOLCANO & MAGMA CHASM
+            {t('VOLCANO & MAGMA CHASM')}
           </div>
         </div>
       );
@@ -73,7 +74,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <circle cx="28" cy="65" r="14" fill="#06B6D4" opacity="0.8" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-[#06B6D4]">
-            SYNTHWAVE NEON METROPOLIS
+            {t('SYNTHWAVE NEON METROPOLIS')}
           </div>
         </div>
       );
@@ -96,7 +97,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <rect x="0" y="125" width="320" height="15" fill="#F8FAFC" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-[#0284C7]">
-            FROSTBITE GLACIER PASS
+            {t('FROSTBITE GLACIER PASS')}
           </div>
         </div>
       );
@@ -120,7 +121,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <rect x="0" y="125" width="320" height="15" fill="#292524" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-[#F43F5E]">
-            ANCIENT BLOSSOM SANCTUM
+            {t('ANCIENT BLOSSOM SANCTUM')}
           </div>
         </div>
       );
@@ -151,7 +152,7 @@ export const BiomeGraphicPreview: React.FC<BiomeGraphicPreviewProps> = ({ mapId,
             <rect x="0" y="125" width="320" height="15" fill="#181A24" />
           </svg>
           <div className="absolute bottom-2 left-3 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[11px] font-['Lilita_One'] text-[#FEF08A]">
-            BAZAAR BOULEVARD & TOWNHOUSES
+            {t('BAZAAR BOULEVARD & TOWNHOUSES')}
           </div>
         </div>
       );

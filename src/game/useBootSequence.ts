@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Boot sequence for the loading screen in front of the title menu.
  *
  * Timing is deliberate:
- * - first page load in a browser session: ~5s, so the splash reads as a real boot
+ * - first page load in a browser session: 8s, so the logo and wordmark have
+ *   time to arrive fully painted before the title menu takes over
  * - repeat loads in the same session: ~2s, because the player already saw it
  *
  * The bar follows an ease-out curve over that window (fast out of the gate,
@@ -30,7 +31,7 @@ export const BOOT_STAGES: BootStageDefinition[] = [
 export const BOOT_SEEN_KEY = 'swiposaur.boot_seen';
 
 /** Splash length on the first load of a session (the full brand moment). */
-export const BOOT_FIRST_LOAD_MS = 5000;
+export const BOOT_FIRST_LOAD_MS = 8000;
 /** Splash length on later loads: the player has already seen it, keep it brief. */
 export const BOOT_REPEAT_LOAD_MS = 2000;
 
@@ -112,14 +113,24 @@ export function useBootSequence(options: BootSequenceOptions = {}): BootSequence
   useEffect(() => {
     let raf = 0;
     let fadeTimer = 0;
+    let wallTimer = 0;
     const startedAt = performance.now();
     const duration = durationRef.current ?? firstLoadMs;
     let holdUntil = 0;
     let finishing = false;
 
+    const finish = () => {
+      if (finishing || !mountedRef.current) return;
+      finishing = true;
+      setProgress(100);
+      setLeaving(true);
+      fadeTimer = window.setTimeout(() => {
+        if (mountedRef.current) setVisible(false);
+      }, fadeMs);
+    };
+
     const tick = (now: number) => {
       const elapsed = Math.max(0, now - startedAt);
-      const ramp = Math.min(1, elapsed / duration);
 
       // Safety net: never trap a player behind a stalled network call.
       if (elapsed >= duration + maxExtraMs) {
@@ -128,27 +139,23 @@ export function useBootSequence(options: BootSequenceOptions = {}): BootSequence
       const allDone = BOOT_STAGES.every((stage) => completedRef.current.has(stage.id));
 
       if (!finishing) {
-        if (ramp >= 1 && allDone) {
+        if (elapsed >= duration && allDone) {
           setProgress(100);
         } else {
           // Ease-out cubic, capped at 96% until every stage really reports in.
+          const ramp = Math.min(1, elapsed / duration);
           const eased = 1 - Math.pow(1 - ramp, 3);
           setProgress(Math.min(96, eased * 96));
         }
       }
 
-      if (ramp >= 1 && allDone) {
+      if (elapsed >= duration && allDone) {
         if (!holdUntil) {
           holdUntil = now + holdMs;
           markBootSeen();
         }
         if (now >= holdUntil && !finishing) {
-          finishing = true;
-          setProgress(100);
-          setLeaving(true);
-          fadeTimer = window.setTimeout(() => {
-            if (mountedRef.current) setVisible(false);
-          }, fadeMs);
+          finish();
           return;
         }
       }
@@ -158,8 +165,19 @@ export function useBootSequence(options: BootSequenceOptions = {}): BootSequence
 
     raf = requestAnimationFrame(tick);
 
+    // A hidden tab pauses requestAnimationFrame completely, which would leave
+    // the splash on screen forever — this wall-clock path releases it on the
+    // same schedule (ramp + guard + hold) whether or not frames are ticking.
+    wallTimer = window.setTimeout(() => {
+      if (finishing || !mountedRef.current) return;
+      BOOT_STAGES.forEach((stage) => complete(stage.id));
+      markBootSeen();
+      finish();
+    }, duration + maxExtraMs + holdMs);
+
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(wallTimer);
       if (fadeTimer) window.clearTimeout(fadeTimer);
     };
   }, [complete, fadeMs, firstLoadMs, holdMs, maxExtraMs]);

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { CharacterSkin } from '../game/types.ts';
 import { buildDinoCharacterMesh, DinoMeshComponents } from '../game/DinoMeshBuilder.ts';
+import { t } from '../game/i18n.ts';
 import { RotateCw } from 'lucide-react';
 
 interface Dino3DPreviewProps {
@@ -158,7 +159,7 @@ export const Dino3DPreview: React.FC<Dino3DPreviewProps> = ({ skin, className = 
       <canvas ref={canvasRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
       <div className="absolute bottom-2 right-2 pointer-events-none flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded-full text-[10px] text-[#FED7AA] backdrop-blur-xs border border-white/10">
         <RotateCw className="w-3 h-3 text-[#FACC15] animate-spin" style={{ animationDuration: '8s' }} />
-        <span>Drag to rotate</span>
+        <span>{t('Drag to rotate')}</span>
       </div>
     </div>
   );

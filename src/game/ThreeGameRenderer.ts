@@ -91,6 +91,9 @@ export class ThreeGameRenderer {
   private powerupMeshes: Map<number, THREE.Group> = new Map();
   private particleGroup: THREE.Group;
   private floatingTextSprites: Map<number, THREE.Sprite> = new Map();
+  /** Shared box geometry and palette for flame rendering, built once. */
+  private flameGeo: THREE.BoxGeometry | null = null;
+  private flameMats: THREE.MeshBasicMaterial[] | null = null;
 
   // Materials & Geometries Cache (Flat-shaded retro pixel art materials)
   private materials: { [key: string]: THREE.Material } = {};
@@ -2254,7 +2257,8 @@ export class ThreeGameRenderer {
     _mobDistance: number,
     introVictim?: IntroVictim | null,
     introActive?: boolean,
-    introPhase?: 'WINDUP' | 'SLAP_IMPACT' | 'BLAST_OFF' | 'DONE'
+    introPhase?: 'WINDUP' | 'SLAP_IMPACT' | 'BLAST_OFF' | 'DONE',
+    fireBreath?: { active: boolean; timeLeft: number; targetX: number; targetY: number }
   ): void {
     if (this.hitFreeze > 0) {
       this.hitFreeze--;
@@ -2529,6 +2533,7 @@ export class ThreeGameRenderer {
     this.renderChasers(chasers, elapsedTime);
     this.renderCollectibles(coins, powerups, elapsedTime);
     this.renderParticlesAndTexts(particles, floatingTexts);
+    this.renderFireBreath(player, obstacles, fireBreath);
     this.renderIntroVictim(introVictim, introActive);
     this.updateSkyAndClouds(elapsedTime, pz);
     this.updateWeatherParticles(elapsedTime, pz);
@@ -2586,12 +2591,26 @@ export class ThreeGameRenderer {
 
       const oz = (obs.z || 0) * SCALE_Z;
       mesh.position.set(obs.x * SCALE_X, oz, -obs.y * SCALE_Y);
-      mesh.rotation.x = obs.rotation || 0;
+      // Rolling props spin around their own centre, not around the road, or a
+      // quarter turn sinks half the mesh under the asphalt.
+      const spin = mesh.userData.spin as THREE.Group | undefined;
+      if (spin) {
+        spin.rotation.x = obs.rotation || 0;
+        mesh.rotation.x = 0;
+      } else {
+        mesh.rotation.x = obs.rotation || 0;
+      }
       mesh.rotation.y = obs.rotationY || 0;
       mesh.rotation.z = obs.rotationZ || 0;
 
       // Tumbling physics rotation when hit
-      if (obs.hit) {
+      if (obs.burning) {
+        // It burns where it stands: shrink towards ash instead of tumbling,
+        // and skip the shared-opacity knock-aside treatment.
+        const burn = Math.max(0, Math.min(1, obs.burnProgress ?? 0));
+        mesh.scale.setScalar(Math.max(0.001, 1 - burn));
+        mesh.position.y = oz + burn * 0.6;
+      } else if (obs.hit) {
         mesh.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material && 'opacity' in child.material) {
             child.material.transparent = true;
@@ -2613,24 +2632,33 @@ export class ThreeGameRenderer {
     const group = new THREE.Group();
 
     if (obs.type === 'barrel' || obs.type === 'loop_boulder' || obs.type === 'crate') {
-      // Chunky Voxel Wooden Fruit Crate stacked with fresh market fruit (replaces dark boulder/barrel)
+      // Chunky Voxel Wooden Fruit Crate stacked with fresh market fruit (replaces dark boulder/barrel).
+      // Built on a pivot at the crate's own centre: the whole group is rotated
+      // to roll, so the pivot has to sit where the mass sits or the spin drags
+      // the crate through the road. 0.64 splits the difference between the box
+      // lying flat (half-height 0.575) and standing on its end (half-depth 0.7).
+      const PIVOT_Y = 0.64;
+      const spin = new THREE.Group();
+      spin.position.y = PIVOT_Y;
+      group.add(spin);
+      group.userData.spin = spin;
+
       const crateGeo = new THREE.BoxGeometry(1.7, 1.15, 1.4);
       const crate = new THREE.Mesh(crateGeo, this.materials['crateWood']);
-      crate.position.y = 0.58;
       crate.castShadow = true;
-      group.add(crate);
+      spin.add(crate);
 
       // Pixel Fruit Cubes on top
       const fruitGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
       const fruit1 = new THREE.Mesh(fruitGeo, this.materials['apple']);
-      fruit1.position.set(-0.35, 1.25, -0.2);
-      group.add(fruit1);
+      fruit1.position.set(-0.35, 1.25 - PIVOT_Y, -0.2);
+      spin.add(fruit1);
       const fruit2 = new THREE.Mesh(fruitGeo, this.materials['orange']);
-      fruit2.position.set(0.35, 1.25, 0.15);
-      group.add(fruit2);
+      fruit2.position.set(0.35, 1.25 - PIVOT_Y, 0.15);
+      spin.add(fruit2);
       const fruit3 = new THREE.Mesh(fruitGeo, this.materials['apple']);
-      fruit3.position.set(0, 1.35, 0);
-      group.add(fruit3);
+      fruit3.position.set(0, 1.35 - PIVOT_Y, 0);
+      spin.add(fruit3);
     } else if (obs.type === 'spikes') {
       // Prehistoric Obsidian / Bone Spikes
       const baseMat = new THREE.MeshStandardMaterial({ color: 0x292524, roughness: 0.9 });
@@ -3568,6 +3596,79 @@ export class ThreeGameRenderer {
     }
   }
 
+  /**
+   * Flame Mode's visible fire: a jet of flame streaming from the dino's mouth
+   * to the prop it just breathed on, plus the flames licking any prop that is
+   * still alight. Appended after the particle pass, which clears this group at
+   * the start of every frame.
+   */
+  private renderFireBreath(
+    player: Player,
+    obstacles: Obstacle[],
+    breath?: { active: boolean; timeLeft: number; targetX: number; targetY: number }
+  ): void {
+    const alight = obstacles.filter((o) => o.burning && (o.burnTime ?? 0) > 0);
+    if (!breath?.active && alight.length === 0) return;
+
+    if (!this.flameGeo) this.flameGeo = new THREE.BoxGeometry(1, 1, 1);
+    if (!this.flameMats) {
+      this.flameMats = [0xf97316, 0xfbbf24, 0xf59e0b, 0xef4444].map(
+        (color) => new THREE.MeshBasicMaterial({ color })
+      );
+    }
+    const geo = this.flameGeo;
+    const mats = this.flameMats;
+    const group = this.particleGroup;
+    const time = performance.now() / 1000;
+
+    // 1. The breath itself: puffs from the mouth out along the gap, flickering
+    //    and shrinking as the jet runs out.
+    if (breath?.active) {
+      const life = Math.max(0, Math.min(1, breath.timeLeft / 0.28));
+      const startX = player.x * SCALE_X;
+      const startZ = -(player.y + 16) * SCALE_Y;
+      const startY = 1.45 + (player.z || 0) * SCALE_Z;
+      const endX = breath.targetX * SCALE_X;
+      const endZ = -breath.targetY * SCALE_Y;
+      const endY = 0.9;
+      const puffs = 18;
+      for (let i = 0; i < puffs; i++) {
+        const t = i / (puffs - 1);
+        const flick = 0.7 + 0.5 * Math.abs(Math.sin(time * 24 + i * 1.7));
+        const size = (0.55 - 0.32 * t) * flick * life;
+        if (size <= 0.02) continue;
+        const mesh = new THREE.Mesh(geo, mats[(i + Math.floor(time * 20)) % mats.length]);
+        mesh.position.set(
+          startX + (endX - startX) * t + (Math.random() - 0.5) * 0.2,
+          startY + (endY - startY) * t + (Math.random() - 0.5) * 0.28,
+          startZ + (endZ - startZ) * t + (Math.random() - 0.5) * 0.2
+        );
+        mesh.scale.setScalar(size);
+        mesh.rotation.set(Math.random(), Math.random(), Math.random());
+        group.add(mesh);
+      }
+    }
+
+    // 2. Props still alight: flame licking around them while they shrink.
+    for (const obs of alight) {
+      const burn = Math.max(0, Math.min(1, obs.burnProgress ?? 0));
+      const halfW = Math.max(0.4, (obs.width || 46) * SCALE_X * 0.5);
+      for (let i = 0; i < 9; i++) {
+        const flick = 0.7 + 0.6 * Math.abs(Math.sin(time * 18 + i * 2.1));
+        const size = (0.5 - 0.28 * burn) * flick;
+        const mesh = new THREE.Mesh(geo, mats[(i + Math.floor(time * 16)) % mats.length]);
+        mesh.position.set(
+          obs.x * SCALE_X + (Math.random() - 0.5) * halfW * 1.7,
+          0.3 + Math.random() * 1.0 + burn * 0.4,
+          -obs.y * SCALE_Y + (Math.random() - 0.5) * 0.7
+        );
+        mesh.scale.setScalar(size);
+        mesh.rotation.set(Math.random(), Math.random(), Math.random());
+        group.add(mesh);
+      }
+    }
+  }
+
   private renderParticlesAndTexts(particles: Particle[], floatingTexts: FloatingText[]): void {
     // 1. Render Voxel Spark Cubes & Pixel Confetti
     while (this.particleGroup.children.length > 0) {
@@ -3647,6 +3748,10 @@ export class ThreeGameRenderer {
     this.renderer.dispose();
     Object.values(this.materials).forEach((mat) => mat.dispose());
     Object.values(this.sharedGeometries).forEach((geo) => geo.dispose());
+    this.flameMats?.forEach((mat) => mat.dispose());
+    this.flameMats = null;
+    this.flameGeo?.dispose();
+    this.flameGeo = null;
     for (const sprite of this.floatingTextSprites.values()) {
       sprite.material.dispose();
     }

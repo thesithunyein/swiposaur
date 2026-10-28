@@ -182,6 +182,20 @@ html[lang='my'] select {
   line-height: 1.65;
 }
 
+/*
+ * Every element switches to Aka 08 while Burmese is on. Tailwind's font-
+ * utilities (font-['Fredoka'], font-['Lilita_One']) and the inline font-family
+ * attributes on SVG titles set their own stacks, so inheritance is not enough —
+ * this outranks all of them, inline styles included, and the late Fredoka /
+ * Lilita entries only ever win a glyph Aka 08 does not carry (emoji, symbols).
+ */
+html[lang='my'] body *,
+html[lang='my'] body *::before,
+html[lang='my'] body *::after {
+  font-family: 'Aka08', 'Noto Sans Myanmar', 'Myanmar Text', 'Padauk', 'Fredoka', 'Lilita One',
+    ui-sans-serif, system-ui, sans-serif !important;
+}
+
 html[lang='my'] .font-pixel,
 html[lang='my'] .font-ui {
   letter-spacing: 0;

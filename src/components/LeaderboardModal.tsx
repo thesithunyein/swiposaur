@@ -86,7 +86,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             </span>
             {typeof playerRank === 'number' && playerRank > 0 && (
               <span className="font-['Lilita_One'] text-[#FEF08A]">
-                {isOnline ? t('GLOBAL') : t('LOCAL')} RANK #{playerRank}
+                {isOnline
+                  ? t('GLOBAL RANK #{rank}', { rank: playerRank })
+                  : t('LOCAL RANK #{rank}', { rank: playerRank })}
               </span>
             )}
           </div>

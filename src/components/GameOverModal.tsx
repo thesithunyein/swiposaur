@@ -363,7 +363,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {stats.leaderboardStatus === 'local' && stats.localRank && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F97316]/20 border border-[#F97316]/60 text-[#FED7AA] rounded-full text-xs font-['Lilita_One'] mb-3">
               <Award className="w-4 h-4" />
-              <span>LOCAL RANK #{stats.localRank}</span>
+              <span>{t('LOCAL RANK #{rank}', { rank: stats.localRank })}</span>
             </div>
           )}
 
@@ -376,7 +376,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {stats.leaderboardStatus === 'submitted' && stats.globalRank && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#10B981]/25 border border-[#10B981]/60 text-[#34D399] rounded-full text-xs font-['Lilita_One'] mb-3">
               <Award className="w-4 h-4" />
-              <span>GLOBAL RANK #{stats.globalRank}</span>
+              <span>{t('GLOBAL RANK #{rank}', { rank: stats.globalRank })}</span>
             </div>
           )}
 
