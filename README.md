@@ -29,7 +29,7 @@ charge the Primal Roar and outrun the stampede.
 
 Swiposaur is a one-thumb endless runner that runs entirely in the browser: no plugins,
 no sprite sheets, no audio files and no server requirement. The whole world (dinosaur,
-critters, biomes, weather and soundtrack) is generated in code at runtime; the only
+critters, biomes, weather and sound effects) is generated in code at runtime; the only
 binary files in the build are the app icons and favicons.
 
 | | |
@@ -57,8 +57,9 @@ binary files in the build are the app icons and favicons.
 Launch passes through a short loading gate before the title menu: the logo, one progress
 bar and one rotating tip over a daylight sky with drifting clouds and pollen. The bar is
 gated by three real stages (typeface, arena, progress), so it parks at 96% until the work
-actually reports in rather than faking a finish. The first load in a browser session takes
-about 5 seconds; reloads in the same session take about 2, because the player has already
+actually reports in rather than faking a finish. The first load in a browser session holds
+for 8 seconds — about 8.35 s including the hold and fade — so the wordmark is fully painted
+before the menu; reloads in the same session take about 3, because the player has already
 seen the brand moment. An ease-out curve, not a linear tick, drives the fill; a guard
 releases the screen if a stage stalls, and `prefers-reduced-motion` drops the animation.
 
@@ -70,7 +71,7 @@ blind death, and three hits' worth of stamina before the stampede can end it.
 ```mermaid
 flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter inside<br/>whip reach?"}
-    range -- yes --> hit["TAIL WHIP LANDS<br/>+35 stamina · combo +1"]
+    range -- yes --> hit["TAIL WHIP LANDS<br/>+22 stamina · combo +1"]
     range -- no --> whiff["WHIFF<br/>no stamina refund"]
     hit --> roar["Roar meter charges<br/>1x → 2x → 4x → 8x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}
@@ -80,7 +81,7 @@ flowchart LR
     dmg --> alive{"Stamina left?"}
     score --> alive
     alive -- yes --> dodge
-    alive -- no --> over(["GAME OVER<br/>grade from score, distance and combo"])
+    alive -- no --> over(["GAME OVER<br/>grade from distance and combo"])
 ```
 
 1. **Opening cinematic.** A rival blocks the road; the first tap lands a cinematic
@@ -88,9 +89,11 @@ flowchart LR
 2. **Safe start (6 s).** The road is clear, the mob is off-camera and a mistake cannot
    end the run: the first obstacle is never a blind death.
 3. **Three-hit stamina.** A stumble costs 35–45 stamina and each hit spawns the chasing
-   stampede for 6 seconds unless you run clean. Stamina only drops on hits, so a clean
-   run never dies to a hidden timer.
-4. **Whip to survive.** A landed whip refunds +35 stamina and charges the roar meter.
+   stampede for 6 seconds unless you run clean. Running also burns stamina once the
+   opening is over, and the drain climbs with the clock, so no run is infinite.
+4. **Whip to survive.** A landed whip refunds +22 stamina, has an 18-frame cooldown and
+   charges the roar meter — enough to keep the loop alive, never enough to erase the
+   fatigue clock on its own.
 5. **Roar multiplier.** The meter steps `1x → 2x → 4x → 8x → 16x`; every point of score
    rides on it, so chaining whips is worth more than surviving passively.
 
@@ -129,7 +132,7 @@ flowchart TD
     subgraph VIS["Presentation layer"]
         RENDER["ThreeGameRenderer.ts<br/>scene · camera · voxel world · weather"]
         DINO["DinoMeshBuilder.ts<br/>rigged voxel dinosaur"]
-        SOUND["SoundEngine.ts<br/>synthesized music and SFX"]
+        SOUND["SoundEngine.ts<br/>synthesized SFX"]
     end
 
     STORE[("localStorage")]
@@ -237,11 +240,12 @@ ever creates one record.
 
 ## Features
 
-- Custom Three.js renderer: voxel dinosaur built from primitives, 6 skins, 6 biomes,
+- Custom Three.js renderer: voxel dinosaur built from primitives, 9 skins, 6 biomes,
   dynamic shadows, weather and camera shake.
-- Procedural Web Audio soundtrack and SFX, with no audio files and no sample licensing.
+- Procedural Web Audio SFX — whips, blasts, coin chimes — with no audio files and no sample
+  licensing. The arcade sequencer is not started during a run, so the effects carry the audio.
 - A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
-  pollen, eased over 5 seconds on the first load and 2 seconds on reloads.
+  pollen, eased over 8 seconds on the first load and 2 seconds on reloads.
 - Persistence: high score, coins, skins, levels, achievements, daily rewards, missions and
   banked stamina are stored locally (`localStorage`).
 - Five daily missions, drawn from a rotating twelve-mission pool and reset at 00:00
@@ -305,7 +309,7 @@ src/main.tsx                    React entry
 src/App.tsx                     screen state, persistence, HUD wiring
 src/components/                 Start screen, HUD, rating stamp, modals
 src/components/BootScreen.tsx   loading gate shown once before the title menu
-src/game/useBootSequence.ts     staged boot progress, 5 s first load / 2 s reloads
+src/game/useBootSequence.ts     staged boot progress, 8 s first load / 2 s reloads
 src/game/GameEngine.ts          run loop, collisions, whip, stamina, chase, scoring
 src/game/ThreeGameRenderer.ts   scene, camera, track and world rendering
 src/game/DinoMeshBuilder.ts     voxel dinosaur construction

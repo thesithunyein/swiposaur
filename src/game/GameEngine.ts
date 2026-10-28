@@ -55,6 +55,24 @@ const FIRE_BREATH_LEAD = 72;
 const FIRE_BREATH_MS = 560;
 /** How long a prop keeps burning before it is nothing but ash. */
 const BURN_MS = 620;
+/**
+ * Stamina economy.
+ *
+ * A whip used to restore 35 points with a 7-frame cooldown and nothing drained
+ * stamina while running, so a player who landed most whips could never lose:
+ * headless runs reached 11+ km without dying. The bar is now a budget — it
+ * bleeds while you run (faster the longer you go) and a whip only buys back
+ * part of it — so every run has a ceiling no matter how clean the dodging is.
+ */
+const STAMINA_PER_WHIP = 22;
+/** Frames between whips, so a crowd cannot be farmed frame by frame. */
+const SLAP_COOLDOWN_FRAMES = 18;
+/** Stamina lost per second before the ramp, once fatigue starts. */
+const STAMINA_DRAIN_BASE = 0.6;
+/** Extra drain per second of running, per second past the fatigue start. */
+const STAMINA_DRAIN_RAMP = 0.2;
+/** No fatigue while the player is still reading the opening street. */
+const STAMINA_FATIGUE_START_SECONDS = 6;
 /** Loud, stupid lines for the moment the dino breathes fire at a prop. */
 const FIRE_BREATH_LINES = [
   'TOASTY!',
@@ -842,8 +860,15 @@ export class GameEngine {
 
     // 2. Health / Stamina
     // Stamina is the only life system: obstacles cost it, landed whips restore
-    // it. There is deliberately no passive drain, so a clean run never ends on
-    // a timer the player cannot see or influence.
+    // part of it, and running itself burns it once the opening is over. The
+    // fatigue drain is the run's ceiling — without it, a player who lands every
+    // whip refills faster than anything can take it away and never loses.
+    if (this.runTimeSeconds > STAMINA_FATIGUE_START_SECONDS) {
+      const drainPerSecond =
+        STAMINA_DRAIN_BASE +
+        (this.runTimeSeconds - STAMINA_FATIGUE_START_SECONDS) * STAMINA_DRAIN_RAMP;
+      p.stamina = Math.max(0, p.stamina - (drainPerSecond * dtFactor) / 60);
+    }
     this.stats.stamina = Math.round(p.stamina);
     if (p.stamina <= 0) {
       this.triggerGameOver('EXHAUSTED');
@@ -872,7 +897,9 @@ export class GameEngine {
     // 3. Forward Speed calculation (faster base speed, gradually increases with distance)
     // Full speed now arrives at ~760 m / ~18 s instead of ~1,266 m / ~30 s,
     // so the acceleration is felt while obstacle density is still climbing.
-    const speedProgressBonus = Math.min(3.8, (p.y / 3000) * 1.5);
+    // The cap keeps climbing past the old 9.0 units/frame ceiling, so a long run
+    // keeps gaining pace instead of flattening out after 760 m.
+    const speedProgressBonus = Math.min(6.4, (p.y / 2400) * 1.8);
     let currentSpeed = (p.baseSpeed + speedProgressBonus);
     if (this.stats.feverActive) {
       currentSpeed *= 1.45; // Super turbo in Fever
@@ -1516,7 +1543,7 @@ export class GameEngine {
     const p = this.player;
     if (p.slapCooldown > 0) return;
 
-    p.slapCooldown = 7; // Snappy whip cadence
+    p.slapCooldown = SLAP_COOLDOWN_FRAMES; // deliberate whip cadence, not a burst
     p.isSlapping = true;
     p.slapProgress = 0;
     this.passiveRunTimer = 0;
@@ -1605,11 +1632,12 @@ export class GameEngine {
         this.stats.maxCombo = this.stats.comboStreak;
       }
 
-      // REPLENISH STAMINA / HEALTH:
-      p.stamina = Math.min(this.stats.maxStamina, p.stamina + 35);
+      // REPLENISH STAMINA / HEALTH: enough to keep the loop alive, never enough
+      // to erase the fatigue clock on its own.
+      p.stamina = Math.min(this.stats.maxStamina, p.stamina + STAMINA_PER_WHIP);
       this.stats.stamina = Math.round(p.stamina);
       sounds.playStaminaRefill();
-      this.addFloatingText(b.x, b.y + 70, '+35 STAMINA!', '#10B981', 20);
+      this.addFloatingText(b.x, b.y + 70, `+${STAMINA_PER_WHIP} STAMINA!`, '#10B981', 20);
 
       // Slapping also helps you pull away from chasing officer
       if (this.stats.chaserOnScreen) {

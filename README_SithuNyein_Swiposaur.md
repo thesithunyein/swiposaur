@@ -64,18 +64,19 @@ Best on a phone in portrait (360×640 and up) or any desktop window (1280×720 a
 - **Pause:** `P` / `Esc` or the pause button.
 
 Scoring: distance + coins + vaults + near-misses + whip combos, multiplied by the Roar
-meter (1×–16×). Stamina refills only on a landed whip.
+meter (1×–16×). Stamina falls to fatigue while running and is partly refunded by a landed
+whip (+22), so every run has a ceiling.
 
-Grades are read off the run itself, not the multiplier: **C** below 3,000 points · **B**
-3,000 · **A** 7,000 · **S** 14,000 (or 800 m with an 8× combo) · **S+** 24,000 (or
-1,100 m with a 12× combo).
+Grades are read off the run itself, not the score: the tier comes from distance plus the
+roar combo reached in the same run — **C** under 350 m · **B** 350 m · **A** 800 m ·
+**S** 1,400 m with a 10× combo · **S+** 2,000 m with a 15× combo.
 
 ### How it works
 
 ```mermaid
 flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter in<br/>whip reach?"}
-    range -- yes --> hit["WHIP LANDS<br/>+35 stamina · combo +1"]
+    range -- yes --> hit["WHIP LANDS<br/>+22 stamina · combo +1"]
     range -- no --> whiff["WHIFF<br/>no refund"]
     hit --> roar["Roar charges<br/>1x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}
@@ -141,7 +142,7 @@ flowchart TD
   `LICENSE`, and `package.json` declares the same identifier.
 - All art, 3D models, textures, logo and icons: original, generated in code (Three.js
   primitives + inline SVG), Apache-2.0.
-- All music and SFX: original, synthesized at runtime with the Web Audio API. No audio files.
+- All audio: original, synthesized at runtime with the Web Audio API. No audio files.
 - Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P (Google Fonts, SIL OFL 1.1).
 - Code libraries: MIT / ISC / Apache-2.0, see `README.md` for the full table.
 - No third-party art, sprites, music or purchased assets are included.
@@ -149,15 +150,16 @@ flowchart TD
 ## 12. Special testing instructions
 
 - Test both a desktop browser and a phone; touch controls are swipe + a 72 px whip button.
-- Touch devices intentionally spawn fewer obstacles (52/62/72% by distance band, mostly
-  one lane) than desktop (70/82/90%). Compare the same distance on both if a run feels off.
+- Touch devices intentionally spawn fewer obstacles (55/80/100% of rows by distance band)
+  than desktop (70/90/100%). In both modes 70% of obstacle rows fill two lanes and 30% fill
+  one, so a clear lane always exists. Compare the same distance on both if a run feels off.
 - If a run feels too easy or too hard, note the grade and distance on the game-over card.
 - Leaderboard smoke test: finish a run → the game-over card should say "LOCAL RANK" and
   "Saved locally". Only a successful, persisted online response may show "GLOBAL RANK".
 - To reset progress: Settings (gear icon, top right of the menu) → Reset progress, or
   clear site data.
 - Quick smoke test: PLAY → whip the intro rival → survive 6 s → whip a sidewalk critter
-  (stamina +35) → pause → resume → finish the run and check the grade card.
+  (stamina +22) → pause → resume → finish the run and check the grade card.
 
 ## 13. Recommended orientation, resolution, aspect ratio
 

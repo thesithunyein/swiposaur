@@ -271,7 +271,7 @@ describe('spawn cadence at speed', () => {
     engine.introState.active = false;
 
     const p = engine.player;
-    p.y = 13_000; // past the 1,267 m speed cap
+    p.y = 13_000; // past the ~853 m speed cap
     p.prevY = p.y;
     p.z = 0;
     p.vz = 0;
@@ -281,11 +281,12 @@ describe('spawn cadence at speed', () => {
     (engine as unknown as { update(dtFactor: number): void }).update(1);
     const after = (engine as unknown as { nextSpawnY: number }).nextSpawnY;
 
-    expect(p.speed).toBeCloseTo(9, 5);
+    // The cap now climbs to 6.4 units/frame of bonus instead of flattening at 3.8.
+    expect(p.speed).toBeCloseTo(p.baseSpeed + 6.4, 5);
 
     const gap = after - before;
-    expect(gap).toBeGreaterThan(500);
-    expect(gap).toBeLessThan(630);
+    expect(gap).toBeGreaterThan(650);
+    expect(gap).toBeLessThan(820);
     expect(gap / (p.speed * 60)).toBeGreaterThanOrEqual(0.95);
     expect(gap / (p.speed * 60)).toBeLessThanOrEqual(1.16);
   });
@@ -546,6 +547,117 @@ describe('personal best banner', () => {
 
     expect(engine.stats.highScore).toBe(1001);
     expect(engine.stats.isNewPersonalBest).toBe(true);
+  });
+});
+
+describe('stamina economy', () => {
+  function setup(): GameEngine {
+    const engine = makeEngine();
+    setTouchEnvironment(false);
+    engine.startGame();
+    engine.introState.active = false;
+    engine.tutorialState.active = false;
+    engine.obstacles = [];
+    engine.powerups = [];
+    engine.bystanders = [];
+    const p = engine.player;
+    p.x = 0;
+    p.prevX = 0;
+    p.y = 100;
+    p.prevY = 100;
+    p.z = 0;
+    p.vz = 0;
+    p.stamina = 100;
+    engine.stats.distanceRun = 100;
+    return engine;
+  }
+
+  function shopper(id: number, x: number, y: number) {
+    return {
+      id,
+      x,
+      y,
+      type: 'fruitseller' as const,
+      name: 'Shopper',
+      points: 50,
+      bodyColor: '#000',
+      shirtColor: '#fff',
+      accessory: 'hat' as const,
+      slapped: false,
+      wobble: 0,
+      walking: false,
+      walkSpeed: 0,
+      walkPhase: 0,
+    };
+  }
+
+  it('refunds a bounded slice of stamina per whip instead of a full heal', () => {
+    const engine = setup();
+    const p = engine.player;
+    p.stamina = 40;
+    engine.bystanders = [shopper(1, 0, p.y + 10)];
+
+    engine.requestSlap();
+    (engine as unknown as { update(dtFactor: number): void }).update(1);
+
+    expect(engine.stats.slapsCount).toBe(1);
+    // 40 + 22, not the old +35 that let a whip outrun every drain.
+    expect(p.stamina).toBeCloseTo(62, 2);
+  });
+
+  it('enforces a whip cooldown so a crowd cannot be farmed', () => {
+    const engine = setup();
+    const p = engine.player;
+    engine.bystanders = [shopper(1, 0, p.y + 10), shopper(2, 40, p.y + 30)];
+    const state = engine as unknown as { update(dtFactor: number): void };
+
+    engine.requestSlap();
+    state.update(1);
+    expect(engine.stats.slapsCount).toBe(1);
+    expect(p.slapCooldown).toBeGreaterThan(10);
+
+    // A second press inside the cooldown is swallowed, not a free second hit.
+    engine.requestSlap();
+    state.update(1);
+    expect(engine.stats.slapsCount).toBe(1);
+    expect(engine.bystanders.filter((b) => b.slapped)).toHaveLength(1);
+  });
+
+  it('does not bleed stamina during the opening seconds', () => {
+    const engine = setup();
+    const p = engine.player;
+    const state = engine as unknown as { update(dtFactor: number): void; runTimeSeconds: number };
+    state.runTimeSeconds = 3;
+
+    for (let i = 0; i < 120; i++) state.update(1);
+
+    expect(p.stamina).toBe(100);
+  });
+
+  it('burns stamina while running once fatigue starts', () => {
+    const engine = setup();
+    const p = engine.player;
+    const state = engine as unknown as { update(dtFactor: number): void; runTimeSeconds: number };
+    state.runTimeSeconds = 70;
+
+    for (let i = 0; i < 60; i++) state.update(1);
+
+    // ~13 stamina in one second at the 70 s drain rate, so the bar falls visibly.
+    expect(p.stamina).toBeGreaterThan(84);
+    expect(p.stamina).toBeLessThan(88);
+  });
+
+  it('ends a perfectly dodged run by exhaustion, not forever', () => {
+    const engine = setup();
+    const p = engine.player;
+    const state = engine as unknown as { update(dtFactor: number): void; runTimeSeconds: number };
+    state.runTimeSeconds = 120;
+    p.stamina = 4;
+
+    for (let i = 0; i < 30; i++) state.update(1);
+
+    expect(engine.state).toBe('GAMEOVER');
+    expect(engine.stats.gameOverReason).toBe('EXHAUSTED');
   });
 });
 
