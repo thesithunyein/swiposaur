@@ -127,8 +127,11 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
         </div>
       )}
 
-      {/* Right hub: jump and the one big whip target. No captions, no duplicates. */}
-      <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
+      {/* Right hub: jump and the one big whip target, packed tight so one right
+          thumb rests across both. The whip grew from 80 to 96 px on phones (the
+          left hub keeps 80 px buttons, so a 360 px screen still fits side by
+          side); the sm: sizes the desktop sees are unchanged. */}
+      <div className="flex items-end gap-1 sm:gap-2 pointer-events-auto">
         {isTouch && (
           <button
             type="button"
@@ -175,7 +178,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
           }}
           onPointerCancel={() => setIsSlapPressed(false)}
           aria-label={t('Tail-whip slap button')}
-          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl border-3 border-[#FFE082] flex flex-col items-center justify-center gap-0.5 cursor-pointer touch-none select-none transition-all ${
+          className={`w-24 h-24 rounded-2xl sm:rounded-3xl border-3 border-[#FFE082] flex flex-col items-center justify-center gap-0.5 cursor-pointer touch-none select-none transition-all ${
             isIntroActive
               ? 'bg-gradient-to-b from-[#FFA726] to-[#D97706] animate-pulse shadow-[0_0_28px_#F59E0B]'
               : 'bg-gradient-to-b from-[#FFA726] via-[#FB8C00] to-[#E65100]'

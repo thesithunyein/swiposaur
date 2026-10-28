@@ -22,6 +22,9 @@ import {
   COMIC_WORDS,
   ROAD_WIDTH,
   ROAD_LANES,
+  TOUCH_ROAD_WIDTH,
+  TOUCH_ROAD_LANES,
+  TOUCH_SLAP_REACH,
   SIDEWALK_EDGES,
   SLAP_REACH,
   MOB_SAFE_DISTANCE,
@@ -65,6 +68,12 @@ const BURN_MS = 620;
  * part of it — so every run has a ceiling no matter how clean the dodging is.
  */
 const STAMINA_PER_WHIP = 22;
+/**
+ * Touch runs refund a little more per whip: a phone has one thumb juggling
+ * dodge, jump and whip, so +26 keeps the fatigue ramp survivable without ever
+ * letting a whip outrun the drain (at +35 it used to). Desktop stays at 22.
+ */
+const STAMINA_PER_WHIP_TOUCH = 26;
 /** Frames between whips, so a crowd cannot be farmed frame by frame. */
 const SLAP_COOLDOWN_FRAMES = 18;
 /**
@@ -215,6 +224,15 @@ export class GameEngine {
    * on both input modes.
    */
   public readonly touchInputMode: boolean;
+  /**
+   * Street geometry for this run, frozen with the input mode. Phones get the
+   * wider road (about 12% more room between the same three lanes) and the
+   * longer whip reach that follows from walkers standing farther out;
+   * keyboard runs keep the original constants.
+   */
+  public readonly roadWidth: number;
+  public readonly roadLanes: number[];
+  public readonly slapReach: number;
   private onStatsUpdate?: (stats: GameStats, state: GameState) => void;
   public onHurtFlash?: () => void;
   /** High score as it stood when the current run began, captured before saving. */
@@ -258,7 +276,11 @@ export class GameEngine {
     this.canvas = canvas;
     this.onHurtFlash = onHurtFlash;
     this.touchInputMode = isTouchEnvironment();
+    this.roadWidth = this.touchInputMode ? TOUCH_ROAD_WIDTH : ROAD_WIDTH;
+    this.roadLanes = this.touchInputMode ? TOUCH_ROAD_LANES : ROAD_LANES;
+    this.slapReach = this.touchInputMode ? TOUCH_SLAP_REACH : SLAP_REACH;
     this.renderer = new ThreeGameRenderer(this.canvas);
+    this.renderer.setTouchLayout(this.touchInputMode);
     this.onStatsUpdate = onStatsUpdate;
 
     const currentSettings = loadSettings();
@@ -565,7 +587,7 @@ export class GameEngine {
       }
       this.currentLaneIndex = Math.max(
         0,
-        Math.min(ROAD_LANES.length - 1, this.currentLaneIndex + direction)
+        Math.min(this.roadLanes.length - 1, this.currentLaneIndex + direction)
       );
       this.stats.currentLane = this.currentLaneIndex;
       this.tutorialState.active = false;
@@ -573,7 +595,7 @@ export class GameEngine {
       markMobileTutorialSeen();
       sounds.playPowerup();
       this.addFloatingText(
-        ROAD_LANES[this.currentLaneIndex],
+        this.roadLanes[this.currentLaneIndex],
         this.player.y + 25,
         'NICE DODGE!',
         '#34D399',
@@ -582,7 +604,7 @@ export class GameEngine {
       return;
     }
 
-    const newIndex = Math.max(0, Math.min(ROAD_LANES.length - 1, this.currentLaneIndex + direction));
+    const newIndex = Math.max(0, Math.min(this.roadLanes.length - 1, this.currentLaneIndex + direction));
     if (newIndex !== this.currentLaneIndex) {
       this.currentLaneIndex = newIndex;
       this.stats.currentLane = this.currentLaneIndex;
@@ -610,14 +632,14 @@ export class GameEngine {
       rollSpeed: 0,
       vx: 0,
       isShifting: false,
-      shiftMinX: -100,
-      shiftMaxX: 100,
+      shiftMinX: -100 * (this.roadWidth / ROAD_WIDTH),
+      shiftMaxX: 100 * (this.roadWidth / ROAD_WIDTH),
     });
 
     for (let i = 0; i < 4; i++) {
       this.coins.push({
         id: this.entityIdCounter++,
-        x: ROAD_LANES[2],
+        x: this.roadLanes[2],
         y: 355 + i * 30,
         collected: false,
         bobPhase: i * 0.4,
@@ -924,7 +946,7 @@ export class GameEngine {
       currentSpeed *= 1.45; // Super turbo in Fever
     } else if (p.slipTimer > 0) {
       currentSpeed *= 0.65; // Stumble slowdown
-    } else if (Math.abs(p.x) > 125) {
+    } else if (Math.abs(p.x) > this.roadWidth / 2 - 15) {
       // Rough sidewalk curb friction on outer edges
       currentSpeed *= 0.88;
     }
@@ -953,7 +975,7 @@ export class GameEngine {
     }
 
     // Smooth snappy glide ensuring character always lands squarely in the center of the lane
-    const targetX = ROAD_LANES[this.currentLaneIndex];
+    const targetX = this.roadLanes[this.currentLaneIndex];
     const diff = targetX - p.x;
     if (Math.abs(diff) > 0.4) {
       p.vx = diff * 12.0;
@@ -964,7 +986,7 @@ export class GameEngine {
     }
 
     // Clamp inside 3-lane road limits (-125 to 125)
-    const maxBound = ROAD_WIDTH / 2 - 15;
+    const maxBound = this.roadWidth / 2 - 15;
     if (p.x < -maxBound) p.x = -maxBound;
     if (p.x > maxBound) p.x = maxBound;
 
@@ -1046,6 +1068,20 @@ export class GameEngine {
         fa.rotation += 0.15 * dtFactor;
         fa.vy -= 0.25 * dtFactor; // gravity
       }
+    }
+
+    // 6a. Touch auto-whip assist, airborne only. On a phone the same thumb has
+    // to jump and whip, so a walker could glow and pass while the player was
+    // mid-dodge. The engine covers that jump window itself, but ground whips
+    // stay manual: otherwise every walker is hit for free, stamina never drops
+    // and the run has no failure state. Same cooldown and reward as a tap.
+    if (
+      this.touchInputMode &&
+      p.z > 0 &&
+      p.slapCooldown <= 0 &&
+      this.bystanders.some((b) => b.inStrikeRange)
+    ) {
+      this.executeSlap();
     }
 
     // 6b. Opening grace window: keep the mob off-camera so a new player can
@@ -1583,7 +1619,7 @@ export class GameEngine {
     const dx = b.x - this.player.x;
     const dy = b.y - this.player.y;
     if (dy < backWindow || dy > SLAP_FRONT_WINDOW) return false;
-    return Math.sqrt(dx * dx + dy * dy) <= SLAP_REACH;
+    return Math.sqrt(dx * dx + dy * dy) <= this.slapReach;
   }
 
   /** Closest bystander the current whip would connect with, if any. */
@@ -1686,11 +1722,13 @@ export class GameEngine {
       }
 
       // REPLENISH STAMINA / HEALTH: enough to keep the loop alive, never enough
-      // to erase the fatigue clock on its own.
-      p.stamina = Math.min(this.stats.maxStamina, p.stamina + STAMINA_PER_WHIP);
+      // to erase the fatigue clock on its own. Touch gets the slightly richer
+      // +26 slice; keyboard keeps the tuned +22.
+      const staminaGain = this.touchInputMode ? STAMINA_PER_WHIP_TOUCH : STAMINA_PER_WHIP;
+      p.stamina = Math.min(this.stats.maxStamina, p.stamina + staminaGain);
       this.stats.stamina = Math.round(p.stamina);
       sounds.playStaminaRefill();
-      this.addFloatingText(b.x, b.y + 70, `+${STAMINA_PER_WHIP} STAMINA!`, '#10B981', 20);
+      this.addFloatingText(b.x, b.y + 70, `+${staminaGain} STAMINA!`, '#10B981', 20);
 
       // Slapping also helps you pull away from chasing officer
       if (this.stats.chaserOnScreen) {
@@ -1800,17 +1838,18 @@ export class GameEngine {
    * - Zero yellow obstacles (banana peel completely removed)
    */
   private spawnMarketSegment(targetY: number): void {
-    const lanes = ROAD_LANES; // [-90, 0, 90]
+    const lanes = this.roadLanes; // [-90, 0, 90], wider on touch
     const dist = this.stats.distanceRun;
 
     // 1. Spawn Bystanders along left and right sidewalk platforms
-    // (Bystanders stand at -155 or +155, easily slappable when player is in lane -90 or +90)
+    // (Desktop: ±155, just outside the ±140 curb. On touch the street is
+    // ~12% wider, so the sidewalk — and these walkers — move out with it.)
     const numBystanders = Math.random() > 0.35 ? 2 : 1;
     for (let i = 0; i < numBystanders; i++) {
       const walking = Math.random() < 0.55;
       const template = BYSTANDER_TEMPLATES[Math.floor(Math.random() * BYSTANDER_TEMPLATES.length)];
       const side = (i === 0 ? (Math.random() > 0.5 ? 1 : -1) : (Math.random() > 0.5 ? -1 : 1));
-      const bx = side * (155 + Math.random() * 8);
+      const bx = side * (this.roadWidth / 2 + 15 + Math.random() * 8);
       const by = targetY + (Math.random() * 50 - 25);
 
       this.bystanders.push({
@@ -1915,8 +1954,10 @@ export class GameEngine {
         rollSpeed: (type === 'barrel' || type === 'loop_boulder') ? 1.5 + Math.random() * 0.3 : 0,
         vx: initialVx,
         isShifting,
-        shiftMinX: -100,
-        shiftMaxX: 100,
+        // Sweeps the whole street: ±100 on the 280-wide road, ±112 on the
+        // wider touch road so it still reaches the outer lanes at ±101.
+        shiftMinX: -100 * (this.roadWidth / ROAD_WIDTH),
+        shiftMaxX: 100 * (this.roadWidth / ROAD_WIDTH),
       };
       this.obstacles.push(spawned);
     }
@@ -1934,8 +1975,8 @@ export class GameEngine {
         rollSpeed: 0,
         vx: 0,
         isShifting: false,
-        shiftMinX: -100,
-        shiftMaxX: 100,
+        shiftMinX: -100 * (this.roadWidth / ROAD_WIDTH),
+        shiftMaxX: 100 * (this.roadWidth / ROAD_WIDTH),
       });
     }
 

@@ -172,3 +172,21 @@ export const SIDEWALK_EDGES = [-140, 140]; // Curb edge hazards
 // whole cue window from every lane, so no glowing walker is out of reach.
 export const SLAP_REACH = 282;
 export const MOB_SAFE_DISTANCE = 45; // Minimum distance before mob catches player
+
+/**
+ * Touch builds run on a slightly wider street: same three lanes, just about
+ * 12% more breathing room between them. Everything downstream — the road
+ * clamp, the lane dashes, the sidewalk bystanders stand on — derives from
+ * these values, and the keyboard build keeps the original numbers untouched.
+ */
+export const TOUCH_ROAD_SCALE = 1.12;
+export const TOUCH_ROAD_WIDTH = Math.round(ROAD_WIDTH * TOUCH_ROAD_SCALE); // 314
+export const TOUCH_ROAD_LANES = ROAD_LANES.map((lane) => Math.round(lane * TOUCH_ROAD_SCALE)); // [-101, 0, 101]
+
+/**
+ * On the wider street the far curb sits at ±157.5 and a walker can stand at
+ * ±180.5, so the worst cross-road cue (lane -101 against walker 180.5 at dy
+ * 112) is ~303 units. 310 keeps every glowing walker reachable on touch;
+ * desktop keeps the tuned 282.
+ */
+export const TOUCH_SLAP_REACH = 310;

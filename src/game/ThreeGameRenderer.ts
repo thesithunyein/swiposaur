@@ -12,7 +12,7 @@ import {
   CharacterSkin,
   IntroVictim,
 } from './types.ts';
-import { ROAD_WIDTH, CHARACTER_SKINS } from './constants.ts';
+import { ROAD_WIDTH, TOUCH_ROAD_SCALE, CHARACTER_SKINS } from './constants.ts';
 import { MapDefinition, GAME_MAPS, getMapById } from './maps.ts';
 import { buildDinoCharacterMesh, DinoMeshComponents, buildDinoHeadwear } from './DinoMeshBuilder.ts';
 
@@ -51,6 +51,16 @@ export class ThreeGameRenderer {
   private roadSegments: THREE.Group[] = [];
   private readonly segmentLength: number = 64; // in Three.js world units
   private readonly numSegments: number = 7;
+  /**
+   * Touch layout: the street runs ~12% wider (same three lanes, more room
+   * between them) and the follow camera sits a little higher, a little farther
+   * back and aims further down the road so obstacles arrive earlier on screen.
+   * All zeroes on desktop, so the original framing is untouched.
+   */
+  private roadScale = 1;
+  private touchLift = 0;
+  private touchBack = 0;
+  private touchLookAhead = 0;
 
   // Dynamic Voxel Player Character Group
   private playerGroup: THREE.Group;
@@ -397,7 +407,7 @@ export class ThreeGameRenderer {
    */
   private createSegment(index: number): THREE.Group {
     const group = new THREE.Group();
-    const halfRoad = (ROAD_WIDTH / 2) * SCALE_X; // 140 * 0.05 = 7.0
+    const halfRoad = (ROAD_WIDTH / 2) * this.roadScale * SCALE_X; // 140 * 0.05 = 7.0
     const sidewalkWidth = 70 * SCALE_X; // 3.5
     const length = this.segmentLength;
 
@@ -443,7 +453,7 @@ export class ThreeGameRenderer {
     group.add(lineR);
 
     // 5. 2 Dashed Voxel Lane Blocks (-45, 45) cleanly separating 3 lanes
-    const dividers = [-45, 45].map((d) => d * SCALE_X);
+    const dividers = [-45, 45].map((d) => d * this.roadScale * SCALE_X);
     const dashLen = 2.2;
     const dashGap = 2.4;
     const numDashes = Math.floor(length / (dashLen + dashGap));
@@ -1963,6 +1973,32 @@ export class ThreeGameRenderer {
     }
   }
 
+  /**
+   * Mobile layout: widen the street by TOUCH_ROAD_SCALE (same three lanes,
+   * more room between them) and reframe the camera a little higher and
+   * farther back, aimed further ahead. The track is rebuilt because roadbed,
+   * curbs, dashes and every biome prop sit relative to the road edge. Desktop
+   * passes false and keeps the original geometry and framing.
+   */
+  public setTouchLayout(enabled: boolean): void {
+    this.roadScale = enabled ? TOUCH_ROAD_SCALE : 1;
+    this.touchLift = enabled ? 0.6 : 0;
+    this.touchBack = enabled ? 1.2 : 0;
+    this.touchLookAhead = enabled ? 2 : 0;
+    this.rebuildTrack();
+  }
+
+  private rebuildTrack(): void {
+    while (this.roadGroup.children.length > 0) {
+      this.roadGroup.remove(this.roadGroup.children[0]);
+    }
+    this.roadSegments = [];
+    this.buildRoadSegments();
+    const currentPz = this.playerGroup ? this.playerGroup.position.z : 0;
+    this.resetTrack(currentPz);
+    this.resetCamera(currentPz);
+  }
+
   public setMap(map: MapDefinition): void {
     this.currentMap = map;
     this.scene.background = new THREE.Color(map.skyColor);
@@ -2018,8 +2054,12 @@ export class ThreeGameRenderer {
 
   public resetCamera(pz: number = 0): void {
     const isPortrait = this.camera.aspect < 0.88;
-    this.camera.position.set(0, isPortrait ? 6.2 : 5.2, pz + (isPortrait ? 10.6 : 9.2));
-    this.camera.lookAt(0, 1.9, pz - 11.5);
+    this.camera.position.set(
+      0,
+      (isPortrait ? 6.2 : 5.2) + this.touchLift,
+      pz + (isPortrait ? 10.6 : 9.2) + this.touchBack
+    );
+    this.camera.lookAt(0, 1.9, pz - 11.5 - this.touchLookAhead);
   }
 
   private buildRoadSegments(): void {
@@ -2483,11 +2523,11 @@ export class ThreeGameRenderer {
     // 5. Follow Camera (Closer, high-clarity arcade follow framing)
     const isPortrait = this.camera.aspect < 0.88;
     let targetCamX = px * (isPortrait ? 0.35 : 0.48);
-    let targetCamY = (isPortrait ? 6.2 : 5.2) + py * 0.35;
-    let targetCamZ = pz + (isPortrait ? 10.6 : 9.2);
+    let targetCamY = (isPortrait ? 6.2 : 5.2) + this.touchLift + py * 0.35;
+    let targetCamZ = pz + (isPortrait ? 10.6 : 9.2) + this.touchBack;
     let targetLookX = px * 0.35;
     let targetLookY = 1.9 + py * 0.4;
-    let targetLookZ = pz - 11.5;
+    let targetLookZ = pz - 11.5 - this.touchLookAhead;
 
     if (introActive) {
       if (introPhase === 'WINDUP') {

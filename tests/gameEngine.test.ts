@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/game/ThreeGameRenderer.ts', () => {
   class RendererStub {
+    setTouchLayout() {}
     setCharacterFocus() {}
     setSkin() {}
     setMap() {}
@@ -115,6 +116,21 @@ describe('GameEngine touch mode', () => {
     expect(late.obstacleRate).toBeGreaterThan(0.97);
     expect(late.doubleLaneShare).toBeGreaterThan(0.64);
     expect(late.doubleLaneShare).toBeLessThan(0.76);
+  });
+
+  it('widens the street ~12% on touch and keeps the desktop numbers', () => {
+    setTouchEnvironment(true);
+    const touchEngine = makeEngine();
+    expect(touchEngine.roadWidth).toBe(314); // 280 * 1.12
+    expect(touchEngine.roadLanes).toEqual([-101, 0, 101]);
+    // The whip has to follow the wider street: walkers stand farther out.
+    expect(touchEngine.slapReach).toBe(310);
+
+    setTouchEnvironment(false);
+    const desktopEngine = makeEngine();
+    expect(desktopEngine.roadWidth).toBe(280);
+    expect(desktopEngine.roadLanes).toEqual([-90, 0, 90]);
+    expect(desktopEngine.slapReach).toBe(282);
   });
 
   it('drops coins in a single lane per row, and far fewer of them', () => {
@@ -552,8 +568,10 @@ describe('personal best banner', () => {
 
 describe('stamina economy', () => {
   function setup(): GameEngine {
-    const engine = makeEngine();
+    // Set the environment first: touch mode is frozen at construction, so
+    // anything a previous test left behind would silently retune this run.
     setTouchEnvironment(false);
+    const engine = makeEngine();
     engine.startGame();
     engine.introState.active = false;
     engine.tutorialState.active = false;
@@ -603,6 +621,39 @@ describe('stamina economy', () => {
     expect(engine.stats.slapsCount).toBe(1);
     // 40 + 22, not the old +35 that let a whip outrun every drain.
     expect(p.stamina).toBeCloseTo(62, 2);
+  });
+
+  it('pays +26 per whip on a touch build instead of the keyboard +22', () => {
+    // Detection is frozen at construction, so the touch env must be set first.
+    setTouchEnvironment(true);
+    const engine = makeEngine();
+    setTouchEnvironment(false);
+    engine.startGame();
+    engine.introState.active = false;
+    engine.tutorialState.active = false;
+    engine.obstacles = [];
+    engine.powerups = [];
+    engine.bystanders = [];
+    const p = engine.player;
+    p.x = 0;
+    p.prevX = 0;
+    p.y = 100;
+    p.prevY = 100;
+    p.z = 0;
+    p.vz = 0;
+    p.stamina = 40;
+    engine.stats.distanceRun = 100;
+    engine.bystanders = [shopper(1, 0, p.y + 10)];
+
+    engine.requestSlap();
+    (engine as unknown as { update(dtFactor: number): void }).update(1);
+
+    expect(engine.stats.slapsCount).toBe(1);
+    // 40 + 26: the phone refund is a little richer, but still far below the
+    // +35 that made a full heal possible.
+    expect(p.stamina).toBeCloseTo(66, 2);
+    // Still below the cap, so the value is a slice, not a refill.
+    expect(p.stamina).toBeLessThan(engine.stats.maxStamina);
   });
 
   it('enforces a whip cooldown so a crowd cannot be farmed', () => {

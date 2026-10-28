@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/game/ThreeGameRenderer.ts', () => {
   class RendererStub {
+    setTouchLayout() {}
     setCharacterFocus() {}
     setSkin() {}
     setMap() {}
@@ -20,7 +21,6 @@ vi.mock('../src/game/ThreeGameRenderer.ts', () => {
 });
 
 import { GameEngine } from '../src/game/GameEngine.ts';
-import { ROAD_LANES } from '../src/game/constants.ts';
 import type { Bystander } from '../src/game/types.ts';
 
 type Tickable = { update(dtFactor: number): void };
@@ -44,7 +44,42 @@ function walker(x: number, y: number, walkSpeed: number): Bystander {
   };
 }
 
-function setup(lane: number, bystanderX: number, walkSpeed: number, walkerAhead = 260, startY = 100) {
+function setTouchEnvironment(touch: boolean): void {
+  // jsdom defines `ontouchstart`, so every run would otherwise look like a
+  // phone. Stub matchMedia too: jsdom does not implement it and the touch
+  // probe reads it once the touch property is removed.
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+  Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: touch ? 5 : 0 });
+  if (touch) {
+    (window as unknown as Record<string, unknown>).ontouchstart = null;
+  } else {
+    delete (window as unknown as Record<string, unknown>).ontouchstart;
+  }
+}
+
+function setup(
+  lane: number,
+  bystanderX: number,
+  walkSpeed: number,
+  walkerAhead = 260,
+  startY = 100,
+  touch = false,
+  airborne = false
+) {
+  setTouchEnvironment(touch);
   const canvas = document.createElement('canvas');
   const engine = new GameEngine(canvas, () => {}, () => {});
   engine.startGame();
@@ -54,11 +89,12 @@ function setup(lane: number, bystanderX: number, walkSpeed: number, walkerAhead 
   engine.powerups = [];
   engine.bystanders = [];
   const p = engine.player;
-  p.x = ROAD_LANES[lane];
+  // Read the lanes off the engine: touch runs sit on the wider street.
+  p.x = engine.roadLanes[lane];
   p.prevX = p.x;
   p.y = startY;
   p.prevY = startY;
-  p.z = 0;
+  p.z = airborne ? 500 : 0;
   p.vz = 0;
   p.stamina = 100;
   engine.currentLaneIndex = lane;
@@ -79,7 +115,11 @@ beforeEach(() => {
 });
 
 describe('whip reach', () => {
-  it('lands on every frame the target is highlighted, for walkers on both curbs', () => {
+  // 1,120 engine constructions (~39k updates) in one simulation loop: it runs
+  // in ~2.3 s on an idle machine but blows past the default 5 s limit whenever
+  // the other test files are running in parallel, so it gets its own budget.
+  // The assertions themselves are unchanged.
+  it('lands on every frame the target is highlighted, for walkers on both curbs', { timeout: 30_000 }, () => {
     // Center lane reaches the far curb (dx ≈ 159); right lane reaches the near
     // one (dx ≈ 69). Both directions of sidewalk traffic are covered, because a
     // walker drifting toward the runner used to have the shortest window.
@@ -124,6 +164,63 @@ describe('whip reach', () => {
       expect(cueFrames, `cue at ${startY}, dt ${dt}`).toBeGreaterThan(12 / dt);
       expect(whiffs, `lane ${lane}, x ${x}, walk ${speed}, y ${startY}, dt ${dt}`).toBe(0);
     }
+  });
+
+  it('auto-whips a glowing walker on touch only while airborne', () => {
+    // Jumping and whipping share one thumb on a phone, so the engine covers the
+    // airborne window. Ground whips stay manual; otherwise stamina never drops
+    // and the run cannot be lost.
+    const grounded = setup(1, 159, -0.6, 60, 100, true);
+    const groundedState = grounded.engine as unknown as Tickable;
+    groundedState.update(1);
+    expect(grounded.engine.touchInputMode).toBe(true);
+    expect(grounded.target.slapped).toBe(false);
+
+    const airborne = setup(1, 159, -0.6, 60, 100, true, true);
+    const airborneState = airborne.engine as unknown as Tickable;
+    airborneState.update(1);
+    expect(airborne.target.slapped).toBe(true);
+    expect(airborne.engine.stats.slapsCount).toBe(1);
+
+    // The same airborne frame on a desktop run must wait for the player's key.
+    const desktop = setup(1, 159, -0.6, 60, 100, false, true);
+    const desktopState = desktop.engine as unknown as Tickable;
+    desktopState.update(1);
+    expect(desktop.engine.touchInputMode).toBe(false);
+    expect(desktop.target.slapped).toBe(false);
+  });
+
+  it('reaches the far curb from the opposite lane on the wider touch street', () => {
+    // Phone lanes sit at ±101 and walkers stand at ±172-180, so the cross-road
+    // cue is longer than the desktop worst case (282 units). The touch reach
+    // has to cover the whole window from the far lane or a glowing walker
+    // would be visible and unhittable.
+    const { engine, target } = setup(0, 180, 0, 130, 100, true);
+    expect(engine.roadWidth).toBe(314);
+    expect(engine.roadLanes).toEqual([-101, 0, 101]);
+
+    const state = engine as unknown as Tickable;
+    let whipped = false;
+    for (let i = 0; i < 70 && !whipped; i++) {
+      engine.requestSlap();
+      state.update(1);
+      whipped = target.slapped;
+    }
+    expect(whipped).toBe(true);
+  });
+
+  it('auto-whip honours the cooldown instead of swinging every frame', () => {
+    const { engine, p } = setup(1, 159, 0, 60, 100, true, true);
+    engine.bystanders.push({ ...walker(-159, p.y + 90, 0), id: 2 });
+    const state = engine as unknown as Tickable;
+    const [first, second] = engine.bystanders;
+
+    state.update(1);
+    expect(first.slapped).toBe(true);
+    expect(second.slapped).toBe(false);
+
+    for (let i = 0; i < 19; i++) state.update(1);
+    expect(second.slapped).toBe(true);
   });
 
   it('queues a whip pressed during cooldown instead of swallowing it', () => {

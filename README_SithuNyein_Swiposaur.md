@@ -150,18 +150,25 @@ flowchart TD
 ## 12. Special testing instructions
 
 - Test both a desktop browser and a phone; touch controls are four buttons
-  (LEFT, RIGHT, JUMP, 80 px WHIP) plus swipes anywhere on screen: left/right to
-  change lane, up to jump, down to whip.
-- Touch devices intentionally spawn fewer obstacles (55/80/100% of rows by distance band)
-  than desktop (70/90/100%). In both modes 70% of obstacle rows fill two lanes and 30% fill
-  one, so a clear lane always exists. Compare the same distance on both if a run feels off.
+  (LEFT, RIGHT, JUMP, 96 px WHIP) plus swipes anywhere on screen: left/right to
+  change lane, up to jump, down to whip. The engine auto-whips a glowing walker
+  only while the dino is airborne, which covers the jump-and-whip clash on one
+  thumb; ground whips stay manual, so stamina can still run out and a run can end.
+- Touch runs are tuned a little softer than keyboard runs: a 12% wider road
+  (same three lanes, more room between them), a camera that sits higher and
+  farther back to show more of the road ahead, +26 stamina per whip (keyboard
+  +22), and fewer obstacles (55/80/100% of rows by distance band vs desktop
+  70/90/100%). In both modes 70% of obstacle rows fill two lanes and 30% fill
+  one, so a clear lane always exists. Compare the same distance on both if a run
+  feels off.
 - If a run feels too easy or too hard, note the grade and distance on the game-over card.
 - Leaderboard smoke test: finish a run → the game-over card should say "LOCAL RANK" and
   "Saved locally". Only a successful, persisted online response may show "GLOBAL RANK".
 - To reset progress: Settings (gear icon, top right of the menu) → Reset progress, or
   clear site data.
 - Quick smoke test: PLAY → whip the intro rival → survive 6 s → whip a sidewalk critter
-  (stamina +22) → pause → resume → finish the run and check the grade card.
+  (stamina +26 on a phone, +22 on keyboard) → pause → resume → finish the run and
+  check the grade card.
 
 ## 13. Recommended orientation, resolution, aspect ratio
 
