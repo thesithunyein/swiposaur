@@ -39,7 +39,7 @@ binary files in the build are the app icons and favicons.
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Footprint** | ~1.4 MB on disk · ~306 KB gzipped (286 KB JS, 14 KB CSS) · no sprite, texture or audio files |
+| **Footprint** | ~1.38 MB on disk · ~306 KiB gzipped JS+CSS (292 KiB JS, 14 KiB CSS) · no sprite, texture or audio files |
 
 ---
 
@@ -227,7 +227,8 @@ provides a durable Redis REST store:
 the endpoint answers `503` with `storage: "unavailable"`, and the client quietly keeps
 the on-device **Hall of Fame** instead of showing a fake global board. On a purely static
 host the probe fails the same way. With `VITE_LEADERBOARD_API=false` the app makes **no
-network requests except Google Fonts**.
+leaderboard/API requests**. With `VITE_ANALYTICS_URL` unset (as in the submitted build),
+no telemetry is sent; external fonts still load from Google Fonts and jsDelivr.
 
 Each browser gets one stable player id and a generated name (for example
 `NEON_RAPTOR42`), so a new player appears on the board without filling anything in. The
@@ -249,7 +250,7 @@ ever creates one record.
 - Procedural Web Audio SFX — whips, blasts, coin chimes — with no audio files and no sample
   licensing. The arcade sequencer is not started during a run, so the effects carry the audio.
 - A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
-  pollen, eased over 8 seconds on the first load and 2 seconds on reloads.
+  pollen, with an 8-second first-load progress bar and a 2-second reload progress bar.
 - Persistence: high score, coins, skins, levels, achievements, daily rewards, missions and
   banked stamina are stored locally (`localStorage`).
 - Twelve biomes and twelve dino skins unlock as you level: the original six between
@@ -373,8 +374,8 @@ docs/screenshots/               screenshots used by this README
 | All 3D models, textures and UI art | Generated in code with Three.js primitives and inline SVG | Original work, Apache-2.0 |
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` | Original work, Apache-2.0 |
 | Music and sound effects | Synthesized at runtime with the Web Audio API | Original work, Apache-2.0 |
-| Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P | Google Fonts | SIL Open Font License 1.1 |
-| Burmese font: Aka 08 | [myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts) on jsDelivr | SIL Open Font License 1.1 |
+| Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
+| Burmese font: Aka 08 | [myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | SIL Open Font License 1.1 |
 | React, React DOM | react.dev | MIT |
 | Three.js | threejs.org | MIT |
 | Vite, Tailwind CSS | vite.dev, tailwindcss.com | MIT |
@@ -406,5 +407,5 @@ The game — source code, code-generated art and synthesized audio — is licens
 `package.json` declares the same SPDX identifier (`Apache-2.0`).
 
 Bundled dependencies keep their own licenses: React, React DOM, Three.js, Vite,
-Tailwind CSS and Express are MIT, lucide-react is ISC, TypeScript is Apache-2.0, and the
-Google Fonts families are SIL OFL 1.1.
+Tailwind CSS and Express are MIT, lucide-react is ISC, and TypeScript is Apache-2.0.
+The Google Fonts families, including Noto Sans Myanmar, and Aka 08 are SIL OFL 1.1.

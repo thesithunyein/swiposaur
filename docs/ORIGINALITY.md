@@ -9,9 +9,9 @@
 
 Swiposaur was written for Digit7 Jam 2026. The repository's first commit is dated
 **10 October 2026** and the submitted build is commit-tagged on `main`; the history
-is public, so the development timeline can be checked commit by commit (44
-commits at the time of writing). No part of the game was published or made
-commercially available before this submission.
+is public, so the development timeline can be checked commit by commit; HEAD had
+45 commits before this documentation update. No part of the game was published
+or made commercially available before this submission.
 
 ## 2. What is original
 
@@ -45,8 +45,8 @@ Only open-source libraries and fonts, all credited in the README's asset table:
 | React, React DOM, Three.js, Vite, Tailwind CSS, Express | MIT |
 | lucide-react | ISC |
 | TypeScript | Apache-2.0 |
-| Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P (Google Fonts) | SIL OFL 1.1 |
-| Aka 08 Myanmar font (saturngod/myanmar-unicode-fonts) | see upstream repository |
+| Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar (Google Fonts) | SIL OFL 1.1 |
+| Aka 08 Myanmar font (saturngod/myanmar-unicode-fonts), served by jsDelivr | SIL OFL 1.1 |
 
 No third-party art, sprites, music, voice or level design is included. No asset
 was purchased.

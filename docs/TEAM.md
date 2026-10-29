@@ -23,10 +23,10 @@ the same author appear in `git shortlog`).
 ## What was built for this jam
 
 A mobile-first 3D voxel endless runner with a stamina economy, a seven-day login
-streak, five daily missions on Myanmar time, nine dinosaur skins across six
-biomes, and a durable online leaderboard with an honest on-device fallback.
-Written in TypeScript with React, Three.js and the Web Audio API; 164 automated
-tests; released under Apache-2.0.
+streak, five daily missions on Myanmar time, twelve dinosaur skins across twelve
+biomes, English and Burmese localization, and a durable online leaderboard with
+an honest on-device fallback. Written in TypeScript with React, Three.js and the
+Web Audio API; 166 automated tests across 16 files; released under Apache-2.0.
 
 See [TECHNICAL.md](TECHNICAL.md) for the engineering write-up and
 [ORIGINALITY.md](ORIGINALITY.md) for the originality and AI-use declaration.

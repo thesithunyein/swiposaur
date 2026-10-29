@@ -106,7 +106,8 @@ flowchart LR
   online board is on by default, needs a durable Redis REST store on the server, and is a
   community leaderboard: scores are self-reported and validated for shape, rate and
   plausibility, not cheat-proof.
-- Fonts load from Google Fonts; with the network blocked the UI falls back to system fonts.
+- Fonts load from Google Fonts (including Noto Sans Myanmar) and Aka 08 loads from jsDelivr;
+  if those requests are blocked, the UI falls back to system sans-serif and platform Burmese fonts.
 - Very low-end GPUs may dip below 30 FPS at high device pixel ratios.
 
 ## 10. Third-party tools and libraries
@@ -152,8 +153,9 @@ flowchart TD
 - All art, 3D models, textures, logo and icons: original, generated in code (Three.js
   primitives + inline SVG), Apache-2.0.
 - All audio: original, synthesized at runtime with the Web Audio API. No audio files.
-- Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P (Google Fonts, SIL OFL 1.1),
-  and Aka 08 for the Burmese UI (myanmar-unicode-fonts on jsDelivr, SIL OFL 1.1).
+- Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P and Noto Sans Myanmar
+  (Google Fonts, SIL OFL 1.1), plus Aka 08 for the Burmese UI (myanmar-unicode-fonts,
+  served by jsDelivr, SIL OFL 1.1).
 - Code libraries: MIT / ISC / Apache-2.0, see `README.md` for the full table.
 - No third-party art, sprites, music or purchased assets are included.
 

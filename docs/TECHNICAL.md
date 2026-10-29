@@ -34,8 +34,10 @@ enraged crowd catches the runner.
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
 `npm run build` emits one JS bundle plus one CSS file. The current build is
-~1.14 MB of JavaScript (≈300 KB gzipped) and 97 KB of CSS. There is no code
-splitting yet; see §12.
+1,142,480 bytes of JavaScript (298,943 bytes gzipped) and 98,943 bytes of CSS
+(14,463 bytes gzipped); the asset bundle totals about 306 KiB gzipped. The full
+`dist/` directory is about 1.4 MB, including icons and metadata. There is no
+code splitting yet; see §12.
 
 ## 3. Module map
 
@@ -243,12 +245,14 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 5. **Self-reported scores**, as described in §9.
 6. **Missions and rewards are device-local**, so clearing storage resets them
    and a second device starts a fresh streak.
-7. **Fonts load from Google Fonts / jsDelivr**; with the network blocked the UI
-   falls back to system fonts.
+7. **Fonts load externally.** Display faces and Noto Sans Myanmar load from Google
+   Fonts; Aka 08 loads from jsDelivr. With those requests blocked the UI falls back
+   to system fonts and the platform's Burmese font.
 
 ## 13. Tests
 
-166 tests across 16 files (`npm test`), all passing, plus `tsc --noEmit` clean:
+166 tests across 16 files (`npm test`), all passing. Typecheck is run separately
+with `npm run typecheck`:
 
 | Area | Files |
 | --- | --- |
