@@ -19,7 +19,7 @@
       <feDropShadow dx="0" dy="10" stdDeviation="3" flood-color="#180a04" flood-opacity=".7" />
     </filter>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@700;800;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@700;800;900&amp;display=swap');
       .myanmar { font-family: 'Aka08', 'Noto Sans Myanmar', 'Myanmar Text', 'Padauk', sans-serif; }
     </style>
   </defs>
