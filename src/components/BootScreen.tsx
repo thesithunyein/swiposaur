@@ -25,9 +25,17 @@ const CLOUDS = [
   { id: 'jungle-haze', top: '77%', width: 185, duration: 66, delay: 30, opacity: 0.16, bob: 8 },
 ];
 
-/** One smooth cartoon cloud silhouette: three lobes, flat base, no seams. */
-const CLOUD_PATH =
-  'M30 78 C16 78 6 68 6 56 C6 45 14 36 25 34 C27 20 39 10 54 10 C68 10 80 19 84 32 C90 24 100 19 111 19 C128 19 142 32 143 49 C158 49 172 57 176 68 C178 73 174 78 168 78 Z';
+/** Square pixel positions arranged into a soft, stepped cloud silhouette. */
+const CLOUD_ROWS = [
+  { y: 4, from: 84, to: 108 },
+  { y: 16, from: 72, to: 156 },
+  { y: 28, from: 48, to: 168 },
+  { y: 40, from: 36, to: 168 },
+  { y: 52, from: 36, to: 168 },
+];
+const CLOUD_BLOCKS = CLOUD_ROWS.flatMap(({ y, from, to }) =>
+  Array.from({ length: Math.floor((to - from) / 12) + 1 }, (_, index) => ({ x: from + index * 12, y })),
+);
 
 const MOTES = [
   { left: 7, size: 4, duration: 13, delay: 0, drift: 22, color: '#FEF08A' },
@@ -60,22 +68,11 @@ export const BootScreen: React.FC<BootScreenProps> = ({ progress, label, leaving
       aria-live="polite"
       aria-busy={!leaving}
       aria-label="Loading Swiposaur"
-      className={`boot-shell fixed inset-0 z-[120] flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#7DD3FC] via-[#38BDF8] to-[#0E7490] px-5 ${
+      className={`boot-shell fixed inset-0 z-[120] flex flex-col items-center justify-center overflow-hidden bg-[#38BDF8] px-5 ${
         leaving ? 'boot-fade-out' : ''
       }`}
     >
-      {/* Daylight sky with a low sun and a jungle-green horizon, matching the
-          world the title menu sits on instead of a flat dark plate. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_6%,rgba(254,240,138,0.55),transparent_44%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_114%,rgba(16,185,129,0.5),transparent_58%)]"
-      />
-
-      {/* Sky life: slow parallax clouds up top, drifting pollen across the frame */}
+      {/* Flat bright-blue sky, with parallax pixel clouds and drifting square flecks. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         {CLOUDS.map((cloud) => (
           <div
@@ -93,8 +90,17 @@ export const BootScreen: React.FC<BootScreenProps> = ({ progress, label, leaving
               className="boot-cloud-bob"
               style={{ animationDuration: `${cloud.bob}s`, animationDelay: `-${cloud.delay / 2}s` }}
             >
-              <svg viewBox="0 0 200 90" className="block h-auto w-full" focusable="false">
-                <path d={CLOUD_PATH} fill="#FFFFFF" />
+              <svg viewBox="0 0 200 64" className="boot-cloud-art block h-auto w-full" focusable="false">
+                {CLOUD_BLOCKS.map(({ x, y }, index) => (
+                  <rect
+                    key={`${x}-${y}`}
+                    x={x}
+                    y={y}
+                    width="12"
+                    height="12"
+                    fill={index % 4 === 0 ? '#FFFFFF' : index % 3 === 0 ? '#D8F2FA' : '#C6EAF6'}
+                  />
+                ))}
               </svg>
             </div>
           </div>
@@ -103,21 +109,23 @@ export const BootScreen: React.FC<BootScreenProps> = ({ progress, label, leaving
         {MOTES.map((mote) => (
           <span
             key={`${mote.left}-${mote.size}`}
-            className="boot-mote absolute rounded-full"
+            className="boot-mote absolute"
             style={
               {
                 left: `${mote.left}%`,
                 bottom: '-3%',
-                width: mote.size,
-                height: mote.size,
-                background: mote.color,
-                boxShadow: `0 0 ${mote.size * 2}px ${mote.color}`,
+                width: mote.size + 4,
+                height: mote.size + 4,
                 animationDuration: `${mote.duration}s`,
                 animationDelay: `-${mote.delay}s`,
                 '--boot-drift': `${mote.drift}px`,
               } as React.CSSProperties
             }
-          />
+          >
+            <svg viewBox="0 0 8 8" className="boot-pixel" focusable="false">
+              <rect width="8" height="8" fill={mote.color} />
+            </svg>
+          </span>
         ))}
       </div>
 

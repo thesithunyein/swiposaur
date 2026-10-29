@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/brand/swiposaur-wordmark.png" alt="Swiposaur: Tail Frenzy" width="460" />
+<img src="docs/brand/swiposaur-wordmark-my.svg" alt="ဆွီပိုဆောရပ်စ် — အမြီးရိုက် အရူးအမူး" width="560" />
 
 <br />
 
@@ -24,7 +24,7 @@
 
 ## 3. Main contact person
 
-Sithu Nyein, sithunyein.mailto@gmail.com, Telegram: @sithunyein
+Sithu Nyein, sithunyein.mailto@gmail.com, Telegram: @thesithunyein
 
 ## 4. Short game description
 

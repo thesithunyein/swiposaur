@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/brand/swiposaur-wordmark.png" alt="Swiposaur: Tail Frenzy" width="620" />
+<img src="docs/brand/swiposaur-wordmark-my.svg" alt="ဆွီပိုဆောရပ်စ် — အမြီးရိုက် အရူးအမူး" width="700" />
 
 <br />
 
@@ -36,7 +36,7 @@ binary files in the build are the app icons and favicons.
 | --- | --- |
 | **Game title** | Swiposaur — Tail Frenzy |
 | **Team name** | Solo Canvas (solo entry, one member) |
-| **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@sithunyein` |
+| **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · post-jam build with 12 biomes and Burmese localization |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |

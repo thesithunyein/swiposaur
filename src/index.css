@@ -63,7 +63,7 @@ body {
   will-change: transform;
 }
 
-/* Gentle vertical breathing on top of the drift, so clouds are not rigid. */
+/* Slow depth-like bob on top of the drift, so voxel clouds do not feel rigid. */
 @keyframes boot-cloud-bob {
   0%,
   100% {
@@ -81,7 +81,7 @@ body {
   will-change: transform;
 }
 
-/* Pollen specks rising with a slight sideways drift. */
+/* Tiny square color flecks rise with a slight sideways drift. */
 @keyframes boot-mote-float {
   0% {
     transform: translate3d(0, 12vh, 0) scale(0.7);
@@ -105,6 +105,16 @@ body {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: transform, opacity;
+}
+
+.boot-pixel {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.boot-cloud-art {
+  shape-rendering: crispEdges;
 }
 
 .boot-fade-out {

@@ -49,8 +49,15 @@ describe('BootScreen', () => {
 
     expect(clouds.length).toBe(4);
     expect(motes.length).toBe(13);
-    clouds.forEach((cloud) => expect(cloud.closest('[aria-hidden="true"]')).not.toBeNull());
-    motes.forEach((mote) => expect(mote.closest('[aria-hidden="true"]')).not.toBeNull());
+    clouds.forEach((cloud) => {
+      expect(cloud.closest('[aria-hidden="true"]')).not.toBeNull();
+      expect(cloud.querySelectorAll('.boot-cloud-art rect').length).toBeGreaterThan(40);
+      expect(cloud.querySelector('.boot-cloud-art')?.getAttribute('viewBox')).toBe('0 0 200 64');
+    });
+    motes.forEach((mote) => {
+      expect(mote.closest('[aria-hidden="true"]')).not.toBeNull();
+      expect(mote.querySelectorAll('.boot-pixel rect')).toHaveLength(1);
+    });
 
     // Atmosphere must never add visible text of its own.
     const sky = clouds[0].closest('[aria-hidden="true"]') as HTMLElement;
