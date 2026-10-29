@@ -57,6 +57,7 @@ const missionSummary = (overrides: Partial<MissionSummary> = {}): MissionSummary
   title: 'Beachside Tail Whip',
   description: 'Land 15 tail whips',
   metric: 'slaps',
+  difficulty: 'easy',
   current: 0,
   target: 15,
   percent: 0,
@@ -92,10 +93,13 @@ describe('Myanmar clock', () => {
 });
 
 describe('daily mission rotation', () => {
-  it('gives every day five missions covering five different metrics', () => {
+  it('gives every day two easy, two medium and one hard mission', () => {
     const day = missionsForDay(10);
     expect(day).toHaveLength(MISSIONS_PER_DAY);
-    expect(new Set(day.map((mission) => mission.metric)).size).toBe(MISSIONS_PER_DAY);
+    expect(day.filter((mission) => mission.difficulty === 'easy')).toHaveLength(2);
+    expect(day.filter((mission) => mission.difficulty === 'medium')).toHaveLength(2);
+    expect(day.filter((mission) => mission.difficulty === 'hard')).toHaveLength(1);
+    expect(new Set(day.map((mission) => mission.id)).size).toBe(MISSIONS_PER_DAY);
     expect(day.map((mission) => mission.id)).toEqual(missionsForDay(10).map((mission) => mission.id));
   });
 

@@ -12,8 +12,10 @@ import { gradeFor, GradeLetter } from './grades.ts';
  * so a day never offers the same objective twice.
  */
 export type MissionMetric = 'slaps' | 'distance' | 'coins' | 'roar' | 'nearMiss' | 'grade';
+export type MissionDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface MissionDefinition {
+  difficulty: MissionDifficulty;
   id: string;
   title: string;
   description: string;
@@ -37,6 +39,7 @@ export const MISSIONS_PER_DAY = 5;
 export const MISSION_POOL: MissionDefinition[] = [
   {
     id: 'mission_slap_15',
+    difficulty: 'easy',
     title: 'Beachside Tail Whip',
     description: 'Land 15 tail whips on silly resort critters',
     metric: 'slaps',
@@ -47,6 +50,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_slap_30',
+    difficulty: 'medium',
     title: 'Tail Whip Marathon',
     description: 'Land 30 tail whips on resort critters',
     metric: 'slaps',
@@ -57,6 +61,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_roar_4',
+    difficulty: 'easy',
     title: 'Roar Rally',
     description: 'Reach a 4x Roar multiplier in a single run',
     metric: 'roar',
@@ -67,6 +72,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_roar_8',
+    difficulty: 'hard',
     title: 'Primal Crescendo',
     description: 'Reach an 8x Roar multiplier in a single run',
     metric: 'roar',
@@ -77,6 +83,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_run_600',
+    difficulty: 'easy',
     title: 'Sunny Shoreline Dash',
     description: 'Sprint 600 meters without falling to the stampede',
     metric: 'distance',
@@ -87,6 +94,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_run_1200',
+    difficulty: 'medium',
     title: 'Boardwalk Endurance',
     description: 'Sprint 1,200 meters in a single run',
     metric: 'distance',
@@ -97,6 +105,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_coins_25',
+    difficulty: 'easy',
     title: 'Golden Shell Harvest',
     description: 'Collect 25 gold coins along the track',
     metric: 'coins',
@@ -107,6 +116,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_coins_60',
+    difficulty: 'medium',
     title: 'Treasure Trail',
     description: 'Collect 60 gold coins along the track',
     metric: 'coins',
@@ -117,6 +127,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_nearmiss_3',
+    difficulty: 'easy',
     title: 'Traffic Slalom',
     description: 'Slip past 3 obstacles for a near miss',
     metric: 'nearMiss',
@@ -127,6 +138,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_nearmiss_6',
+    difficulty: 'medium',
     title: 'Close Call Collector',
     description: 'Slip past 6 obstacles for near misses',
     metric: 'nearMiss',
@@ -137,6 +149,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_grade_a',
+    difficulty: 'medium',
     title: 'Speedway Contender',
     description: 'Finish a run with Grade A or better',
     metric: 'grade',
@@ -147,6 +160,7 @@ export const MISSION_POOL: MissionDefinition[] = [
   },
   {
     id: 'mission_grade_s',
+    difficulty: 'hard',
     title: 'Stampede Legend',
     description: 'Finish a run with Grade S or better',
     metric: 'grade',
@@ -180,18 +194,27 @@ function shuffle<T>(items: T[], rand: () => number): T[] {
   return copy;
 }
 
-/** Deterministic daily rotation: five different metrics, one tier each. */
+/** Deterministic daily rotation with exactly two easy, two medium and one hard mission. */
 export function missionsForDay(dayNumber: number): MissionDefinition[] {
   const rand = mulberry32(dayNumber * 2654435761);
-  const metrics = shuffle(
-    [...new Set(MISSION_POOL.map((mission) => mission.metric))],
-    rand
-  ).slice(0, MISSIONS_PER_DAY);
+  const missions: MissionDefinition[] = [];
 
-  return metrics.map((metric) => {
-    const options = MISSION_POOL.filter((mission) => mission.metric === metric);
-    return options[Math.floor(rand() * options.length)];
-  });
+  const choose = (difficulty: MissionDifficulty, count: number) => {
+    const available = MISSION_POOL.filter(
+      (mission) => mission.difficulty === difficulty && !missions.some((chosen) => chosen.id === mission.id)
+    );
+    const freshMetrics = available.filter(
+      (mission) => !missions.some((chosen) => chosen.metric === mission.metric)
+    );
+    const preferred = shuffle(freshMetrics, rand);
+    const fallback = shuffle(available.filter((mission) => !preferred.includes(mission)), rand);
+    missions.push(...[...preferred, ...fallback].slice(0, count));
+  };
+
+  choose('easy', 2);
+  choose('medium', 2);
+  choose('hard', 1);
+  return missions;
 }
 
 /** `6h 12m` until the next Myanmar midnight. */
@@ -355,6 +378,7 @@ export interface MissionSummary {
   title: string;
   description: string;
   metric: MissionMetric;
+  difficulty: MissionDifficulty;
   current: number;
   target: number;
   percent: number;
@@ -373,6 +397,7 @@ function toSummary(mission: DailyMission): MissionSummary {
     title: mission.title,
     description: mission.description,
     metric: mission.metric,
+    difficulty: mission.difficulty,
     current: mission.current,
     target: mission.target,
     percent,

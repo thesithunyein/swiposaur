@@ -59,6 +59,12 @@ export function saveLevelResult(level: number, stars: number, score: number): vo
 }
 
 export function getMapForLevel(level: number): string {
+  if (level >= 95) return 'moonlit_bazaar';
+  if (level >= 85) return 'monsoon_coast';
+  if (level >= 75) return 'starlight_shibuya';
+  if (level >= 65) return 'aurora_ridge';
+  if (level >= 55) return 'ember_canyon';
+  if (level >= 45) return 'sakura_heights';
   if (level >= 35) return 'golden_temple';
   if (level >= 25) return 'winter_peak';
   if (level >= 18) return 'neon_night';
@@ -314,9 +320,10 @@ export function getObstaclesForLevel(levelNumber: number, mapIdOverride?: string
 } {
   const lvl = Math.max(1, levelNumber);
   const mapId = mapIdOverride || getMapForLevel(lvl);
-  const pool = MAP_PROP_POOLS[mapId];
-  const startLevel = MAP_START_LEVEL[mapId];
-  if (!pool || startLevel === undefined) return legacyObstaclesForLevel(lvl, mapId);
+  const mapStyleId = GAME_MAPS.find((map) => map.id === mapId)?.renderStyle ?? mapId;
+  const pool = MAP_PROP_POOLS[mapStyleId];
+  const startLevel = MAP_START_LEVEL[mapStyleId];
+  if (!pool || startLevel === undefined) return legacyObstaclesForLevel(lvl, mapStyleId);
 
   const index = lvl - startLevel;
   const combos = levelComboList(pool);

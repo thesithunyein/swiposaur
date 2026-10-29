@@ -271,7 +271,11 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="bg-[#111927]/85 backdrop-blur-md px-5 py-2 rounded-2xl border-2 border-white/15 flex items-center gap-3 text-xs sm:text-sm font-['Fredoka'] font-medium text-amber-100 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-1.5">
             <kbd className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-xs text-[#FDE047] font-['Lilita_One']">SPACE</kbd>
-            <span>{t('Tail-Whip / Jump')}</span>
+            <span>{t('Tail-Whip')}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-xs text-[#34D399] font-['Lilita_One']">W / ↑</kbd>
+            <span>{t('Jump')}</span>
           </div>
           <span className="text-white/30">·</span>
           <div className="flex items-center gap-1.5">

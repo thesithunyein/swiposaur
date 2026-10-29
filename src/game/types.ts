@@ -22,6 +22,7 @@ export interface CharacterSkin {
   hat: 'none' | 'crown' | string;
   speedBonus: number;
   cost: number;
+  unlockLevel?: number;
 }
 
 export interface LeaderboardEntry {

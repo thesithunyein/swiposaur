@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { getLevel, getMapForLevel, getObstaclesForLevel } from '../src/game/levels.ts';
 import { isRampType, OBSTACLE_TYPES } from '../src/game/obstacleRules.ts';
+import { GAME_MAPS, getMapById } from '../src/game/maps.ts';
+import { CHARACTER_SKINS } from '../src/game/constants.ts';
 
 /** The obstacle pools a map is allowed to draw from, mirrored from levels.ts. */
 const MAP_ALLOWED_PROPS: Record<string, string[]> = {
@@ -17,6 +19,25 @@ const blockersOf = (level: number) =>
     .obstacles.filter((type) => !isRampType(type))
     .slice()
     .sort();
+
+describe('late-game map and skin milestones', () => {
+  const milestones = [45, 55, 65, 75, 85, 95];
+
+  it('assigns each milestone level to its matching selectable biome', () => {
+    const milestoneMaps = GAME_MAPS.filter((map) => milestones.includes(map.unlockLevel));
+    expect(milestoneMaps.map((map) => map.unlockLevel)).toEqual(milestones);
+    for (const map of milestoneMaps) {
+      expect(getMapById(getMapForLevel(map.unlockLevel)).id).toBe(map.id);
+      expect(getMapById(getMapForLevel(map.unlockLevel - 1)).id).not.toBe(map.id);
+      expect(map.renderStyle).toBeDefined();
+    }
+  });
+
+  it('gives each milestone a matching level-unlocked skin', () => {
+    const milestoneSkins = CHARACTER_SKINS.filter((skin) => skin.unlockLevel !== undefined);
+    expect(milestoneSkins.map((skin) => skin.unlockLevel)).toEqual(milestones);
+  });
+});
 
 describe('unique obstacle set per level', () => {
   it('gives every level in the first 100 its own blocker combination', () => {
@@ -43,7 +64,8 @@ describe('unique obstacle set per level', () => {
   it('only draws props from its own map and names its own level', () => {
     for (let level = 1; level <= 100; level++) {
       const mapId = getMapForLevel(level);
-      const allowed = MAP_ALLOWED_PROPS[mapId];
+      const mapStyleId = getMapById(mapId).renderStyle ?? mapId;
+      const allowed = MAP_ALLOWED_PROPS[mapStyleId];
       const { themeName, obstacles } = getObstaclesForLevel(level);
       expect(themeName).toContain(`Level ${level}`);
       for (const type of obstacles) {

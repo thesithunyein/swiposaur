@@ -144,18 +144,35 @@ export default function App() {
 
   // Persistent Unlocked Skins
   const [unlockedSkinIds, setUnlockedSkinIds] = useState<string[]>(() => {
+    const levelUnlocked = CHARACTER_SKINS
+      .filter((skin) => skin.unlockLevel !== undefined && skin.unlockLevel <= levelProgress.unlockedLevel)
+      .map((skin) => skin.id);
     try {
-      const s = localStorage.getItem('slap_run_unlocked_skins');
-      if (s) {
-        const parsed = JSON.parse(s);
-        if (!parsed.includes('rex_red')) {
-          parsed.unshift('rex_red');
+      const saved = localStorage.getItem('slap_run_unlocked_skins');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return [...new Set(['rex_red', ...parsed, ...levelUnlocked])];
         }
-        return parsed;
       }
     } catch {}
-    return ['rex_red', 'spino_blue'];
+    return [...new Set(['rex_red', 'spino_blue', ...levelUnlocked])];
   });
+
+  useEffect(() => {
+    const levelUnlocked = CHARACTER_SKINS
+      .filter((skin) => skin.unlockLevel !== undefined && skin.unlockLevel <= levelProgress.unlockedLevel)
+      .map((skin) => skin.id);
+    setUnlockedSkinIds((current) => {
+      const merged = [...new Set([...current, ...levelUnlocked])];
+      if (merged.length !== current.length) {
+        try {
+          localStorage.setItem('slap_run_unlocked_skins', JSON.stringify(merged));
+        } catch {}
+      }
+      return merged;
+    });
+  }, [levelProgress.unlockedLevel]);
 
   // On-device Hall of Fame plus the optional online board. Real runs only: no
   // seeded demo competitors and no fake participant totals.
@@ -764,7 +781,7 @@ export default function App() {
     setLeaderboardEntries([]);
 
     setLevelProgress({ unlockedLevel: 1, levelStars: {}, levelScores: {} });
-    setUnlockedSkinIds(['speedy_dash']);
+    setUnlockedSkinIds(['rex_red', 'spino_blue']);
     setSelectedSkin(CHARACTER_SKINS[0]);
     if (engineRef.current) {
       engineRef.current.setSkin(CHARACTER_SKINS[0]);
@@ -1276,6 +1293,7 @@ export default function App() {
           onClose={() => setIsSkinsOpen(false)}
           selectedSkin={selectedSkin}
           unlockedSkinIds={unlockedSkinIds}
+          highestLevel={levelProgress.unlockedLevel}
           totalCoins={stats.totalCoinsCollected}
           onSelectSkin={handleSelectSkin}
           onUnlockSkin={handleUnlockSkin}

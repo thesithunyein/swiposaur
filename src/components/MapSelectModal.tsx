@@ -52,7 +52,7 @@ export const MapSelectModal: React.FC<MapSelectModalProps> = ({
 
         {/* Subheader */}
         <div className="px-5 py-2.5 bg-[#140D08] border-b border-white/10 text-xs flex items-center justify-between text-[#FED7AA] font-medium">
-          <span>{t('Run through 6 tropical prehistoric habitats with dynamic weather & obstacles')}</span>
+          <span>{t('Explore 12 prehistoric habitats with dynamic weather & obstacles')}</span>
           <span className="text-[#FBBF24] font-['Lilita_One'] text-sm">
             {t('Lv. {level} Explorer', { level: highestLevel })}
           </span>
@@ -78,7 +78,7 @@ export const MapSelectModal: React.FC<MapSelectModalProps> = ({
                 {/* Map Graphic Preview */}
                 <div className="relative w-full mb-3 overflow-hidden border-2 border-white/20 rounded-xl group">
                   <BiomeGraphicPreview
-                    mapId={map.id}
+                    mapId={map.renderStyle ?? map.id}
                     className={`h-28 sm:h-32 transition-transform duration-300 ${
                       !isUnlocked ? 'grayscale contrast-125 opacity-40' : 'group-hover:scale-[1.02]'
                     }`}

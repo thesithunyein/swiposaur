@@ -113,6 +113,11 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
         <div className="p-4 sm:p-5 overflow-y-auto space-y-2.5">
           {missions.map((mission) => {
             const percent = Math.min(100, Math.round((mission.current / mission.target) * 100));
+            const difficultyStyle = {
+              easy: 'border-[#34D399]/50 bg-[#34D399]/10 text-[#6EE7B7]',
+              medium: 'border-[#FBBF24]/50 bg-[#FBBF24]/10 text-[#FDE68A]',
+              hard: 'border-[#F87171]/50 bg-[#F87171]/10 text-[#FCA5A5]',
+            }[mission.difficulty];
 
             return (
               <div
@@ -131,9 +136,14 @@ export const DailyMissionsModal: React.FC<DailyMissionsModalProps> = ({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide truncate">
-                      {t(mission.title)}
-                    </h3>
+                    <div className="min-w-0 flex items-center gap-1.5">
+                      <h3 className="font-['Lilita_One'] text-sm sm:text-base text-white tracking-wide truncate">
+                        {t(mission.title)}
+                      </h3>
+                      <span className={`shrink-0 rounded-md border px-1.5 py-0.5 font-['Lilita_One'] text-[9px] uppercase leading-none ${difficultyStyle}`}>
+                        {t(mission.difficulty)}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="flex items-center gap-0.5 font-['Lilita_One'] text-[11px] text-[#FACC15]">
                         <Coins className="w-3 h-3 fill-[#FACC15]" />+{mission.rewardCoins}

@@ -97,6 +97,14 @@ const BURMESE: Record<string, string> = {
   'HALL OF FAME': 'ဂုဏ်ထူးဆောင်စာရင်း',
   'Tail-Whip / Jump': 'အမြီးရိုက် / ခုန်',
   'Dodge Lanes': 'လမ်းကြော ရွှေ့',
+  'Tail-Whip': 'အမြီးရိုက်',
+  Jump: 'ခုန်',
+  'Level {level}': 'အဆင့် {level}',
+  'Explore 12 prehistoric habitats with dynamic weather & obstacles':
+    'ရာသီဥတုပြောင်းလဲမှုနှင့် အတားအဆီးများရှိ ရှေးဟောင်းဒိုင်နို နေရာ ၁၂ ခုကို စူးစမ်းပါ',
+  easy: 'လွယ်',
+  medium: 'အလယ်အလတ်',
+  hard: 'ခက်',
   'Swipe & Tap on Touch!': 'ဖုန်းတွင် ပွတ်ဆွဲပြီး နှိပ်ပါ!',
 
   // HUD
@@ -133,7 +141,6 @@ const BURMESE: Record<string, string> = {
   Vault: 'ခုန်',
   JUMP: 'ခုန်',
   'WHIP!': 'ရိုက်!',
-  'Tail-Whip': 'အမြီးရိုက်',
   'Hit Target': 'ပစ်မှတ်ကို ရိုက်',
   'Jump left into left lane': 'ဘယ်ဘက်လမ်းသို့ ခုန်ဝင်ရန်',
   'Vault jump': 'ခုန်ရန်',
@@ -446,6 +453,30 @@ const BURMESE: Record<string, string> = {
   'Cherry Blossom Sanctuary': 'ချယ်ရီပန်း ဘုရားတော',
   'Moonlit cobblestone path guided by glowing crimson lanterns & pink sakura blossoms':
     'လမင်းရောင် ကျောက်ခင်းလမ်းပေါ် နီရောင်မီးအိမ်များနှင့် ပန်းရောင် စံချိမ်းပန်းများ',
+  'Sakura Heights': 'ဆာကူရာ ကုန်းမြင့်',
+  'Spring Blossom Highlands': 'နွေဦး ပန်းပွင့် ကုန်းမြင့်',
+  'A bright spring run through pink blossoms and lantern-lit hills':
+    'ပန်းရောင် ပန်းပွင့်များနှင့် မီးအိမ်ရောင် တောင်ကုန်းများကြား တောက်ပနေသော နွေဦး အပြေးပွဲ',
+  'Ember Canyon': 'မီးရှူးကျောက်ကြား',
+  'Crimson Volcanic Canyon': 'နီရင့်သော မီးတောင် ကျောက်ကြား',
+  'Race through a glowing canyon of ember-red stone and volcanic light':
+    'မီးခိုးနီ ကျောက်တုံးများနှင့် မီးတောင်အလင်းရောင် ထိုးနေသော ကျောက်ကြားကို ဖြတ်ပြေးပါ',
+  'Aurora Ridge': 'အော်ရိုရာ တောင်ကြော',
+  'Northern Lights Glacier': 'မြောက်ဘက်အလင်း ရေခဲမြစ်',
+  'Glide beneath a dancing aurora across blue-white alpine peaks':
+    'ပြာဖြူ တောင်ထိပ်များကြား လှုပ်ရှားနေသော အော်ရိုရာအောက် လျှောဝင်ပြေးပါ',
+  'Starlight Shibuya': 'ကြယ်ရောင် ရှိဘျူး',
+  'Starlit Neon Metropolis': 'ကြယ်ရောင် နီယွန်မြို့ကြီး',
+  'A midnight sprint through a violet skyline under a bright moon':
+    'တောက်ပနေသော လမင်းအောက် ခရမ်းရောင် မြို့သစ်ထဲ သန်းခေါင် အပြေးပွဲ',
+  'Monsoon Coast': 'မုတ်သုံ ကမ်းခြေ',
+  'Emerald Rain Coast': 'စိမ်းစိမ်း မိုးရေကမ်းခြေ',
+  'Run beside a deep emerald sea as warm rain sweeps the palms':
+    'နွေးထွေးသော မိုးရေက ရေမြောပင်များကို ဖြတ်သန်းနေစဉ် စိမ်းနက်သော ပင်လယ်ဘေးတွင် ပြေးပါ',
+  'Moonlit Bazaar': 'လမင်း ဈေးတန်း',
+  'Midnight Market Festival': 'သန်းခေါင် ဈေးပွဲတော်',
+  'Dash past glowing stalls beneath a deep blue festival sky':
+    'နက်ပြာသော ပွဲတော်မိုးအောက် တောက်ပနေသော ဆိုင်တန်းများကို ဖြတ်ပြေးပါ',
 
   // Biome preview captions inside the map cards
   'BAZAAR BOULEVARD & TOWNHOUSES': 'ဈေးလမ်းမကြီးနှင့် အိမ်များ',
@@ -486,6 +517,24 @@ const BURMESE: Record<string, string> = {
   'Midnight Rex': 'သြတ်နံနက် ရက်စ်',
   'Obsidian stealth predator that strikes like a phantom':
     'နတ်ဆိုးကဲ့သို့ တိတ်ဆိတ်စွာ ရိုက်ချိုးသော နက်မည်း လိုက်စ်ဘာ',
+  'Sakura Rex': 'ဆာကူရာ ရက်စ်',
+  'A spring-pink runner from Sakura Heights':
+    'ဆာကူရာ ကုန်းမြင့်မှ နွေဦးပန်းရောင် ပြေးသမား',
+  'Ember Rex': 'မီးရှူး ရက်စ်',
+  'A volcanic runner forged in Ember Canyon':
+    'မီးရှူးကျောက်ကြားတွင် ဖြစ်ပေါ်လာသော မီးတောင် ပြေးသမား',
+  'Aurora Spino': 'အော်ရိုရာ စပိုင်နို',
+  'A glacier-blue runner beneath the northern lights':
+    'မြောက်ဘက်အလင်းအောက် ရေခဲပြာရောင် ပြေးသမား',
+  'Starlight Raptor': 'ကြယ်ရောင် ရက်ပ်တာ',
+  'A violet runner racing under Shibuya stars':
+    'ရှိဘျူး ကြယ်များအောက် ပြေးနေသော ခရမ်းရောင် ပြေးသမား',
+  'Monsoon Raptor': 'မုတ်သုံ ရက်ပ်တာ',
+  'An emerald runner built for the rainy coast':
+    'မိုးရေကမ်းခြေအတွက် တည်ဆောက်ထားသော စိမ်းစိမ်း ပြေးသမား',
+  'Moonlit Rex': 'လမင်း ရက်စ်',
+  'A midnight-blue runner of the moonlit bazaar':
+    'လမင်းဈေးတန်း၏ သန်းခေါင်ပြာရောင် ပြေးသမား',
   'Red Rex Classic': 'ရှေးဟောင်း နီရောင် ရက်စ်',
   'Classic crimson runner': 'ရှေးဟောင်း နီရောင် ပြေးသမား',
   'White Phantom Dino': 'ဖြူဖြူဝါ သရဲဒိုင်နို',

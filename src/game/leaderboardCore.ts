@@ -40,6 +40,12 @@ export const ALLOWED_SKIN_IDS = [
   'speedy_dash',
   'market_ninja',
   'golden_champ',
+  'sakura_dino',
+  'ember_rex',
+  'aurora_spino',
+  'starlight_raptor',
+  'monsoon_raptor',
+  'moonlit_rex',
 ] as const;
 
 export interface ValidRun {

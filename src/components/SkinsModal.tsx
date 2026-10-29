@@ -12,6 +12,7 @@ interface SkinsModalProps {
   onClose: () => void;
   selectedSkin: CharacterSkin;
   unlockedSkinIds: string[];
+  highestLevel: number;
   totalCoins: number;
   onSelectSkin: (skin: CharacterSkin) => void;
   onUnlockSkin: (skin: CharacterSkin) => void;
@@ -22,6 +23,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
   onClose,
   selectedSkin,
   unlockedSkinIds,
+  highestLevel,
   totalCoins,
   onSelectSkin,
   onUnlockSkin,
@@ -35,9 +37,11 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isPreviewUnlocked = unlockedSkinIds.includes(previewSkin.id);
+  const isPreviewUnlocked =
+    unlockedSkinIds.includes(previewSkin.id) ||
+    (previewSkin.unlockLevel !== undefined && highestLevel >= previewSkin.unlockLevel);
   const isPreviewSelected = selectedSkin.id === previewSkin.id;
-  const canAffordPreview = totalCoins >= previewSkin.cost;
+  const canAffordPreview = previewSkin.unlockLevel === undefined && totalCoins >= previewSkin.cost;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md select-none animate-fadeIn font-['Fredoka']">
@@ -140,8 +144,16 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                       : 'bg-black/50 border-white/10 text-white/40 cursor-not-allowed'
                   }`}
                 >
-                  <Coins className="w-4 h-4 fill-current" />
-                  <span>{t('UNLOCK · {cost} COINS', { cost: previewSkin.cost.toLocaleString() })}</span>
+                  {previewSkin.unlockLevel !== undefined ? (
+                    <Lock className="w-4 h-4" />
+                  ) : (
+                    <Coins className="w-4 h-4 fill-current" />
+                  )}
+                  <span>
+                    {previewSkin.unlockLevel !== undefined
+                      ? t('Unlock at Level {level}', { level: previewSkin.unlockLevel })
+                      : t('UNLOCK · {cost} COINS', { cost: previewSkin.cost.toLocaleString() })}
+                  </span>
                 </button>
               )}
             </div>
@@ -150,7 +162,9 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
           {/* Right/Bottom: Dinosaur Grid Cards */}
           <div className="w-full md:w-7/12 p-3 sm:p-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {primaryDinos.map((skin) => {
-              const isUnlocked = unlockedSkinIds.includes(skin.id);
+              const isUnlocked =
+                unlockedSkinIds.includes(skin.id) ||
+                (skin.unlockLevel !== undefined && highestLevel >= skin.unlockLevel);
               const isSelected = selectedSkin.id === skin.id;
               const isInspecting = previewSkin.id === skin.id;
 
@@ -214,8 +228,17 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({
                       </span>
                       {!isUnlocked && (
                         <div className="flex items-center gap-1 text-[11px] font-['Lilita_One'] text-[#FACC15] mt-1">
-                          <Coins className="w-3 h-3 fill-[#FACC15]" />
-                          <span>{skin.cost.toLocaleString()}</span>
+                          {skin.unlockLevel !== undefined ? (
+                            <>
+                              <Lock className="w-3 h-3" />
+                              <span>{t('Level {level}', { level: skin.unlockLevel })}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Coins className="w-3 h-3 fill-[#FACC15]" />
+                              <span>{skin.cost.toLocaleString()}</span>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

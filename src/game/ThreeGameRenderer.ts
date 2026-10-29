@@ -509,7 +509,7 @@ export class ThreeGameRenderer {
    */
   private createArchitectureForMap(side: number, halfRoad: number, sidewalkWidth: number, length: number, index: number): THREE.Group {
     const group = new THREE.Group();
-    const mapId = this.currentMap.id;
+    const mapId = this.currentMap.renderStyle ?? this.currentMap.id;
     const parkwayX = side * (halfRoad + sidewalkWidth + 8.5);
     const bldZ = (index % 2 === 0 ? -1 : 1) * (length * 0.16);
     const modelVariation = (index + (side > 0 ? 0 : 1)) % 2;
@@ -1420,7 +1420,7 @@ export class ThreeGameRenderer {
     this.celestialMesh = undefined;
 
     const map = this.currentMap;
-    const mapId = map.id;
+    const mapId = map.renderStyle ?? map.id;
 
     // 1. Build Biome-Specific Celestial Body & Sky Environment
     const celestialGroup = new THREE.Group();
