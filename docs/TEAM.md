@@ -1,7 +1,8 @@
 # Team Profile
 
-**Team name:** Swiposaur
+**Team name:** Solo Canvas
 **Entry:** Swiposaur — Tail Frenzy
+**Team leader:** Sithu Nyein
 **Team size:** 1
 
 ## Member

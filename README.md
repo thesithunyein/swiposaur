@@ -19,7 +19,7 @@ charge the Primal Roar and outrun the stampede.
 [![TypeScript](https://img.shields.io/badge/TypeScript-7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-**Digit7 Jam 2026 · HTML arcade game · built by [Sithu Nyein](https://github.com/thesithunyein)**
+**Solo Canvas · Digit7 Jam 2026 · HTML arcade game · built by [Sithu Nyein](https://github.com/thesithunyein)**
 
 </div>
 
@@ -34,8 +34,15 @@ binary files in the build are the app icons and favicons.
 
 | | |
 | --- | --- |
-| **Current judge build** | `v1.1.0` · post-jam build with 12 biomes and Burmese localization; source: [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`) |
-| **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; serves the post-jam feature set; exact deployed commit not asserted) |
+| **Game title** | Swiposaur — Tail Frenzy |
+| **Team name** | Solo Canvas (solo entry, one member) |
+| **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@sithunyein` |
+| **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · post-jam build with 12 biomes and Burmese localization |
+| **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
+| **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
+| **How to play** | Open the live URL in any browser with WebGL, wait for the load gate, press **ကစားမည် / PLAY**, then `Space` for a tail-whip on desktop or tap the WHIP button on a phone |
+| **Orientation / resolution** | Phones: portrait from 360×640 (9:16 works). Desktop: any orientation from 1280×720. The canvas fills the window at any aspect ratio and the camera re-derives its aspect on resize |
+| **Network requirements** | No backend is needed to play. The browser fetches web fonts, and on this deployment probes `/api/leaderboard`; if either is unavailable the game falls back to system fonts and the on-device Hall of Fame. No third-party API key or account |
 | **Historical jam snapshot** | [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) — six biomes, before the Burmese localization; not the build described below |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
@@ -218,6 +225,26 @@ server (API + Vite middleware) instead:
 ```bash
 npm run dev:api    # http://localhost:3000
 ```
+
+---
+
+## Testing notes
+
+- **No setup to play.** The deployed build is static files plus one optional serverless
+  endpoint: no account, key or download step. Open the URL, wait for the boot gate, press PLAY.
+- **The 8-second first-load gate is deliberate** (see *Boot, then a fair first run*); a reload
+  later in the same session takes about 2 seconds. A slow first load is the brand moment,
+  not a hang.
+- **A board that says "Saved on this device" is the documented fallback, not a failure.** It
+  means the deployment has no durable store or the probe did not answer; reloading lets it
+  probe again. See *Configuration* for the storage variables.
+- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 166 tests across 16
+  files with no browser, network or saved state. If a low-memory machine struggles with the
+  default worker pool, `npx vitest run --no-file-parallelism` runs the same suite in one
+  worker.
+- **Testing the online board locally:** `npm run dev` has no API route, so the board stays
+  local by design. Use `npm run dev:api` to exercise the real endpoint, or point
+  `LEADERBOARD_KV_REST_URL` / `LEADERBOARD_KV_REST_TOKEN` at a Redis REST store.
 
 ---
 
@@ -404,7 +431,14 @@ No third-party art, audio, sprites or templates are included. No paid assets.
 AI tools were used during development and are disclosed here as required:
 
 - **Google AI Studio (Gemini):** initial project scaffolding, component drafts and UI copy.
+  Affected code: the first project skeleton and the component shells under `src/components/`,
+  plus copy strings that were edited by hand and now live in `src/game/i18n.ts`.
 - **An AI coding assistant:** refactors, gameplay tuning, documentation and code review.
+  Affected code: the run simulation and pacing (`src/game/GameEngine.ts`,
+  `src/game/constants.ts`), the leaderboard client and serverless handler, the test suite
+  under `tests/`, and the prose in `README.md` and `docs/`.
+- **No generated assets.** No AI-generated images, 3D models, music or voice appear in the
+  game: every visual is drawn in code and every sound is synthesised at runtime.
 
 Human review: every file was read, tested and modified by the developer; behaviour was
 verified in Chrome at 360×640, 390×844 and 1280×720, and played through in Firefox, Edge

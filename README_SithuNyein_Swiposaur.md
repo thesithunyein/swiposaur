@@ -8,7 +8,7 @@
 
 ### Digit7 Jam 2026 · HTML arcade game · v1.1.0
 
-**Team:** Sithu Nyein (individual participant)
+**Team:** Solo Canvas — Sithu Nyein (solo)
 
 [![Play now](https://img.shields.io/badge/%E2%96%B6_PLAY_NOW-swiposaur.sithunyein.com-F97316?style=for-the-badge)](https://swiposaur.sithunyein.com/)
 
@@ -20,7 +20,7 @@
 
 ## 2. Team name
 
-Sithu Nyein (individual participant)
+**Solo Canvas** (solo entry; team leader Sithu Nyein)
 
 ## 3. Main contact person
 

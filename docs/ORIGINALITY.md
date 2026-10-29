@@ -11,11 +11,13 @@
 ## 1. Development record
 
 Swiposaur was written for Digit7 Jam 2026. The repository's first commit is dated
-**10 October 2026**. The history is public, so the development timeline can be
-checked commit by commit. Before this documentation update, `main` had 46
-commits; this update becomes commit 47. The current source is package version
-`1.1.0`; `v1.0.0` remains the original jam snapshot. No part of the game was
-published or made commercially available before this submission.
+**10 October 2026**, and through `a435f75` on **29 October 2026** `main` holds **50
+commits**, every one of them inside the jam window. The count is pinned to that
+commit so it can be checked with `git rev-list --count a435f75`; later commits only
+extend the same history. The history is public, so the development timeline can be
+checked commit by commit. The current source is package version `1.1.0`; `v1.0.0`
+remains the original jam snapshot. No part of the game was published or made
+commercially available before this submission.
 
 ## 2. What is original
 
