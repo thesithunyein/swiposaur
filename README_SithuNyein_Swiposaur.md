@@ -57,6 +57,8 @@ Best on a phone in portrait (360×640 and up) or any desktop window (1280×720 a
 
 ## 8. Controls and gameplay
 
+- **Language:** Burmese by default; English is one tap away in Settings and the choice is
+  remembered on the device. Every map, skin and mission name is translated.
 - **Lane change:** `A`/`D` or `←`/`→`; on touch the LEFT/RIGHT buttons, a swipe
   left/right, or a tap on the left/right third.
 - **Jump:** `W`, `↑`, `Space` when not beside a critter; on touch the JUMP button or a
@@ -150,7 +152,8 @@ flowchart TD
 - All art, 3D models, textures, logo and icons: original, generated in code (Three.js
   primitives + inline SVG), Apache-2.0.
 - All audio: original, synthesized at runtime with the Web Audio API. No audio files.
-- Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P (Google Fonts, SIL OFL 1.1).
+- Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P (Google Fonts, SIL OFL 1.1),
+  and Aka 08 for the Burmese UI (myanmar-unicode-fonts on jsDelivr, SIL OFL 1.1).
 - Code libraries: MIT / ISC / Apache-2.0, see `README.md` for the full table.
 - No third-party art, sprites, music or purchased assets are included.
 

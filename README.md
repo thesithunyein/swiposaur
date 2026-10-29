@@ -244,7 +244,7 @@ ever creates one record.
 
 ## Features
 
-- Custom Three.js renderer: voxel dinosaur built from primitives, 9 skins, 6 biomes,
+- Custom Three.js renderer: voxel dinosaur built from primitives, 12 skins, 12 biomes,
   dynamic shadows, weather and camera shake.
 - Procedural Web Audio SFX — whips, blasts, coin chimes — with no audio files and no sample
   licensing. The arcade sequencer is not started during a run, so the effects carry the audio.
@@ -252,9 +252,18 @@ ever creates one record.
   pollen, eased over 8 seconds on the first load and 2 seconds on reloads.
 - Persistence: high score, coins, skins, levels, achievements, daily rewards, missions and
   banked stamina are stored locally (`localStorage`).
+- Twelve biomes and twelve dino skins unlock as you level: the original six between
+  levels 1 and 35, then Sakura Heights, Ember Canyon, Aurora Ridge, Starlight Shibuya,
+  Monsoon Coast and Moonlit Bazaar at 45, 55, 65, 75, 85 and 95, each with the dino skin
+  that belongs to it. The new habitats reuse the tuned renderer styles and obstacle pools
+  rather than adding untested geometry.
 - Five daily missions, drawn from a rotating twelve-mission pool and reset at 00:00
-  Myanmar time (UTC+06:30). Each one covers a different skill, pays 80-150 coins and
-  banks **+20 stamina on the next run** when claimed.
+  Myanmar time (UTC+06:30). A day always mixes difficulties — **two easy, two medium and
+  one hard** — chosen from different metrics so the set never repeats an objective. Each
+  one pays 80-150 coins and banks **+20 stamina on the next run** when claimed.
+- English and Burmese, switched in Settings and remembered per device. Burmese is the
+  default; every menu, map, skin, mission and toast has a translation, set in Aka 08 so
+  the Myanmar script stays legible where a Latin display face would break.
 - Login eggs grow on consecutive days and step back a single stage after a missed day
   instead of resetting the streak.
 - The results card names the one thing that was close — the next grade in metres, the next
@@ -310,8 +319,10 @@ ever creates one record.
   not verify a signed run or replay.
 - Clearing browser storage gives that device a new player id, so it appears as a new
   player on the global board.
-- External font requests to `fonts.googleapis.com`; if the network blocks them the game
-  falls back to system sans-serif.
+- External font requests to `fonts.googleapis.com` (Fredoka, Lilita One and the other
+  display faces) and the Aka 08 Myanmar font on `cdn.jsdelivr.net`; if the network blocks
+  them the game falls back to system sans-serif and Aka 08 degrades to `Noto Sans Myanmar`
+  or the platform Myanmar font.
 - Firefox and Safari are supported targets but were not verified on physical devices;
   Chrome on Android and desktop was.
 - Very low-end Android devices with weak GPUs may still drop frames; the renderer caps
@@ -333,6 +344,7 @@ src/game/ThreeGameRenderer.ts   scene, camera, track and world rendering
 src/game/DinoMeshBuilder.ts     voxel dinosaur construction
 src/game/SoundEngine.ts         Web Audio synthesis
 src/game/grades.ts              grade tiers shared by the results card, missions and coach
+src/game/i18n.ts                English/Burmese copy, language store and document lang
 src/game/dailyMissions.ts       deterministic five-a-day missions on Myanmar time
 src/game/runBoosts.ts           banked stamina and the retry-boost cooldown
 src/game/coach.ts               the single actionable line on the results card
@@ -362,6 +374,7 @@ docs/screenshots/               screenshots used by this README
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` | Original work, Apache-2.0 |
 | Music and sound effects | Synthesized at runtime with the Web Audio API | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P | Google Fonts | SIL Open Font License 1.1 |
+| Burmese font: Aka 08 | [myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts) on jsDelivr | SIL Open Font License 1.1 |
 | React, React DOM | react.dev | MIT |
 | Three.js | threejs.org | MIT |
 | Vite, Tailwind CSS | vite.dev, tailwindcss.com | MIT |
