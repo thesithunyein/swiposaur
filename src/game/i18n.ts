@@ -74,6 +74,9 @@ const BURMESE: Record<string, string> = {
   'SHARE NOT AVAILABLE': 'မျှဝေမရပါ',
   'I scored {score} in Swiposaur!': 'Swiposaur တွင် {score} မှတ် ရခဲ့သည်!',
   NORMAL: 'ပုံမှန်',
+  'BEACH CHILL': 'ကမ်းခြေ အေးအေးဆေးဆေး',
+  'TURBO DINO': 'တာဘို ဒိုင်နို',
+  'PRIMAL MAYHEM': 'ရှေးဦး အရူးအမူး',
   MUTED: 'အသံပိတ်',
   BACK: 'နောက်သို့',
   CLAIM: 'ရယူ',
@@ -110,7 +113,6 @@ const BURMESE: Record<string, string> = {
   // HUD
   Score: 'ရမှတ်',
   'DINO ENERGY': 'ဒိုင်နို စွမ်းအင်',
-  'PRIMAL MAYHEM': 'ရှေးဦး ရန်အား',
   'Flame Mode': 'မီးမုဒ်',
   'STAMPEDE ON YOUR TAIL! RUN FAST TO SHAKE THEM OFF!':
     'အမြီးနောက် လူအုပ်လိုက်နေသည်! လွတ်မြောက်ရန် အမြန်ပြေးပါ!',
@@ -544,10 +546,18 @@ const BURMESE: Record<string, string> = {
   'Championship gold with crown': 'မြတ်စိုးရာဇာ ပါသော ရွှေရောင်',
 };
 
-export function t(english: string, vars?: Record<string, string | number>): string {
-  const template = currentLanguage === 'my' ? BURMESE[english] ?? english : english;
+export function tForLanguage(
+  language: Language,
+  english: string,
+  vars?: Record<string, string | number>
+): string {
+  const template = language === 'my' ? BURMESE[english] ?? english : english;
   if (!vars) return template;
   return template.replace(/\{(\w+)\}/g, (match, key: string) =>
     Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : match
   );
+}
+
+export function t(english: string, vars?: Record<string, string | number>): string {
+  return tForLanguage(currentLanguage, english, vars);
 }

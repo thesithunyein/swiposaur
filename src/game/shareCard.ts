@@ -12,7 +12,7 @@
  * no Myanmar glyphs and would fall back to whatever the OS picks.
  */
 
-import { getLanguage, t } from './i18n.ts';
+import { getLanguage, tForLanguage, type Language } from './i18n.ts';
 
 export interface ShareCardData {
   score: number;
@@ -142,10 +142,16 @@ function formatShareDate(myanmar: boolean, now: Date = new Date()): string {
   return `${toMyanmarDigits(String(now.getDate()))} ${month} ${toMyanmarDigits(String(now.getFullYear()))}`;
 }
 
+function formatShareNumber(value: number, language: Language): string {
+  const formatted = value.toLocaleString('en-US');
+  return language === 'my' ? toMyanmarDigits(formatted) : formatted;
+}
+
 export async function buildShareCard(data: ShareCardData): Promise<Blob> {
-  // The Burmese face arrives over the network: draw only after it is usable,
-  // otherwise the first shared card silently falls back to a system font.
-  const myanmar = getLanguage() === 'my';
+  // Capture the selected language once so fonts, labels and translated values
+  // stay consistent even if the player switches language while fonts load.
+  const language = getLanguage();
+  const myanmar = language === 'my';
   try {
     await Promise.all([
       document.fonts.load(myanmar ? "400 40px 'Aka08'" : "400 40px 'Fredoka'"),
@@ -165,20 +171,21 @@ export async function buildShareCard(data: ShareCardData): Promise<Blob> {
       return;
     }
 
-    // Burmese is the game's default language; the copy and the fonts follow it.
+    // Copy, fonts and numbers all follow the captured in-game language.
+    const translate = (value: string) => tForLanguage(language, value);
     const head = myanmar ? MY_HEAD_FONT : HEAD_FONT;
     const ui = myanmar ? MY_UI_FONT : UI_FONT;
     /** Myanmar has no letter case, so upper-casing is an English-only step. */
     const shout = (value: string) => (myanmar ? value : value.toUpperCase());
 
     const copy = {
-      title: t('Final Dinosaur Score'),
-      whips: shout(t('Tail-Whips')),
-      roar: shout(t('Max Roar')),
-      coins: shout(t('Dino Coins')),
-      distance: shout(t('Distance')),
-      newBest: t('NEW PERSONAL BEST!'),
-      runner: shout(t('RUNNER')),
+      title: translate('Final Dinosaur Score'),
+      whips: shout(translate('Tail-Whips')),
+      roar: shout(translate('Max Roar')),
+      coins: shout(translate('Dino Coins')),
+      distance: shout(translate('Distance')),
+      newBest: translate('NEW PERSONAL BEST!'),
+      runner: shout(translate('RUNNER')),
     };
 
     ctx.textAlign = 'center';
@@ -243,8 +250,9 @@ export async function buildShareCard(data: ShareCardData): Promise<Blob> {
     ctx.fillText(copy.title, W / 2, panelY + 56);
 
     ctx.fillStyle = '#FFFFFF';
-    fit(ctx, data.score.toLocaleString('en-US'), panelW - 260, head, '900', 132);
-    ctx.fillText(data.score.toLocaleString('en-US'), W / 2, panelY + 156);
+    const scoreText = formatShareNumber(data.score, language);
+    fit(ctx, scoreText, panelW - 260, head, '900', 132);
+    ctx.fillText(scoreText, W / 2, panelY + 156);
 
     // Grade badge — same tier the results screen awards.
     const badgeCx = panelX + panelW - 84;
@@ -273,14 +281,14 @@ export async function buildShareCard(data: ShareCardData): Promise<Blob> {
     ctx.fillStyle = strip;
     ctx.fill();
 
-    const best = Math.max(data.score, data.highScore).toLocaleString('en-US');
-    // One key per language: the pace names themselves are proper nouns either way.
+    const best = formatShareNumber(Math.max(data.score, data.highScore), language);
+    const paceName = translate(data.paceName);
     const stripText = myanmar
-      ? `အမြန်နှုန်း: ${data.paceName} · အကောင်းဆုံး: ${best}`
-      : `PACE: ${data.paceName}  ·  BEST: ${best}`;
+      ? `အမြန်နှုန်း: ${paceName} · အကောင်းဆုံး: ${best}`
+      : `PACE: ${paceName}  ·  BEST: ${best}`;
     ctx.fillStyle = C.dark;
     fit(ctx, stripText, panelW - 130, head, '700', 26);
-    ctx.fillText(stripText, W / 2, stripY + 28);
+    ctx.fillText(stripText, W / 2, stripY + 28, panelW - 130);
 
     // New personal best pill (same as the in-game banner).
     if (data.isNewBest) {
@@ -305,10 +313,10 @@ export async function buildShareCard(data: ShareCardData): Promise<Blob> {
     // ------------------------------------------------------------ stat grid
     const gridTop = data.isNewBest ? 736 : 700;
     const cards = [
-      { label: copy.whips, value: `${data.slapsCount}`, color: C.cream },
-      { label: copy.roar, value: `${data.maxCombo}x`, color: C.pink },
-      { label: copy.coins, value: `+${data.coins}`, color: C.yellow },
-      { label: copy.distance, value: `${Math.round(data.distanceRun)}m`, color: C.blue },
+      { label: copy.whips, value: formatShareNumber(data.slapsCount, language), color: C.cream },
+      { label: copy.roar, value: `${formatShareNumber(data.maxCombo, language)}${myanmar ? 'ဆ' : 'x'}`, color: C.pink },
+      { label: copy.coins, value: `+${formatShareNumber(data.coins, language)}`, color: C.yellow },
+      { label: copy.distance, value: `${formatShareNumber(Math.round(data.distanceRun), language)}${myanmar ? ' မီတာ' : 'm'}`, color: C.blue },
     ];
 
     const cardW = (W - 192 - 32) / 2;
@@ -352,8 +360,8 @@ export async function buildShareCard(data: ShareCardData): Promise<Blob> {
     ctx.fillText(runner, W / 2, footerY + 16);
 
     ctx.fillStyle = C.amber;
-    ctx.font = `600 24px ${ui}`;
-    ctx.fillText(`${formatShareDate(myanmar)}  ·  swiposaur.sithunyein.com`, W / 2, footerY + 74);
+    fit(ctx, formatShareDate(myanmar), W - 240, ui, '600', 24);
+    ctx.fillText(formatShareDate(myanmar), W / 2, footerY + 74);
 
     // ------------------------------------------------------------- export
     canvas.toBlob((blob) => {
