@@ -6,7 +6,7 @@
 
 <img src="docs/brand/swiposaur-seal.png" alt="Swiposaur sealed build" width="68" />
 
-### Digit7 Jam 2026 · HTML arcade game · v1.0.0
+### Digit7 Jam 2026 · HTML arcade game · v1.1.0
 
 **Team:** Sithu Nyein (individual participant)
 
@@ -36,7 +36,7 @@ coming.
 
 ## 5. How to open and play
 
-1. Open the playable URL on the Digit7 hosting environment (or any HTTPS static host).
+1. Open the current playable build at <https://swiposaur.sithunyein.com/> (or build the `main` source linked in §16).
 2. No install, login or download is required. The game starts on the title screen.
 3. Press **PLAY**. The opening cinematic asks for one tail-whip (tap / `Space`).
 4. After the intro you get a **6-second safe start** before the stampede begins.
@@ -106,8 +106,9 @@ flowchart LR
   online board is on by default, needs a durable Redis REST store on the server, and is a
   community leaderboard: scores are self-reported and validated for shape, rate and
   plausibility, not cheat-proof.
-- Fonts load from Google Fonts (including Noto Sans Myanmar) and Aka 08 loads from jsDelivr;
-  if those requests are blocked, the UI falls back to system sans-serif and platform Burmese fonts.
+- Fonts load externally: Google Fonts supplies the display families and Noto Sans Myanmar
+  (CSS from `fonts.googleapis.com`, font files from `fonts.gstatic.com`); Aka 08 loads from
+  jsDelivr. If blocked, the UI falls back to available system and platform Myanmar fonts.
 - Very low-end GPUs may dip below 30 FPS at high device pixel ratios.
 
 ## 10. Third-party tools and libraries
@@ -154,8 +155,10 @@ flowchart TD
   primitives + inline SVG), Apache-2.0.
 - All audio: original, synthesized at runtime with the Web Audio API. No audio files.
 - Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P and Noto Sans Myanmar
-  (Google Fonts, SIL OFL 1.1), plus Aka 08 for the Burmese UI (myanmar-unicode-fonts,
-  served by jsDelivr, SIL OFL 1.1).
+  (Google Fonts, SIL OFL 1.1), plus Aka 08 for the Burmese UI (credited to
+  [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts),
+  served by jsDelivr). The source repository metadata does not state Aka 08's license;
+  its redistribution terms remain unverified.
 - Code libraries: MIT / ISC / Apache-2.0, see `README.md` for the full table.
 - No third-party art, sprites, music or purchased assets are included.
 
@@ -197,8 +200,12 @@ larger. The canvas fills the viewport and letterboxes nothing.
   `storage: "unavailable"` and the game stays on the local Hall of Fame.
 - **Telemetry:** `VITE_ANALYTICS_URL` is **unset** in the submitted build, so no gameplay
   telemetry is sent.
-- **External requests in the submitted build:** Google Fonts stylesheet and the Aka 08
-  Myanmar font file on jsDelivr, plus the same-origin `/api/leaderboard` probe.
+- **External requests in the submitted build:** the Google Fonts stylesheet and font files
+  (Google Fonts uses `fonts.googleapis.com` and `fonts.gstatic.com`), and the Aka 08 Myanmar
+  font file from jsDelivr. The leaderboard option is on by default and probes the same-origin
+  `/api/leaderboard`; it may also POST a run or rename when a durable online board is active.
+  Set `VITE_LEADERBOARD_API=false` to disable leaderboard requests. With `VITE_ANALYTICS_URL`
+  unset, no gameplay telemetry is sent.
 - **Storage:** `localStorage` for scores, coins, skins, settings, missions and achievements.
 - No accounts, cookies, ads, trackers, crypto, downloads or device permissions.
 
@@ -215,13 +222,13 @@ responsible for the submitted code.
 ## 16. Repository and build access
 
 - Repository: https://github.com/thesithunyein/swiposaur
-- Submission commit/tag: `v1.0.0`
-- Build: `npm install && npm run build` → `dist/`
+- Current judging version: `v1.1.0`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata; this is the post-jam build described in this document.
+- Historical jam tag: [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), an earlier six-biome snapshot without Burmese localization; it is not the build described here.
+- Build this source: `npm install && npm run build` → `dist/`
 - The repository is public, so reviewers can open it without an invitation. If the
   organizer requires a private repository, access will be granted to the announced
   reviewer account before the deadline.
 
 ## 17. Build version
 
-**v1.0.0**: Digit7 Jam 2026 submission build. The playable URL, the ZIP and this
-repository all point at this tag.
+**Current judging build, v1.1.0:** the post-jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization. The public playable URL was checked on 29 October 2026 and serves this post-jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains the historical six-biome jam snapshot.

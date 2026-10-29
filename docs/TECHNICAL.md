@@ -1,11 +1,13 @@
 # Swiposaur — Technical Document
 
-A short, factual description of how the submitted build works, written for judges
-and reviewers rather than for players. Player-facing instructions live in
+A short, factual description of the current post-jam judging build, written for
+judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Playable build:** <https://swiposaur.sithunyein.com/>
-- **Source:** <https://github.com/thesithunyein/swiposaur>
+- **Current judging version:** `v1.1.0`, post-jam build with twelve biomes and English/Burmese localization.
+- **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the post-jam feature set; exact deployed commit not asserted).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`; the only release tag is historical `v1.0.0`).
+- **Historical jam snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
 
@@ -33,11 +35,12 @@ enraged crowd catches the runner.
 | Tests | Vitest (node environment for rules, jsdom for UI) |
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
-`npm run build` emits one JS bundle plus one CSS file. The current build is
-1,142,480 bytes of JavaScript (298,943 bytes gzipped) and 98,943 bytes of CSS
-(14,463 bytes gzipped); the asset bundle totals about 306 KiB gzipped. The full
-`dist/` directory is about 1.4 MB, including icons and metadata. There is no
-code splitting yet; see §12.
+`npm run build` emits one JS bundle plus one CSS file. In the build checked 29
+October 2026, JavaScript was 1,142,480 bytes (298,943 bytes gzipped) and CSS was
+98,943 bytes (14,463 bytes gzipped): together 1,241,423 bytes raw and 313,406
+bytes gzipped (about 306 KiB). The complete `dist/` directory was 1,384,557
+bytes, including icons and metadata. These are generated-build measurements, not
+source tree size. There is no code splitting yet; see §12.
 
 ## 3. Module map
 
@@ -223,8 +226,10 @@ button to its idle state. Covered by `tests/gameOverShare.test.tsx`.
   work of 1.5× for pixels a 6-inch screen cannot resolve.
 - Geometry is built once at start-up from primitives and reused; the road is a
   small number of recycled segments, spawns beyond the fog are culled.
-- Everything is code — no image decoding, no audio decoding, one HTML document
-  and two asset requests (JS, CSS) plus fonts.
+- Everything is code — no image decoding and no audio decoding. The app shell
+  loads one HTML document and a JS/CSS bundle; external font CSS and font files
+  load from Google Fonts and jsDelivr. When enabled, the leaderboard also makes
+  same-origin `/api/leaderboard` requests (probe, score submission and rename).
 
 Honest gap: frame rate has been verified by playing, not instrumented with a
 frame-time histogram. The submitted claim is "target 60 FPS on a modern phone",
@@ -235,8 +240,9 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 1. **No frame-time instrumentation.** Averages hide hitches; a rolling p95
    frame time on screen would be honest and useful.
-2. **One bundle.** 1.14 MB minified, over Vite's 500 KB warning. Code-splitting
-   the renderer would shrink time-to-first-frame on a phone.
+2. **One bundle.** 1,142,480 bytes minified in the build checked 29 October
+   2026, over Vite's 500 KB warning. Code-splitting the renderer would shrink
+   time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,
    not offline play or an install prompt.
 4. **Safari and Firefox have not been run on physical devices** by the author;
@@ -245,14 +251,17 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 5. **Self-reported scores**, as described in §9.
 6. **Missions and rewards are device-local**, so clearing storage resets them
    and a second device starts a fresh streak.
-7. **Fonts load externally.** Display faces and Noto Sans Myanmar load from Google
-   Fonts; Aka 08 loads from jsDelivr. With those requests blocked the UI falls back
-   to system fonts and the platform's Burmese font.
+7. **Fonts load externally.** Fredoka, Lilita One, Titan One, Sniglet, Press
+   Start 2P and Noto Sans Myanmar are requested from Google Fonts; Aka 08 is
+   requested from jsDelivr. The Google Fonts stylesheet may reference font files
+   from `fonts.gstatic.com`. When unavailable, the UI uses local/system fallbacks.
+   The Google Fonts families are SIL OFL 1.1. The Aka 08 source repository does
+   not state a license in its metadata; verify redistribution terms with its
+   author before redistributing the font.
 
 ## 13. Tests
 
-166 tests across 16 files (`npm test`), all passing. Typecheck is run separately
-with `npm run typecheck`:
+166 tests across 16 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
 
 | Area | Files |
 | --- | --- |

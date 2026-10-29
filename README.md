@@ -34,12 +34,13 @@ binary files in the build are the app icons and favicons.
 
 | | |
 | --- | --- |
-| **Playable build** | `v1.0.0` jam build (tag [`v1.0.0`](../../releases/tag/v1.0.0)); `main` also carries post-jam polish |
-| **Live build** | <https://swiposaur.sithunyein.com/> |
+| **Current judge build** | `v1.1.0` · post-jam build with 12 biomes and Burmese localization; source: [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`) |
+| **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; serves the post-jam feature set; exact deployed commit not asserted) |
+| **Historical jam snapshot** | [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) — six biomes, before the Burmese localization; not the build described below |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Footprint** | ~1.38 MB on disk · ~306 KiB gzipped JS+CSS (292 KiB JS, 14 KiB CSS) · no sprite, texture or audio files |
+| **Production footprint** | `dist/`: 1,384,557 bytes on disk · JS+CSS: 1,241,423 bytes raw / 313,406 bytes gzipped (298,943 B JS + 14,463 B CSS; about 306 KiB) · no sprite, texture or audio files |
 
 ---
 
@@ -183,7 +184,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Production build (this is the folder to zip for the jam submission):
+Production build for the current `v1.1.0` judging version from `main` (the `v1.0.0` tag remains the original jam snapshot):
 
 ```bash
 npm run build      # outputs ./dist
@@ -226,9 +227,10 @@ provides a durable Redis REST store:
 `UPSTASH_REDIS_REST_TOKEN` are also accepted. On a deployment without those credentials
 the endpoint answers `503` with `storage: "unavailable"`, and the client quietly keeps
 the on-device **Hall of Fame** instead of showing a fake global board. On a purely static
-host the probe fails the same way. With `VITE_LEADERBOARD_API=false` the app makes **no
-leaderboard/API requests**. With `VITE_ANALYTICS_URL` unset (as in the submitted build),
-no telemetry is sent; external fonts still load from Google Fonts and jsDelivr.
+host the probe fails the same way. With `VITE_LEADERBOARD_API=false` the app makes no
+leaderboard/API requests. With `VITE_ANALYTICS_URL` unset (as in the submitted build),
+no gameplay telemetry is sent. The browser still loads font CSS/files from Google Fonts
+and jsDelivr; when the leaderboard option is enabled, it also probes `/api/leaderboard`.
 
 Each browser gets one stable player id and a generated name (for example
 `NEON_RAPTOR42`), so a new player appears on the board without filling anything in. The
@@ -320,10 +322,11 @@ ever creates one record.
   not verify a signed run or replay.
 - Clearing browser storage gives that device a new player id, so it appears as a new
   player on the global board.
-- External font requests to `fonts.googleapis.com` (Fredoka, Lilita One and the other
-  display faces) and the Aka 08 Myanmar font on `cdn.jsdelivr.net`; if the network blocks
-  them the game falls back to system sans-serif and Aka 08 degrades to `Noto Sans Myanmar`
-  or the platform Myanmar font.
+- External font requests: the Google Fonts stylesheet and font files from
+  `fonts.googleapis.com` / `fonts.gstatic.com` (Fredoka, Lilita One, Titan One, Sniglet,
+  Press Start 2P and Noto Sans Myanmar), plus Aka 08 from `cdn.jsdelivr.net`. If blocked,
+  display faces fall back to system sans-serif and Burmese text uses Noto Sans Myanmar,
+  Myanmar Text, Padauk or the platform Myanmar font when available.
 - Firefox and Safari are supported targets but were not verified on physical devices;
   Chrome on Android and desktop was.
 - Very low-end Android devices with weak GPUs may still drop frames; the renderer caps
@@ -375,7 +378,7 @@ docs/screenshots/               screenshots used by this README
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` | Original work, Apache-2.0 |
 | Music and sound effects | Synthesized at runtime with the Web Audio API | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
-| Burmese font: Aka 08 | [myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | SIL Open Font License 1.1 |
+| Burmese font: Aka 08 | [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | License not stated in the repository metadata; verify the font's redistribution terms with its author before redistribution |
 | React, React DOM | react.dev | MIT |
 | Three.js | threejs.org | MIT |
 | Vite, Tailwind CSS | vite.dev, tailwindcss.com | MIT |
@@ -408,4 +411,4 @@ The game — source code, code-generated art and synthesized audio — is licens
 
 Bundled dependencies keep their own licenses: React, React DOM, Three.js, Vite,
 Tailwind CSS and Express are MIT, lucide-react is ISC, and TypeScript is Apache-2.0.
-The Google Fonts families, including Noto Sans Myanmar, and Aka 08 are SIL OFL 1.1.
+The Google Fonts families, including Noto Sans Myanmar, are SIL OFL 1.1. Aka 08 is credited to its author in the asset table; the source repository does not declare a license, so its redistribution terms remain unverified.

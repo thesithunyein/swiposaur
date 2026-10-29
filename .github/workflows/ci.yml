@@ -2,8 +2,8 @@ name: CI
 
 # The suite is the only thing standing between a tuning tweak and a broken
 # build, and a jam submission gets judged on the deployed commit. Run the same
-# checks locally and here: tsc for types, Vitest for the 164 gameplay,
-# leaderboard, i18n and boot tests, and a real production bundle so a bundling
+# checks locally and here: tsc for types, Vitest for the 166 gameplay,
+# leaderboard, i18n, boot and share tests, and a real production bundle so a bundling
 # failure is caught on push instead of at deploy time.
 on:
   push:
