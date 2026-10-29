@@ -46,9 +46,19 @@ binary files in the build are the app icons and favicons.
 
 ## Screenshots
 
-<img src="docs/screenshots/01-start-screen.png" alt="Swiposaur title screen: a voxel city street with the PLAY, Dino Skins, Maps, Missions and Hall of Fame menu buttons" width="100%" />
-
-*The title screen: three lanes, sidewalk critters, and the run waiting behind the PLAY button.*
+<table>
+  <tr>
+    <td><img src="docs/screenshots/01-start-screen.png" alt="Swiposaur title screen in Burmese, with the voxel city street and main menu" width="100%" /><p><strong>Title screen</strong></p></td>
+    <td><img src="docs/screenshots/02-gameplay.png" alt="Live run on the voxel street, with the dinosaur, obstacles and gameplay HUD" width="100%" /><p><strong>Gameplay</strong></p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/03-game-over.png" alt="Game over results screen showing the run score, stats and retry options" width="100%" /><p><strong>Run results</strong></p></td>
+    <td><img src="docs/screenshots/04-map-selection.png" alt="Map selection modal with illustrated biomes and unlock states" width="100%" /><p><strong>Biome selection</strong></p></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/05-leaderboard.png" alt="Hall of Fame leaderboard showing player ranks and scores" width="100%" /><p><strong>Hall of Fame</strong></p></td>
+  </tr>
+</table>
 
 ---
 
