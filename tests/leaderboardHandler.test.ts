@@ -111,6 +111,31 @@ describe('/api/leaderboard handler', () => {
     expect(await store.list()).toEqual([]);
   });
 
+  it('rejects an impossible score that has no run time behind it', async () => {
+    const handler = createLeaderboardHandler(() => store);
+
+    const bare = createRes();
+    await handler({ method: 'POST', body: { ...validBody, score: 5_000_000 } }, bare.res);
+    expect(bare.recorded.statusCode).toBe(400);
+
+    // A claimed duration that is far too short for the score is refused too.
+    const tooFast = createRes();
+    await handler(
+      { method: 'POST', body: { ...validBody, score: 5_000_000, durationMs: 30_000 } },
+      tooFast.res
+    );
+    expect(tooFast.recorded.statusCode).toBe(400);
+
+    // A score that fits inside a real-length run is accepted.
+    const honest = createRes();
+    await handler(
+      { method: 'POST', body: { ...validBody, score: 2_000_000, durationMs: 900_000 } },
+      honest.res
+    );
+    expect(honest.recorded.statusCode).toBe(200);
+    expect(await store.list()).toHaveLength(1);
+  });
+
   it('sanitizes a non-string name instead of rejecting the run', async () => {
     const handler = createLeaderboardHandler(() => store);
     const { res, recorded } = createRes();

@@ -99,10 +99,11 @@ flowchart LR
 
 - No offline mode: there is **no service worker**, so there is no install prompt and no
   cached play. "Add to Home Screen" only creates a shortcut.
-- The Hall of Fame is stored locally on the device and is labelled "Saved on this device"
-  with a local rank. The optional online board is disabled by default, needs a durable
-  Redis REST store, and is a community leaderboard: scores are self-reported, not
-  cheat-proof.
+- The Hall of Fame falls back to the device (labelled "Saved on this device" with a local
+  rank) whenever `/api/leaderboard` is missing or does not report durable storage. The
+  online board is on by default, needs a durable Redis REST store on the server, and is a
+  community leaderboard: scores are self-reported and validated for shape, rate and
+  plausibility, not cheat-proof.
 - Fonts load from Google Fonts; with the network blocked the UI falls back to system fonts.
 - Very low-end GPUs may dip below 30 FPS at high device pixel ratios.
 
@@ -184,12 +185,15 @@ larger. The canvas fills the viewport and letterboxes nothing.
 ## 14. Network, API and third-party services
 
 - **Required network:** none. The game is fully client-side.
-- **Optional:** `VITE_LEADERBOARD_API=true` enables the `/api/leaderboard` probe, but the
-  endpoint needs a durable store (`LEADERBOARD_KV_REST_URL` + `LEADERBOARD_KV_REST_TOKEN`,
-  or the Vercel KV / Upstash equivalents) before it reports online mode. Without that it
-  returns `storage: "unavailable"` and the game stays on the local Hall of Fame.
-  `VITE_ANALYTICS_URL` enables telemetry. All of these are **off** in the submitted build.
-- **External requests in the submitted build:** Google Fonts stylesheet only.
+- **Leaderboard probe:** on by default — the client asks `/api/leaderboard` once per
+  session. Set `VITE_LEADERBOARD_API=false` to switch it off entirely. The endpoint needs
+  a durable store (`LEADERBOARD_KV_REST_URL` + `LEADERBOARD_KV_REST_TOKEN`, or the Vercel
+  KV / Upstash equivalents) before it reports online mode; without one it answers
+  `storage: "unavailable"` and the game stays on the local Hall of Fame.
+- **Telemetry:** `VITE_ANALYTICS_URL` is **unset** in the submitted build, so no gameplay
+  telemetry is sent.
+- **External requests in the submitted build:** Google Fonts stylesheet and the Aka 08
+  Myanmar font file on jsDelivr, plus the same-origin `/api/leaderboard` probe.
 - **Storage:** `localStorage` for scores, coins, skins, settings, missions and achievements.
 - No accounts, cookies, ads, trackers, crypto, downloads or device permissions.
 

@@ -283,6 +283,8 @@ export interface GameStats {
   tutorialActive?: boolean;
   tutorialDirection?: -1 | 1;
   distanceRun: number;
+  /** Whole milliseconds of actual running time, used to sanity-check a submitted score. */
+  durationMs?: number;
   comboStreak: number;
   maxCombo: number;
   longestChaseEscape: number;

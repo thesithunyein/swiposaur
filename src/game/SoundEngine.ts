@@ -20,6 +20,8 @@ class SoundEngine {
   private nextNoteTime: number = 0;
   private beatStep: number = 0;
   private chaosMult: number = 1;
+  /** Set once the silent buffer has unlocked iOS Safari's audio pipeline. */
+  private unlocked: boolean = false;
 
   constructor() {
     try {
@@ -65,6 +67,29 @@ class SoundEngine {
   private resume(ctx: AudioContext): void {
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
+    }
+  }
+
+  /**
+   * iOS Safari only starts audio inside a real gesture, and it swallows the very
+   * first sound played after a suspended context resumes. Call this from the
+   * first pointerdown so the PLAY tap already has a running context and the run
+   * does not open silent. Safe to call repeatedly; it is a no-op once unlocked.
+   */
+  unlock(): void {
+    const ctx = this.initCtx();
+    if (!ctx) return;
+    this.resume(ctx);
+    if (this.unlocked) return;
+    this.unlocked = true;
+    try {
+      const silence = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = silence;
+      source.connect(this.masterGain ?? ctx.destination);
+      source.start(0);
+    } catch {
+      // A blocked silent buffer is harmless: the next real sound resumes anyway.
     }
   }
 

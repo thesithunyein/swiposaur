@@ -444,6 +444,7 @@ export default function App() {
             score: newStats.score,
             maxCombo: Math.max(0, Math.round(newStats.maxCombo)),
             skinId: selectedSkinRef.current.id,
+            durationMs: Math.max(0, Math.round(newStats.durationMs ?? 0)),
           });
         }
       }
@@ -972,6 +973,7 @@ export default function App() {
   return (
     <div
       ref={containerRef}
+      onPointerDownCapture={() => sounds.unlock()}
       className="relative w-screen h-[100dvh] overflow-hidden select-none bg-transparent font-['Fredoka'] touch-none overscroll-none"
     >
       {/* 3D WebGL Canvas */}

@@ -42,7 +42,37 @@ describe('validateRunPayload', () => {
     for (const score of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, MAX_LEADERBOARD_SCORE + 1, '100']) {
       expect(validateRunPayload({ ...validPayload, score }).ok).toBe(false);
     }
-    expect(validateRunPayload({ ...validPayload, score: MAX_LEADERBOARD_SCORE }).ok).toBe(true);
+    // The absolute ceiling still applies, but a score that large now also has to
+    // arrive with a run length that could have produced it.
+    expect(validateRunPayload({ ...validPayload, score: MAX_LEADERBOARD_SCORE }).ok).toBe(false);
+  });
+
+  it('rejects a big score that the run time could not produce', () => {
+    // 120,000 points in 20 s is 6,000/s, far above what the game can pay out.
+    expect(validateRunPayload({ ...validPayload, score: 120_000, durationMs: 20_000 }).ok).toBe(false);
+  });
+
+  it('requires a run length for a big score, and one in a believable range', () => {
+    expect(validateRunPayload({ ...validPayload, score: 120_000 }).ok).toBe(false);
+    for (const durationMs of [-1, 0, 1_000, 21 * 60_000, 1.5, '60000']) {
+      expect(validateRunPayload({ ...validPayload, score: 120_000, durationMs }).ok).toBe(false);
+    }
+  });
+
+  it('accepts a big score that its run length could produce, and carries it through', () => {
+    const result = validateRunPayload({ ...validPayload, score: 120_000, durationMs: 90_000 });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.run.score).toBe(120_000);
+      expect(result.run.durationMs).toBe(90_000);
+    }
+  });
+
+  it('leaves ordinary scores alone when a duration is missing or zero', () => {
+    const result = validateRunPayload({ ...validPayload, durationMs: 0 });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.run.durationMs).toBeUndefined();
+    expect(validateRunPayload({ ...validPayload, score: 900, maxCombo: 2 }).ok).toBe(true);
   });
 
   it('rejects out-of-range or fractional combos', () => {

@@ -8,6 +8,16 @@ import type { LeaderboardEntry } from './types.ts';
 
 /** Hard ceiling for a single run, well above any legitimate score. */
 export const MAX_LEADERBOARD_SCORE = 5_000_000;
+/**
+ * Above this score a submission must also carry the run duration it was set in,
+ * so an impossible score cannot ride in on a bare number. Low scores skip the
+ * check: ordinary players should never be asked for anything extra.
+ */
+export const PLAUSIBILITY_SCORE_THRESHOLD = 50_000;
+/** The fastest score this game can physically pay out, per second of running. */
+export const MAX_SCORE_PER_SECOND = 2_500;
+export const MIN_RUN_DURATION_MS = 8_000;
+export const MAX_RUN_DURATION_MS = 20 * 60_000;
 /** A combo is one whip chain; 250 is far beyond a realistic run. */
 export const MAX_LEADERBOARD_COMBO = 250;
 export const MAX_PLAYER_NAME_LENGTH = 16;
@@ -40,6 +50,8 @@ export interface ValidRun {
   score: number;
   maxCombo: number;
   skinId: string;
+  /** Run length; required for scores above PLAUSIBILITY_SCORE_THRESHOLD. */
+  durationMs?: number;
 }
 
 export type RunValidation = { ok: true; run: ValidRun } | { ok: false; error: string };
@@ -153,6 +165,32 @@ export function validateRunPayload(raw: unknown): RunValidation {
     return { ok: false, error: 'skinId is not a known dinosaur' };
   }
 
+  // Plausibility: a big score has to be possible in the time it claims to have
+  // taken. This is not proof against a determined cheater (that needs signed
+  // runs or replays), but it rejects the lazy "post 5,000,000" case.
+  let durationMs: number | undefined;
+  if (score > PLAUSIBILITY_SCORE_THRESHOLD) {
+    const claimed = body.durationMs;
+    if (
+      typeof claimed !== 'number' ||
+      !Number.isFinite(claimed) ||
+      !Number.isInteger(claimed) ||
+      claimed < MIN_RUN_DURATION_MS ||
+      claimed > MAX_RUN_DURATION_MS
+    ) {
+      return {
+        ok: false,
+        error: `a score above ${PLAUSIBILITY_SCORE_THRESHOLD.toLocaleString('en-US')} needs the run duration in milliseconds`,
+      };
+    }
+    if (score > (claimed / 1000) * MAX_SCORE_PER_SECOND) {
+      return { ok: false, error: 'score is not possible in the reported run time' };
+    }
+    durationMs = claimed;
+  } else if (typeof body.durationMs === 'number' && Number.isInteger(body.durationMs) && body.durationMs > 0) {
+    durationMs = body.durationMs;
+  }
+
   return {
     ok: true,
     run: {
@@ -162,6 +200,7 @@ export function validateRunPayload(raw: unknown): RunValidation {
       score,
       maxCombo,
       skinId: body.skinId,
+      ...(durationMs === undefined ? {} : { durationMs }),
     },
   };
 }

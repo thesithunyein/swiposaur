@@ -38,6 +38,7 @@ binary files in the build are the app icons and favicons.
 | **Live build** | <https://swiposaur.sithunyein.com/> |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
+| **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
 | **Footprint** | ~1.4 MB on disk · ~306 KB gzipped (286 KB JS, 14 KB CSS) · no sprite, texture or audio files |
 
 ---
@@ -278,8 +279,13 @@ ever creates one record.
 - Global leaderboard of every player's highest score, one row per player. A new device
   gets a generated name such as `IRON_TALON77`; players can rename themselves in
   Settings at any time.
+- Score plausibility: anything above 50,000 points must arrive with the run's own
+  length and must fit inside 2,500 points per second, so an impossible number is
+  refused by the API rather than printed on the board.
 - Local Hall of Fame fallback that works with no server, labelled "Saved on this device"
   with a local rank. It stores one record only: this device's highest score.
+- **Share card:** the results screen renders the run as a 1080×1350 PNG and opens the
+  phone's share sheet; browsers without one download the image instead.
 
 ---
 
@@ -299,13 +305,17 @@ ever creates one record.
   Screen" creates a shortcut, but there is no offline cache and no install prompt.
 - **The global board needs durable storage** (see Configuration). Without Redis REST
   credentials the game stays on the local Hall of Fame rather than inventing a board.
-  Online scores are self-reported and not cheat-proof — the server validates shape and
-  rate limits, but does not verify a signed run or replay.
+  Online scores are self-reported and not cheat-proof — the server validates shape,
+  rate limits and plausibility (a score must fit inside the run's own length), but does
+  not verify a signed run or replay.
 - Clearing browser storage gives that device a new player id, so it appears as a new
   player on the global board.
 - External font requests to `fonts.googleapis.com`; if the network blocks them the game
   falls back to system sans-serif.
-- Very old low-end Android devices with weak GPUs may drop below 30 FPS at 2× pixel ratio.
+- Firefox and Safari are supported targets but were not verified on physical devices;
+  Chrome on Android and desktop was.
+- Very low-end Android devices with weak GPUs may still drop frames; the renderer caps
+  the pixel ratio at 1.5 on phone-width viewports and 2.0 on desktop to leave headroom.
 
 ---
 
@@ -328,12 +338,16 @@ src/game/runBoosts.ts           banked stamina and the retry-boost cooldown
 src/game/coach.ts               the single actionable line on the results card
 src/game/obstacleDensity.ts     desktop vs touch obstacle curve
 src/game/leaderboard.ts         local Hall of Fame storage and online client
+src/game/shareCard.ts          1080x1350 run card drawn on a canvas
 src/game/leaderboardCore.ts     shared validation and ranking rules
 src/game/*.ts                   constants, maps, levels, missions, rewards, achievements
 server/leaderboardStore.ts      durable file / Redis REST stores, idempotent by runId
 api/leaderboard.ts              optional serverless endpoint (disabled without a store)
 server.ts                       optional Express dev server with the same endpoints
 tests/                          Vitest coverage for rules, storage, API and UI copy
+docs/TECHNICAL.md               engineering write-up (architecture, systems, limits)
+docs/ORIGINALITY.md             originality and AI-use declaration
+docs/TEAM.md                    team profile
 docs/brand/                     README logo and seal artwork
 docs/screenshots/               screenshots used by this README
 ```

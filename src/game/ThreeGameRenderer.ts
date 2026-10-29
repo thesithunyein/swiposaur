@@ -2173,7 +2173,12 @@ export class ThreeGameRenderer {
 
     // Full Native Resolution with high-DPI scaling capped at 2.0
     // Eliminates all blurriness and pixel stretching, rendering crystal clear character lines and text!
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+    // Phones report 3x pixel ratios. Rendering the whole voxel street at 3x (or
+    // even 2x) burns the frame budget on pixels nobody can see on a 6-inch
+    // screen, so narrow viewports cap lower. Desktop keeps the sharper 2x cap.
+    const isNarrow = Math.min(width, height) < 500;
+    const maxDpr = isNarrow ? 1.5 : 2.0;
+    const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
     this.renderer.setSize(width, height, false);
     this.renderer.setPixelRatio(dpr);
   }

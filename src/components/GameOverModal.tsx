@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameStats } from '../game/types.ts';
 import { sounds } from '../game/SoundEngine.ts';
-import { RotateCcw, Home, Award, BatteryCharging } from 'lucide-react';
+import { RotateCcw, Home, Award, BatteryCharging, Share2, Check, Loader2 } from 'lucide-react';
+import { buildShareCard } from '../game/shareCard.ts';
+import { gradeFor } from '../game/grades.ts';
+import { loadPlayerName } from '../game/leaderboard.ts';
 import { LeaderboardAdvancedIcon } from './GameIcons.tsx';
 import type { MissionSummary } from '../game/dailyMissions.ts';
 import { t, useLanguage } from '../game/i18n.ts';
@@ -281,6 +284,7 @@ export const GradeStamp: React.FC<{ grade: string; badgeBg: string; className?: 
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
   stats,
+  paceName = '',
   onRestart,
   onHome,
   onRetryLeaderboard,
@@ -290,9 +294,73 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onRetryWithBoost,
 }) => {
   useLanguage();
+  const [shareState, setShareState] = useState<'idle' | 'working' | 'shared' | 'error'>('idle');
   // The engine compares against the best captured before this run, so a tie with
   // the old record is not a new personal best.
   const isNewBest = stats.score > 0 && stats.isNewPersonalBest === true;
+
+  /**
+   * Social half of the leaderboard: renders the finished run as a share card and
+   * hands it to the platform share sheet. Desktop browsers without a share sheet
+   * download the PNG instead, so the feature works everywhere rather than
+   * failing silently on the machine a reviewer happens to open.
+   */
+  const handleShare = async () => {
+    if (shareState === 'working') return;
+    sounds.playClick();
+    setShareState('working');
+    try {
+      const blob = await buildShareCard({
+        score: stats.score,
+        highScore: stats.highScore,
+        slapsCount: stats.slapsCount,
+        maxCombo: stats.maxCombo,
+        coins: stats.coins,
+        distanceRun: stats.distanceRun,
+        grade: gradeFor(stats.distanceRun, stats.maxCombo).grade,
+        isNewBest,
+        playerName: loadPlayerName(),
+        paceName: paceName || t('NORMAL'),
+      });
+
+      const fileName = `swiposaur-${stats.score}.png`;
+      const shareNavigator = navigator as Navigator & {
+        canShare?: (data?: { files?: File[] }) => boolean;
+      };
+
+      if (shareNavigator.share && shareNavigator.canShare) {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (shareNavigator.canShare({ files: [file] })) {
+          await shareNavigator.share({
+            files: [file],
+            title: 'Swiposaur',
+            text: t('I scored {score} in Swiposaur!', { score: stats.score.toLocaleString('en-US') }),
+          });
+          setShareState('shared');
+          return;
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+      setShareState('shared');
+    } catch (error) {
+      // Dismissing the share sheet is a choice, not a failure.
+      const aborted = error instanceof Error && error.name === 'AbortError';
+      setShareState(aborted ? 'idle' : 'error');
+    }
+  };
+
+  const shareLabel =
+    shareState === 'shared'
+      ? t('SHARE CARD SAVED')
+      : shareState === 'error'
+        ? t('SHARE NOT AVAILABLE')
+        : t('SHARE THIS RIDE');
 
   const getReasonBadge = () => {
     if (stats.gameOverReason === 'BUSTED') {
@@ -462,6 +530,22 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 {t('Stamina boost back in {time}', { time: retryBoostLabel })}
               </p>
             )}
+
+            <button
+              type="button"
+              onClick={() => void handleShare()}
+              disabled={shareState === 'working'}
+              className="w-full py-2.5 px-4 bg-gradient-to-b from-[#38BDF8] to-[#0369A1] hover:from-[#7DD3FC] hover:to-[#0284C7] disabled:opacity-60 disabled:cursor-wait text-white rounded-2xl font-['Lilita_One'] text-sm tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all border-2 border-[#BAE6FD] shadow-[0_3px_0_#075985] active:translate-y-0.5 active:shadow-[0_1px_0_#075985]"
+            >
+              {shareState === 'working' ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : shareState === 'shared' ? (
+                <Check className="w-4 h-4 stroke-[3]" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+              <span>{shareLabel}</span>
+            </button>
 
             <button
               type="button"

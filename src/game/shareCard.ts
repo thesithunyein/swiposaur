@@ -1,14 +1,30 @@
 /**
- * High-Resolution (1080x1350) 8-Bit Pixel Art Run Achievement Card Generator
+ * Share card generator — 1080x1350 PNG.
+ *
+ * The card is drawn with the same visual language as the in-game results screen
+ * so a screenshot of a shared run reads as the same product: warm dark browns
+ * (#2A1E14 → #140F0C), the orange border (#F97316), gold highlights, Lilita One
+ * headings and Fredoka labels.
+ *
+ * Language follows the game: in Burmese the copy comes from the same i18n
+ * dictionary the UI uses, and every Burmese string is drawn with the Myanmar
+ * font stack (Aka 08 → Noto Sans Myanmar) because Lilita One and Fredoka carry
+ * no Myanmar glyphs and would fall back to whatever the OS picks.
  */
+
+import { getLanguage, t } from './i18n.ts';
 
 export interface ShareCardData {
   score: number;
   highScore: number;
   slapsCount: number;
   maxCombo: number;
+  coins: number;
   distanceRun: number;
-  feverCount: number;
+  /** Grade letter from the shared tiers, so the card and the results card agree. */
+  grade: string;
+  /** True when this run beat the previous personal best. */
+  isNewBest?: boolean;
   playerName: string;
   paceName: string;
 }
@@ -20,158 +36,326 @@ export function sanitizeName(raw: string): string {
   return clean || 'RUNNER';
 }
 
-export function buildShareCard(data: ShareCardData): Promise<Blob> {
+const W = 1080;
+const H = 1350;
+
+/** Palette shared with the results card (see GameOverModal). */
+const C = {
+  bgTop: '#2A1E14',
+  bgMid: '#1E1712',
+  bgBot: '#140F0C',
+  panel: '#19110B',
+  panelInner: '#1D140D',
+  border: '#F97316',
+  borderSoft: 'rgba(249, 115, 22, 0.45)',
+  amber: '#FED7AA',
+  cream: '#FFF8E7',
+  gold: '#FBBF24',
+  goldDeep: '#F59E0B',
+  pale: '#FEF08A',
+  green: '#34D399',
+  blue: '#38BDF8',
+  pink: '#F43F5E',
+  yellow: '#FACC15',
+  dark: '#2A1508',
+} as const;
+
+/** Latin display and UI stacks — the fonts the web UI already ships. */
+const HEAD_FONT = "'Lilita One', 'Fredoka', system-ui, sans-serif";
+const UI_FONT = "'Fredoka', system-ui, sans-serif";
+/**
+ * Myanmar stacks. `Aka08` is the family the app registers in index.css and
+ * preloads in GameLogo; Noto Sans Myanmar is the Google fallback. Lilita One /
+ * Fredoka stay at the end so Latin runs inside a Burmese line (a score, a pace
+ * name) still look native.
+ */
+const MY_HEAD_FONT = "'Aka08', 'Noto Sans Myanmar', 'Lilita One', 'Fredoka', system-ui, sans-serif";
+const MY_UI_FONT = "'Aka08', 'Noto Sans Myanmar', 'Fredoka', system-ui, sans-serif";
+
+/** Rounded rect without relying on ctx.roundRect, which older Safari lacks. */
+function path(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function box(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  path(ctx, x, y, w, h, r);
+}
+
+/** Gold gradient used for headings and badges, matching the UI's buttons. */
+function gold(ctx: CanvasRenderingContext2D, from: number, to: number): CanvasGradient {
+  const g = ctx.createLinearGradient(0, from, 0, to);
+  g.addColorStop(0, '#FFFFFF');
+  g.addColorStop(0.18, C.pale);
+  g.addColorStop(0.6, C.gold);
+  g.addColorStop(1, C.goldDeep);
+  return g;
+}
+
+/** Shrinks a string until it fits the given width, so long names never clip. */
+function fit(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, family: string, weight: string, start: number): string {
+  let size = start;
+  while (size > 12) {
+    ctx.font = `${weight} ${size}px ${family}`;
+    if (ctx.measureText(text).width <= maxWidth) break;
+    size -= 2;
+  }
+  return ctx.font;
+}
+
+/** Burmese numerals, so a date sits beside Burmese words in the same voice. */
+const MY_DIGITS = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
+function toMyanmarDigits(value: string): string {
+  return value.replace(/[0-9]/g, (digit) => MY_DIGITS[Number(digit)]);
+}
+
+/**
+ * Burmese month names, written out rather than taken from Intl: browsers ship
+ * little or no `my-MM` locale data, so `toLocaleDateString` falls back to
+ * English month names on the very phones the card is for.
+ */
+const MY_MONTHS = [
+  'ဇန်',
+  'ဖေ',
+  'မတ်',
+  'ဧပြီ',
+  'မေ',
+  'ဇွန်',
+  'ဇူ',
+  'ဩဂုတ်',
+  'စက်',
+  'အောက်',
+  'နိုဝင်',
+  'ဒီဇင်',
+];
+function formatShareDate(myanmar: boolean, now: Date = new Date()): string {
+  if (!myanmar) {
+    return now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  const month = MY_MONTHS[now.getMonth()] ?? '';
+  return `${toMyanmarDigits(String(now.getDate()))} ${month} ${toMyanmarDigits(String(now.getFullYear()))}`;
+}
+
+export async function buildShareCard(data: ShareCardData): Promise<Blob> {
+  // The Burmese face arrives over the network: draw only after it is usable,
+  // otherwise the first shared card silently falls back to a system font.
+  const myanmar = getLanguage() === 'my';
+  try {
+    await Promise.all([
+      document.fonts.load(myanmar ? "400 40px 'Aka08'" : "400 40px 'Fredoka'"),
+      document.fonts.load("700 40px 'Lilita One'"),
+    ]);
+  } catch {
+    // A blocked font is not worth failing a share over.
+  }
+
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1350;
+    canvas.width = W;
+    canvas.height = H;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       reject(new Error('Canvas 2D context unavailable'));
       return;
     }
 
-    // 1. Dark Retro Arcade Cabinet Background
-    ctx.fillStyle = '#181A24';
-    ctx.fillRect(0, 0, 1080, 1350);
+    // Burmese is the game's default language; the copy and the fonts follow it.
+    const head = myanmar ? MY_HEAD_FONT : HEAD_FONT;
+    const ui = myanmar ? MY_UI_FONT : UI_FONT;
+    /** Myanmar has no letter case, so upper-casing is an English-only step. */
+    const shout = (value: string) => (myanmar ? value : value.toUpperCase());
 
-    // Subtle CRT Scanlines
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-    for (let y = 0; y < 1350; y += 6) {
-      ctx.fillRect(0, y, 1080, 3);
-    }
+    const copy = {
+      title: t('Final Dinosaur Score'),
+      whips: shout(t('Tail-Whips')),
+      roar: shout(t('Max Roar')),
+      coins: shout(t('Dino Coins')),
+      distance: shout(t('Distance')),
+      newBest: t('NEW PERSONAL BEST!'),
+      runner: shout(t('RUNNER')),
+    };
 
-    // 2. Thick Pixel Border Frame
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 20;
-    ctx.strokeRect(30, 30, 1080 - 60, 1350 - 60);
-
-    // Inner Gold Pixel Border
-    ctx.strokeStyle = '#F6C445';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(50, 50, 1080 - 100, 1350 - 100);
-
-    // 3. Header Ribbon: 8-Bit Official Record
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(200, 90, 680, 70);
-    ctx.strokeStyle = '#F6C445';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(200, 90, 680, 70);
-
-    ctx.fillStyle = '#F6C445';
-    ctx.font = "700 24px 'Press Start 2P', monospace";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('★ OFFICIAL ARCADE RECORD ★', 540, 126);
 
-    // 4. Game Title in Retro Pixel Font
-    ctx.fillStyle = '#000000';
-    ctx.font = "900 68px 'Press Start 2P', monospace";
-    ctx.fillText('SWIPOSAUR', 546, 246);
+    // ---------------------------------------------------------------- canvas
+    const background = ctx.createLinearGradient(0, 0, 0, H);
+    background.addColorStop(0, C.bgTop);
+    background.addColorStop(0.5, C.bgMid);
+    background.addColorStop(1, C.bgBot);
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = '#F6C445';
-    ctx.fillText('SWIPOSAUR', 540, 240);
+    // Warm glow behind the header, the same trick the results card uses.
+    const glow = ctx.createRadialGradient(W / 2, 210, 20, W / 2, 210, 520);
+    glow.addColorStop(0, 'rgba(251, 191, 36, 0.28)');
+    glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, 760);
 
-    ctx.fillStyle = '#38BDF8';
-    ctx.font = "700 18px 'Press Start 2P', monospace";
-    ctx.fillText('3D DINO ARCADE RUNNER', 540, 300);
+    // ----------------------------------------------------------- outer frame
+    box(ctx, 44, 44, W - 88, H - 88, 56);
+    ctx.fillStyle = C.bgMid;
+    ctx.fill();
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = C.border;
+    ctx.stroke();
 
-    // 5. Giant Retro Pixel Score Box
-    const boxX = 120;
-    const boxY = 350;
-    const boxW = 840;
-    const boxH = 340;
+    box(ctx, 66, 66, W - 132, H - 132, 44);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255, 240, 130, 0.55)';
+    ctx.stroke();
 
-    // Hard black shadow
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(boxX + 16, boxY + 16, boxW, boxH);
+    // ---------------------------------------------------------------- header
+    ctx.fillStyle = gold(ctx, 96, 210);
+    fit(ctx, 'SWIPOSAUR', 760, head, '900', 104);
+    ctx.fillText('SWIPOSAUR', W / 2, 168);
 
-    // Main box fill
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(boxX, boxY, boxW, boxH);
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(boxX, boxY, boxW, boxH);
+    ctx.fillStyle = C.border;
+    ctx.font = `700 30px ${ui}`;
+    ctx.fillText('★  T A I L   F R E N Z Y  ★', W / 2, 238);
 
-    // Score label
-    ctx.fillStyle = '#F6C445';
-    ctx.font = "700 24px 'Press Start 2P', monospace";
-    ctx.fillText('FINAL RUN SCORE', 540, boxY + 65);
+    // ---------------------------------------------------------- score panel
+    const panelX = 96;
+    const panelY = 292;
+    const panelW = W - 192;
+    const panelH = 316;
 
-    // Score number in pure white pixel font
+    box(ctx, panelX + 8, panelY + 10, panelW, panelH, 34);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fill();
+
+    box(ctx, panelX, panelY, panelW, panelH, 34);
+    ctx.fillStyle = C.panel;
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = C.border;
+    ctx.stroke();
+
+    ctx.fillStyle = C.amber;
+    fit(ctx, copy.title, panelW - 200, ui, '700', 26);
+    ctx.fillText(copy.title, W / 2, panelY + 56);
+
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = "900 82px 'Press Start 2P', monospace";
-    ctx.fillText(data.score.toLocaleString(), 540, boxY + 175);
+    fit(ctx, data.score.toLocaleString('en-US'), panelW - 260, head, '900', 132);
+    ctx.fillText(data.score.toLocaleString('en-US'), W / 2, panelY + 156);
 
-    // Subtag: Pace and High Record
-    ctx.fillStyle = '#F6C445';
-    ctx.fillRect(240, boxY + 245, 600, 52);
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(240, boxY + 245, 600, 52);
+    // Grade badge — same tier the results screen awards.
+    const badgeCx = panelX + panelW - 84;
+    const badgeCy = panelY + 74;
+    const badgeR = 52;
+    const badgeFill = ctx.createLinearGradient(0, badgeCy - badgeR, 0, badgeCy + badgeR);
+    badgeFill.addColorStop(0, C.pale);
+    badgeFill.addColorStop(1, C.goldDeep);
+    ctx.beginPath();
+    ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = badgeFill;
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#7C2D12';
+    ctx.stroke();
+    ctx.fillStyle = C.dark;
+    ctx.font = `900 ${data.grade.length > 1 ? 46 : 58}px ${head}`;
+    ctx.fillText(data.grade, badgeCx, badgeCy + 4);
 
-    ctx.fillStyle = '#000000';
-    ctx.font = "700 16px 'Press Start 2P', monospace";
-    ctx.fillText(`PACE: ${data.paceName} · BEST: ${Math.max(data.score, data.highScore).toLocaleString()}`, 540, boxY + 272);
+    // Pace + personal best strip, exactly like the results card copy.
+    const stripY = panelY + panelH - 74;
+    box(ctx, panelX + 36, stripY, panelW - 72, 52, 16);
+    const strip = ctx.createLinearGradient(0, stripY, 0, stripY + 52);
+    strip.addColorStop(0, C.gold);
+    strip.addColorStop(1, C.goldDeep);
+    ctx.fillStyle = strip;
+    ctx.fill();
 
-    // 6. Stats Grid (4 Retro Pixel Terminal Boxes)
-    const statCards = [
-      { label: 'SLAPS', val: `${data.slapsCount}`, color: '#FF4757' },
-      { label: 'COMBO', val: `${data.maxCombo}x`, color: '#F6C445' },
-      { label: 'DISTANCE', val: `${Math.round(data.distanceRun)}M`, color: '#10B981' },
-      { label: 'FEVER', val: `${data.feverCount || 1}X`, color: '#38BDF8' },
+    const best = Math.max(data.score, data.highScore).toLocaleString('en-US');
+    // One key per language: the pace names themselves are proper nouns either way.
+    const stripText = myanmar
+      ? `အမြန်နှုန်း: ${data.paceName} · အကောင်းဆုံး: ${best}`
+      : `PACE: ${data.paceName}  ·  BEST: ${best}`;
+    ctx.fillStyle = C.dark;
+    fit(ctx, stripText, panelW - 130, head, '700', 26);
+    ctx.fillText(stripText, W / 2, stripY + 28);
+
+    // New personal best pill (same as the in-game banner).
+    if (data.isNewBest) {
+      const pillW = 380;
+      const pillH = 54;
+      const pillX = W / 2 - pillW / 2;
+      const pillY = panelY + panelH + 26;
+      box(ctx, pillX, pillY, pillW, pillH, 27);
+      const pill = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
+      pill.addColorStop(0, C.gold);
+      pill.addColorStop(1, C.goldDeep);
+      ctx.fillStyle = pill;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.stroke();
+      ctx.fillStyle = C.dark;
+      fit(ctx, copy.newBest, pillW - 32, head, '700', 24);
+      ctx.fillText(copy.newBest, W / 2, pillY + pillH / 2 + 2);
+    }
+
+    // ------------------------------------------------------------ stat grid
+    const gridTop = data.isNewBest ? 736 : 700;
+    const cards = [
+      { label: copy.whips, value: `${data.slapsCount}`, color: C.cream },
+      { label: copy.roar, value: `${data.maxCombo}x`, color: C.pink },
+      { label: copy.coins, value: `+${data.coins}`, color: C.yellow },
+      { label: copy.distance, value: `${Math.round(data.distanceRun)}m`, color: C.blue },
     ];
 
-    const gridX = 120;
-    const gridY = 740;
-    const cardW = 400;
-    const cardH = 170;
-    const gap = 40;
+    const cardW = (W - 192 - 32) / 2;
+    const cardH = 168;
+    cards.forEach((card, index) => {
+      const cx = 96 + (index % 2) * (cardW + 32);
+      const cy = gridTop + Math.floor(index / 2) * (cardH + 28);
 
-    statCards.forEach((st, idx) => {
-      const cx = gridX + (idx % 2) * (cardW + gap);
-      const cy = gridY + Math.floor(idx / 2) * (cardH + 28);
+      box(ctx, cx + 6, cy + 8, cardW, cardH, 24);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fill();
 
-      // Shadow
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(cx + 10, cy + 10, cardW, cardH);
+      box(ctx, cx, cy, cardW, cardH, 24);
+      ctx.fillStyle = C.panelInner;
+      ctx.fill();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = card.color;
+      ctx.stroke();
 
-      // Card
-      ctx.fillStyle = '#1E2333';
-      ctx.fillRect(cx, cy, cardW, cardH);
-      ctx.strokeStyle = st.color;
-      ctx.lineWidth = 6;
-      ctx.strokeRect(cx, cy, cardW, cardH);
-
-      // Text
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#FDFBF7';
-      ctx.font = "700 16px 'Press Start 2P', monospace";
-      ctx.fillText(st.label, cx + 28, cy + 50);
+      ctx.fillStyle = C.amber;
+      fit(ctx, card.label, cardW - 56, ui, '700', 24);
+      ctx.fillText(card.label, cx + 30, cy + 46);
 
-      ctx.fillStyle = st.color;
-      ctx.font = "900 44px 'Press Start 2P', monospace";
-      ctx.fillText(st.val, cx + 28, cy + 122);
+      ctx.fillStyle = card.color;
+      fit(ctx, card.value, cardW - 56, head, '900', 66);
+      ctx.fillText(card.value, cx + 30, cy + 116);
+      ctx.textAlign = 'center';
     });
 
-    // 7. Footer: Player Signature & Timestamp
-    const footerY = 1170;
-    ctx.textAlign = 'center';
+    // -------------------------------------------------------------- footer
+    const footerY = 1174;
 
-    ctx.fillStyle = '#F6C445';
-    ctx.font = "700 20px 'Press Start 2P', monospace";
-    ctx.fillText(`RUNNER: ${data.playerName.toUpperCase()}`, 540, footerY);
+    box(ctx, 140, footerY - 44, W - 280, 2, 1);
+    ctx.fillStyle = C.borderSoft;
+    ctx.fill();
 
-    ctx.fillStyle = '#FDFBF7';
-    ctx.font = "700 14px 'Press Start 2P', monospace";
-    const dateStr = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-    ctx.fillText(`VERIFIED ON ${dateStr} · SWIPOSAUR ARCADE`, 540, footerY + 45);
+    ctx.fillStyle = C.pale;
+    const runner = `${copy.runner}: ${sanitizeName(data.playerName).toUpperCase()}`;
+    fit(ctx, runner, W - 240, head, '700', 34);
+    ctx.fillText(runner, W / 2, footerY + 16);
 
-    // Export Canvas to Blob
+    ctx.fillStyle = C.amber;
+    ctx.font = `600 24px ${ui}`;
+    ctx.fillText(`${formatShareDate(myanmar)}  ·  swiposaur.sithunyein.com`, W / 2, footerY + 74);
+
+    // ------------------------------------------------------------- export
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
       else reject(new Error('Failed to create Blob from Canvas'));

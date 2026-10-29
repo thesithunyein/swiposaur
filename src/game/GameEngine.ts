@@ -200,6 +200,7 @@ export class GameEngine {
     chaosMultiplier: 1,
     feverActive: false,
     distanceRun: 0,
+    durationMs: 0,
     comboStreak: 0,
     maxCombo: 0,
     longestChaseEscape: 0,
@@ -460,6 +461,7 @@ export class GameEngine {
     this.stats.tutorialActive = false;
     this.stats.tutorialDirection = 1;
     this.runTimeSeconds = 0;
+    this.stats.durationMs = 0;
     this.nextFireAt = FIRE_FIRST_SPAWN_SECONDS;
     this.tutorialState = {
       active: false,
@@ -861,6 +863,9 @@ export class GameEngine {
     }
 
     this.runTimeSeconds += dtFactor / 60;
+    // Published with the score so the leaderboard can check that a big number
+    // was actually possible in the time the run took.
+    this.stats.durationMs = Math.round(this.runTimeSeconds * 1000);
 
     // 1. Fever Run Timer
     if (p.feverTime > 0) {

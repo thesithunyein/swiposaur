@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/*
+ * Mobile browser hardening (iOS Safari and Android Firefox especially).
+ * - no grey flash rectangle on every thumb tap
+ * - no rubber-band scroll or pinch-zoom pulling the game out of the viewport
+ * - no text auto-inflation when the phone is rotated
+ */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 /* Ensure no native browser scrollbar tracks appear anywhere */
 ::-webkit-scrollbar {
   display: none;
