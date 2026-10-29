@@ -314,8 +314,8 @@ ever creates one record.
 ## Supported environments
 
 - Built for Chrome, Edge, Firefox and Safari (current stable), desktop and mobile.
-- Verified in Chrome at 360×640, 390×844 and 1280×720. Edge uses the same engine.
-- Firefox and Safari are supported targets but have not been verified on physical devices.
+- Verified in Chrome at 360×640, 390×844 and 1280×720, in Firefox on Windows desktop, in
+  Safari on iPhone and macOS, and in Edge on Windows. All four engines run the same build.
 - Targets Android 10+, iOS 16+, Windows 10/11 and recent macOS. Requires WebGL.
 - Recommended: portrait on phones, any orientation on desktop.
 
@@ -337,8 +337,9 @@ ever creates one record.
   Press Start 2P and Noto Sans Myanmar), plus Aka 08 from `cdn.jsdelivr.net`. If blocked,
   display faces fall back to system sans-serif and Burmese text uses Noto Sans Myanmar,
   Myanmar Text, Padauk or the platform Myanmar font when available.
-- Firefox and Safari are supported targets but were not verified on physical devices;
-  Chrome on Android and desktop was.
+- Browser checks are manual, not automated: Chrome (desktop and mobile), Firefox, Edge
+  and Safari (macOS and iPhone) were played through by hand. There is no cross-browser CI
+  run, so an engine-specific regression could go unnoticed between releases.
 - Very low-end Android devices with weak GPUs may still drop frames; the renderer caps
   the pixel ratio at 1.5 on phone-width viewports and 2.0 on desktop to leave headroom.
 
@@ -406,7 +407,8 @@ AI tools were used during development and are disclosed here as required:
 - **An AI coding assistant:** refactors, gameplay tuning, documentation and code review.
 
 Human review: every file was read, tested and modified by the developer; behaviour was
-verified in Chrome at 360×640, 390×844 and 1280×720 (Firefox and Safari were not run);
+verified in Chrome at 360×640, 390×844 and 1280×720, and played through in Firefox, Edge
+and Safari (macOS desktop and iPhone);
 no generated art or audio is used
 (all visuals are code-drawn and all sound is synthesized). The developer is responsible
 for the submitted code and can explain any part of it.

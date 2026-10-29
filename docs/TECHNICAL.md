@@ -245,9 +245,10 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
    time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,
    not offline play or an install prompt.
-4. **Safari and Firefox have not been run on physical devices** by the author;
-   Chrome on Android and desktop was verified. iOS audio unlock is implemented
-   (`sounds.unlock()` on the first pointer down) but untested on hardware.
+4. **Browser checks are manual.** Chrome (desktop and mobile), Firefox, Edge and
+   Safari (macOS and iPhone) were played through by hand for this build; there is no
+   automated cross-browser run. iOS audio unlock is implemented (`sounds.unlock()`
+   on the first pointer down).
 5. **Self-reported scores**, as described in §9.
 6. **Missions and rewards are device-local**, so clearing storage resets them
    and a second device starts a fresh streak.

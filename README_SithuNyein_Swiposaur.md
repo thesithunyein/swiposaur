@@ -46,9 +46,9 @@ Local build: `npm install && npm run build`, then serve `dist/` (or `npm run pre
 
 ## 6. Supported browsers
 
-Chrome, Edge, Firefox and Safari, current stable. Verified: Chrome, desktop and mobile
-viewports (360×640, 390×844, 1280×720). Firefox and Safari are supported targets but were
-not verified on physical devices before submission. WebGL required.
+Chrome, Edge, Firefox and Safari, current stable. Verified: Chrome (desktop and mobile, at
+360×640, 390×844 and 1280×720), Firefox, Edge, and Safari on macOS and iPhone. All four
+engines run the same build. WebGL required.
 
 ## 7. Supported devices
 
