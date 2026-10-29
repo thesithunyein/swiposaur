@@ -33,8 +33,8 @@ enraged crowd catches the runner.
 | Tests | Vitest (node environment for rules, jsdom for UI) |
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
-`npm run build` emits one JS bundle plus one CSS file. The submitted build is
-~1.13 MB of JavaScript (≈293 KB gzipped) and 97 KB of CSS. There is no code
+`npm run build` emits one JS bundle plus one CSS file. The current build is
+~1.14 MB of JavaScript (≈300 KB gzipped) and 97 KB of CSS. There is no code
 splitting yet; see §12.
 
 ## 3. Module map
@@ -50,6 +50,7 @@ src/game/IsometricRenderer.ts  menu/attract-mode 2D presentation
 src/game/SoundEngine.ts        synthesised SFX and the audio unlock
 src/game/{constants,maps,levels,grades,obstacleRules,obstacleDensity}.ts
                                tuned data and pure rules for the world
+src/game/i18n.ts               English/Burmese copy, language store, document lang
 src/game/dailyMissions.ts      five missions a day, Myanmar-time reset
 src/game/dailyRewards.ts       seven-day egg streak
 src/game/leaderboardCore.ts    platform-free validation and ranking rules
@@ -66,6 +67,22 @@ The important boundary: **rules are pure functions, the engine owns time, React
 owns presentation.** `leaderboardCore.ts` is imported unchanged by the browser,
 the Express server and the serverless handler, so a run that the client accepts
 cannot be rejected by the server for a different reason, and vice versa.
+
+**World content is data, not code.** `maps.ts` defines twelve biomes (colour,
+fog, props, weather, celestial body and the renderer style they reuse) and
+`constants.ts` defines twelve wardrobe skins plus three legacy aliases kept so
+old saves and submitted scores still resolve. `levels.ts` maps a level to the
+biome it unlocks; the six post-jam habitats arrive at levels 45, 55, 65, 75, 85
+and 95, each paired with a skin. Adding a biome is a data change plus a style
+choice, not new geometry.
+
+**Localisation is a lookup layer.** English strings are the keys, so any screen
+that has not been translated keeps working; `i18n.ts` holds the Burmese table,
+a module-level language store read through `useSyncExternalStore`, and the
+`document.documentElement.lang` switch that `index.css` uses to put the Aka 08
+Myanmar face ahead of the Latin display fonts. Burmese is the default; the
+choice is persisted under `slap_run_language`. A test walks `GAME_MAPS` and
+`CHARACTER_SKINS` and fails if any shipped map or skin is missing a translation.
 
 ## 4. Frame loop
 
@@ -134,10 +151,11 @@ Both dailies reset on **Myanmar time (UTC+06:30) midnight**, computed by a day
 number, not by the device clock's timezone.
 
 - **Missions.** Five objectives per day drawn from a rotating pool of twelve,
-  keyed to a day number so the same day always produces the same set. Progress
-  is folded in when a run ends (`updateMissionsOnRun(stats)`) from real run
-  stats — distance, whips, coins, combo, grade. Each mission claims
-  independently and pays 80–150 coins plus +20 stamina for the next run.
+  keyed to a day number so the same day always produces the same set: two easy,
+  two medium and one hard, each on a different metric so a day never repeats an
+  objective. Progress is folded in when a run ends (`updateMissionsOnRun(stats)`)
+  from real run stats — distance, whips, coins, combo, grade. Each mission
+  claims independently and pays 80–150 coins plus +20 stamina for the next run.
 - **Login eggs.** Seven tiers (50 → 800 coins). A claim on the next day advances
   the streak; missing a day steps it back exactly one stage rather than wiping
   a week of progress.
@@ -161,8 +179,8 @@ not a source of truth for anything competitive.
 
 - `playerId` and `runId` must be 8–64 URL-safe characters.
 - `score` must be a whole number, 1 … 5,000,000; `maxCombo` 0 … 250.
-- `skinId` must be one of the nine shipped dinosaurs (a test keeps that list in
-  sync with `CHARACTER_SKINS`).
+- `skinId` must be one of the shipped skin ids — twelve wardrobe dinosaurs plus
+  three legacy aliases (a test keeps that list in sync with `CHARACTER_SKINS`).
 - Names are sanitised to 16 characters and `YOU` if empty.
 - **Plausibility.** A score above 50,000 must also carry `durationMs` (the run
   length measured by the engine, 8 s … 20 min) and must not exceed 2,500 points
@@ -215,7 +233,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 1. **No frame-time instrumentation.** Averages hide hitches; a rolling p95
    frame time on screen would be honest and useful.
-2. **One bundle.** 1.13 MB minified, over Vite's 500 KB warning. Code-splitting
+2. **One bundle.** 1.14 MB minified, over Vite's 500 KB warning. Code-splitting
    the renderer would shrink time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,
    not offline play or an install prompt.
@@ -230,7 +248,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 ## 13. Tests
 
-164 tests across 16 files (`npm test`), all passing, plus `tsc --noEmit` clean:
+166 tests across 16 files (`npm test`), all passing, plus `tsc --noEmit` clean:
 
 | Area | Files |
 | --- | --- |
