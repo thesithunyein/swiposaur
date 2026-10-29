@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/brand/swiposaur-wordmark-my.svg" alt="ဆွီပိုဆောရပ်စ် — အမြီးရိုက် အရူးအမူး" width="560" />
+<img src="docs/brand/swiposaur-wordmark.png" alt="Swiposaur: Tail Frenzy" width="700" />
 
 <br />
 

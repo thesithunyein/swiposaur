@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/brand/swiposaur-wordmark-my.svg" alt="ဆွီပိုဆောရပ်စ် — အမြီးရိုက် အရူးအမူး" width="700" />
+<img src="docs/brand/swiposaur-wordmark.png" alt="Swiposaur: Tail Frenzy" width="700" />
 
 <br />
 
@@ -402,7 +402,7 @@ tests/                          Vitest coverage for rules, storage, API and UI c
 docs/TECHNICAL.md               engineering write-up (architecture, systems, limits)
 docs/ORIGINALITY.md             originality and AI-use declaration
 docs/TEAM.md                    team profile
-docs/brand/                     README logo and seal artwork
+docs/brand/                     English and Burmese README wordmarks (PNG/SVG) and seal artwork
 docs/screenshots/               screenshots used by this README
 ```
 
@@ -413,7 +413,7 @@ docs/screenshots/               screenshots used by this README
 | Asset | Source | License |
 | --- | --- | --- |
 | All 3D models, textures and UI art | Generated in code with Three.js primitives and inline SVG | Original work, Apache-2.0 |
-| Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` | Original work, Apache-2.0 |
+| Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` as transparent PNG and source SVG | Original work, Apache-2.0 |
 | Music and sound effects | Synthesized at runtime with the Web Audio API | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
 | Burmese font: Aka 08 | [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | License not stated in the repository metadata; verify the font's redistribution terms with its author before redistribution |
