@@ -240,7 +240,7 @@ npm run dev:api    # http://localhost:3000
 - **A board that says "Saved on this device" is the documented fallback, not a failure.** It
   means the deployment has no durable store or the probe did not answer; reloading lets it
   probe again. See *Configuration* for the storage variables.
-- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 166 tests across 16
+- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 168 tests across 17
   files with no browser, network or saved state. If a low-memory machine struggles with the
   default worker pool, `npx vitest run --no-file-parallelism` runs the same suite in one
   worker.

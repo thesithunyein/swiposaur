@@ -262,7 +262,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 ## 13. Tests
 
-166 tests across 16 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
+168 tests across 17 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
 
 | Area | Files |
 | --- | --- |
