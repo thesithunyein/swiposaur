@@ -11,6 +11,7 @@
 **Team:** Solo Canvas — Sithu Nyein (solo)
 
 [![Play now](https://img.shields.io/badge/%E2%96%B6_PLAY_NOW-swiposaur.sithunyein.com-F97316?style=for-the-badge)](https://swiposaur.sithunyein.com/)
+[![Demo video](https://img.shields.io/badge/%E2%96%B6_WATCH_DEMO-2_min-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/aeFZKiTROJ4)
 
 </div>
 

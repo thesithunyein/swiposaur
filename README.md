@@ -12,6 +12,7 @@ Swipe between three lanes, tail-whip prehistoric critters to refill stamina,
 charge the Primal Roar and outrun the stampede.
 
 [![Play now](https://img.shields.io/badge/%E2%96%B6_PLAY_NOW-swiposaur.sithunyein.com-F97316?style=for-the-badge)](https://swiposaur.sithunyein.com/)
+[![Demo video](https://img.shields.io/badge/%E2%96%B6_WATCH_DEMO-2_min-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/aeFZKiTROJ4)
 
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-r186-000000?logo=three.js&logoColor=white)](https://threejs.org)
@@ -40,6 +41,7 @@ binary files in the build are the app icons and favicons.
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · post-jam build with 12 biomes and Burmese localization |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
+| **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls |
 | **How to play** | Open the live URL in any browser with WebGL, wait for the load gate, press **ကစားမည် / PLAY**, then `Space` for a tail-whip on desktop or tap the WHIP button on a phone |
 | **Orientation / resolution** | Phones: portrait from 360×640 (9:16 works). Desktop: any orientation from 1280×720. The canvas fills the window at any aspect ratio and the camera re-derives its aspect on resize |
 | **Network requirements** | No backend is needed to play. The browser fetches web fonts, and on this deployment probes `/api/leaderboard`; if either is unavailable the game falls back to system fonts and the on-device Hall of Fame. No third-party API key or account |
