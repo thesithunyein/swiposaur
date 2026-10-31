@@ -41,7 +41,7 @@ icons and favicons.
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` at that commit · final jam build with 12 biomes and Burmese localization |
-| **Current build** | `1.1.1` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip connects. Nothing else was changed after submission |
+| **Current build** | `1.1.2` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip connects. Nothing else was changed after submission |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
 | **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls. Recorded before the recorded swipe cue was added, so it describes the synthesised whoosh |
@@ -206,7 +206,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Production build for the current `1.1.1` version from `main` (the submitted jam build was `1.1.0` at `a435f75`; the `v1.0.0` tag remains an earlier snapshot):
+Production build for the current `1.1.2` version from `main` (the submitted jam build was `1.1.0` at `a435f75`; the `v1.0.0` tag remains an earlier snapshot):
 
 ```bash
 npm run build      # outputs ./dist

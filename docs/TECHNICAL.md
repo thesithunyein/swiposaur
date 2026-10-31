@@ -4,9 +4,9 @@ A short, factual description of the current judging build, written for
 judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Current version:** `1.1.1`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
+- **Current version:** `1.1.2`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
 - **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the final jam feature set; exact deployed commit not asserted).
-- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.1`; the only release tag is the earlier `v1.0.0`).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.2`; the only release tag is the earlier `v1.0.0`).
 - **Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
