@@ -29,27 +29,30 @@ charge the Primal Roar and outrun the stampede.
 ## What it is
 
 Swiposaur is a three-lane endless runner that runs entirely in the browser: no plugins,
-no sprite sheets, no audio files and no server requirement. The whole world (dinosaur,
-critters, biomes, weather and sound effects) is generated in code at runtime; the only
-binary files in the build are the app icons and favicons.
+no sprite sheets and no server requirement. The whole world (dinosaur, critters, biomes,
+weather and sound effects) is generated in code at runtime, with one exception: the
+lane-change swipe is a real finger swipe recorded by the developer
+(`public/audio/swip.mp3`, 9.5 KB). The only other binary files in the build are the app
+icons and favicons.
 
 | | |
 | --- | --- |
 | **Game title** | Swiposaur — Tail Frenzy |
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
-| **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · final jam build with 12 biomes and Burmese localization |
+| **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` at that commit · final jam build with 12 biomes and Burmese localization |
+| **Current build** | `1.1.1` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue for the lane change. Nothing else was changed after submission |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
-| **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls |
+| **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls. Recorded before the recorded swipe cue was added, so it describes the synthesised whoosh |
 | **How to play** | Open the live URL in any browser with WebGL, wait for the load gate, press **ကစားမည် / PLAY**, then `Space` for a tail-whip on desktop or tap the WHIP button on a phone |
 | **Orientation / resolution** | Phones: portrait from 360×640 (9:16 works). Desktop: any orientation from 1280×720. The canvas fills the window at any aspect ratio and the camera re-derives its aspect on resize |
-| **Network requirements** | No backend is needed to play. The browser fetches web fonts, and on this deployment probes `/api/leaderboard`; if either is unavailable the game falls back to system fonts and the on-device Hall of Fame. No third-party API key or account |
+| **Network requirements** | No backend is needed to play. The browser fetches web fonts, the 9.5 KB swipe recording from the same origin, and on this deployment probes `/api/leaderboard`; if the font or the recording is unavailable the game falls back to system fonts and the synthesized whoosh, and if the API is unavailable it uses the on-device Hall of Fame. No third-party API key or account |
 | **Earlier snapshot** | [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) — six biomes, before the Burmese localization; not the build described below |
-| **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
+| **Engine** | React 19 + Three.js, custom voxel meshes, Web Audio (synthesized effects plus one recorded swipe) |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Production footprint** | `dist/`: 1,384,557 bytes on disk · JS+CSS: 1,241,423 bytes raw / 313,406 bytes gzipped (298,943 B JS + 14,463 B CSS; about 306 KiB) · no sprite, texture or audio files |
+| **Production footprint** | `dist/`: 1,406,418 bytes on disk · JS+CSS: 1,241,555 bytes raw / 312,065 bytes gzipped (297,745 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
 
 ---
 
@@ -203,7 +206,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Production build for the current `v1.1.0` judging version from `main` (the `v1.0.0` tag remains an earlier snapshot):
+Production build for the current `1.1.1` version from `main` (the submitted jam build was `1.1.0` at `a435f75`; the `v1.0.0` tag remains an earlier snapshot):
 
 ```bash
 npm run build      # outputs ./dist
@@ -288,8 +291,10 @@ ever creates one record.
 
 - Custom Three.js renderer: voxel dinosaur built from primitives, 12 skins, 12 biomes,
   dynamic shadows, weather and camera shake.
-- Procedural Web Audio SFX — whips, blasts, coin chimes — with no audio files and no sample
-  licensing. The arcade sequencer is not started during a run, so the effects carry the audio.
+- Web Audio SFX, all synthesized at runtime (whips, blasts, coin chimes), except the
+  lane-change swipe, which is one 0.78 s recording made by the developer
+  (`public/audio/swip.mp3`). Nothing is licensed from a sample pack. The arcade sequencer
+  is not started during a run, so the effects carry the audio.
 - A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
   pollen, with an 8-second first-load progress bar and a 2-second reload progress bar.
 - Persistence: high score, coins, skins, levels, achievements, daily rewards, missions and
@@ -386,7 +391,7 @@ src/game/useBootSequence.ts     staged boot progress, 8 s first load / 2 s reloa
 src/game/GameEngine.ts          run loop, collisions, whip, stamina, chase, scoring
 src/game/ThreeGameRenderer.ts   scene, camera, track and world rendering
 src/game/DinoMeshBuilder.ts     voxel dinosaur construction
-src/game/SoundEngine.ts         Web Audio synthesis
+src/game/SoundEngine.ts         Web Audio synthesis + swipe sample
 src/game/grades.ts              grade tiers shared by the results card, missions and coach
 src/game/i18n.ts                English/Burmese copy, language store and document lang
 src/game/dailyMissions.ts       deterministic five-a-day missions on Myanmar time
@@ -416,7 +421,7 @@ docs/screenshots/               screenshots used by this README
 | --- | --- | --- |
 | All 3D models, textures and UI art | Generated in code with Three.js primitives and inline SVG | Original work, Apache-2.0 |
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` as transparent PNG and source SVG | Original work, Apache-2.0 |
-| Music and sound effects | Synthesized at runtime with the Web Audio API | Original work, Apache-2.0 |
+| Music and sound effects | Synthesized at runtime with the Web Audio API; the lane-change swipe is a recording made by the developer (`public/audio/swip.mp3`) | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
 | Burmese font: Aka 08 | [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | License not stated in the repository metadata; verify the font's redistribution terms with its author before redistribution |
 | React, React DOM | react.dev | MIT |
@@ -440,20 +445,23 @@ AI tools were used during development and are disclosed here as required:
   `src/game/constants.ts`), the leaderboard client and serverless handler, the test suite
   under `tests/`, and the prose in `README.md` and `docs/`.
 - **No generated assets.** No AI-generated images, 3D models, music or voice appear in the
-  game: every visual is drawn in code and every sound is synthesised at runtime.
+  game: every visual is drawn in code and every sound is synthesised at runtime, apart from
+  the one swipe cue the developer recorded by hand.
 
 Human review: every file was read, tested and modified by the developer; behaviour was
 verified in Chrome at 360×640, 390×844 and 1280×720, and played through in Firefox, Edge
 and Safari (macOS desktop and iPhone);
 no generated art or audio is used
-(all visuals are code-drawn and all sound is synthesized). The developer is responsible
+(all visuals are code-drawn, and the one recorded sound was captured by the developer). The
+developer is responsible
 for the submitted code and can explain any part of it.
 
 ## License
 
 Copyright 2026 Sithu Nyein.
 
-The game — source code, code-generated art and synthesized audio — is licensed under
+The game — source code, code-generated art, synthesized audio and the recorded swipe cue —
+is licensed under
 [Apache-2.0](LICENSE). The full license text in `LICENSE` is the canonical statement, and
 `package.json` declares the same SPDX identifier (`Apache-2.0`).
 

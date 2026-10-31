@@ -1,16 +1,23 @@
 /**
- * Procedural audio for Swiposaur.
+ * Audio for Swiposaur.
  *
- * Everything is synthesized with the Web Audio API: there are no recorded
- * samples, no downloaded tracks and no synthetic voice lines. The background
- * music is a small 16-step sequencer (bass, arpeggio, kick, snare, hats) whose
- * tempo and layers rise with the chaos multiplier.
+ * Nearly everything is synthesized with the Web Audio API, with one recorded
+ * exception: the lane-change swipe is a real swipe recorded by the developer
+ * (public/audio/swip.mp3). If that file is unavailable the synthesized whoosh
+ * below plays instead, so the cue never goes missing. The background music is a
+ * small 16-step sequencer (bass, arpeggio, kick, snare, hats) whose tempo and
+ * layers rise with the chaos multiplier.
  */
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
+
+  /** The one recorded sample: a real finger swipe, fetched behind the first tap. */
+  private swipeSample: AudioBuffer | null = null;
+  private swipeLoading: boolean = false;
+  private lastSwipeAt: number = -1;
 
   private isMuted: boolean = false;
   private sfxVolume: number = 0.8;
@@ -80,6 +87,7 @@ class SoundEngine {
     const ctx = this.initCtx();
     if (!ctx) return;
     this.resume(ctx);
+    this.loadSwipeSample();
     if (this.unlocked) return;
     this.unlocked = true;
     try {
@@ -91,6 +99,27 @@ class SoundEngine {
     } catch {
       // A blocked silent buffer is harmless: the next real sound resumes anyway.
     }
+  }
+
+  /**
+   * The swipe is fetched and decoded behind the first tap, so the first lane
+   * change already has it. A failed fetch just leaves the synthesized whoosh in
+   * charge; it is never a missing sound.
+   */
+  private loadSwipeSample(): void {
+    const ctx = this.ctx;
+    if (!ctx || this.swipeSample || this.swipeLoading) return;
+    this.swipeLoading = true;
+    fetch(`${import.meta.env.BASE_URL}audio/swip.mp3`)
+      .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(String(res.status)))))
+      .then((buffer) => ctx.decodeAudioData(buffer))
+      .then((decoded) => {
+        this.swipeSample = decoded;
+        this.swipeLoading = false;
+      })
+      .catch(() => {
+        this.swipeLoading = false;
+      });
   }
 
   /** Schedules one oscillator note on the SFX bus. */
@@ -290,7 +319,32 @@ class SoundEngine {
     window.setTimeout(() => this.playNoise(0.06, 0.32, 'bandpass', 2400), 45);
   }
 
+  /**
+   * The lane-change whip. Plays the recorded swipe once it has loaded; a fast
+   * multi-swipe gesture retriggers it, but not so fast that the tails pile up.
+   */
   public playWhoosh(): void {
+    if (this.isMuted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+    this.resume(ctx);
+
+    if (this.swipeSample && this.masterGain) {
+      const now = ctx.currentTime;
+      if (now - this.lastSwipeAt < 0.09) return;
+      this.lastSwipeAt = now;
+      try {
+        const source = ctx.createBufferSource();
+        source.buffer = this.swipeSample;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.6 * this.sfxVolume;
+        source.connect(gain);
+        gain.connect(this.masterGain);
+        source.start(now);
+        return;
+      } catch {}
+    }
+
     this.playNoise(0.12, 0.16, 'bandpass', 900);
     this.playTone(460, 150, 0.13, 'sine', 0.14);
   }

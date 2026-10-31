@@ -4,9 +4,9 @@ A short, factual description of the current judging build, written for
 judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Current judging version:** `v1.1.0`, final jam build with twelve biomes and English/Burmese localization.
+- **Current version:** `1.1.1`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
 - **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the final jam feature set; exact deployed commit not asserted).
-- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`; the only release tag is the earlier `v1.0.0`).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.1`; the only release tag is the earlier `v1.0.0`).
 - **Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
@@ -16,8 +16,9 @@ judges and reviewers rather than players. Player-facing instructions live in
 ## 1. What the game is
 
 Swiposaur is a three-lane endless runner in the browser. The dinosaur, the
-critters, the city, the weather and every sound are generated in code at
-runtime; the build contains no sprite sheets, no textures and no audio files.
+critters, the city, the weather and nearly every sound are generated in code at
+runtime; the build contains no sprite sheets, no textures, and one recorded
+audio file (the lane-change swipe, `public/audio/swip.mp3`).
 Its loop is built around one resource: **stamina**, which a landed tail-whip
 refills and which the street drains. A run ends when stamina reaches zero or the
 enraged crowd catches the runner.
@@ -29,17 +30,18 @@ enraged crowd catches the runner.
 | UI | React 19 (function components, hooks only) |
 | Simulation | Plain TypeScript class `GameEngine`, no React involvement per frame |
 | 3D | Three.js with hand-built voxel meshes from primitives |
-| Audio | Web Audio API, synthesised at runtime |
+| Audio | Web Audio API, synthesised at runtime, plus one recorded swipe sample |
 | Styling | Tailwind CSS v4 |
 | Bundler | Vite 8 |
 | Tests | Vitest (node environment for rules, jsdom for UI) |
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
-`npm run build` emits one JS bundle plus one CSS file. In the build checked 29
-October 2026, JavaScript was 1,142,480 bytes (298,943 bytes gzipped) and CSS was
-98,943 bytes (14,463 bytes gzipped): together 1,241,423 bytes raw and 313,406
-bytes gzipped (about 306 KiB). The complete `dist/` directory was 1,384,557
-bytes, including icons and metadata. These are generated-build measurements, not
+`npm run build` emits one JS bundle plus one CSS file. In the build checked 31
+October 2026, JavaScript was 1,143,312 bytes (297,745 bytes gzipped) and CSS was
+98,243 bytes (14,320 bytes gzipped): together 1,241,555 bytes raw and 312,065
+bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,418
+bytes, including icons, metadata and the 9,523-byte swipe recording. These are
+generated-build measurements, not
 source tree size. There is no code splitting yet; see §12.
 
 ## 3. Module map
@@ -52,7 +54,7 @@ src/game/GameEngine.ts         run loop, collisions, stamina, whip, chase, scori
 src/game/ThreeGameRenderer.ts  scene, camera, road, props, weather, camera shake
 src/game/DinoMeshBuilder.ts    voxel dinosaur construction
 src/game/IsometricRenderer.ts  menu/attract-mode 2D presentation
-src/game/SoundEngine.ts        synthesised SFX and the audio unlock
+src/game/SoundEngine.ts        synthesised SFX, swipe sample playback, audio unlock
 src/game/{constants,maps,levels,grades,obstacleRules,obstacleDensity}.ts
                                tuned data and pure rules for the world
 src/game/i18n.ts               English/Burmese copy, language store, document lang
@@ -240,7 +242,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 1. **No frame-time instrumentation.** Averages hide hitches; a rolling p95
    frame time on screen would be honest and useful.
-2. **One bundle.** 1,142,480 bytes minified in the build checked 29 October
+2. **One bundle.** 1,143,312 bytes minified in the build checked 31 October
    2026, over Vite's 500 KB warning. Code-splitting the renderer would shrink
    time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,
