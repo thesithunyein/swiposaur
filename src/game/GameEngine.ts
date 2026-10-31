@@ -1655,6 +1655,7 @@ export class GameEngine {
     p.isSlapping = true;
     p.slapProgress = 0;
     this.passiveRunTimer = 0;
+    sounds.playSwipe();
 
     // Detect closest bystander in slap reach
     const hitBystander = this.findWhipTarget();
@@ -1783,7 +1784,6 @@ export class GameEngine {
       }, 240);
     } else {
       // Whiffed the whip: short recovery and clear feedback so the reach is learnable.
-      sounds.playWhoosh();
       this.addFloatingText(p.x, p.y + 45, 'WHIFF!', '#94A3B8', 16);
     }
   }

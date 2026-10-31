@@ -18,7 +18,7 @@ judges and reviewers rather than players. Player-facing instructions live in
 Swiposaur is a three-lane endless runner in the browser. The dinosaur, the
 critters, the city, the weather and nearly every sound are generated in code at
 runtime; the build contains no sprite sheets, no textures, and one recorded
-audio file (the lane-change swipe, `public/audio/swip.mp3`).
+audio file (the tail-whip swipe, `public/audio/swip.mp3`).
 Its loop is built around one resource: **stamina**, which a landed tail-whip
 refills and which the street drains. A run ends when stamina reaches zero or the
 enraged crowd catches the runner.
@@ -37,9 +37,9 @@ enraged crowd catches the runner.
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
 `npm run build` emits one JS bundle plus one CSS file. In the build checked 31
-October 2026, JavaScript was 1,143,312 bytes (297,745 bytes gzipped) and CSS was
-98,243 bytes (14,320 bytes gzipped): together 1,241,555 bytes raw and 312,065
-bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,418
+October 2026, JavaScript was 1,143,400 bytes (297,756 bytes gzipped) and CSS was
+98,243 bytes (14,320 bytes gzipped): together 1,241,643 bytes raw and 312,076
+bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,506
 bytes, including icons, metadata and the 9,523-byte swipe recording. These are
 generated-build measurements, not
 source tree size. There is no code splitting yet; see §12.
@@ -242,7 +242,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 1. **No frame-time instrumentation.** Averages hide hitches; a rolling p95
    frame time on screen would be honest and useful.
-2. **One bundle.** 1,143,312 bytes minified in the build checked 31 October
+2. **One bundle.** 1,143,400 bytes minified in the build checked 31 October
    2026, over Vite's 500 KB warning. Code-splitting the renderer would shrink
    time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,

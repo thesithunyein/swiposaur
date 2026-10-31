@@ -2,7 +2,7 @@
  * Audio for Swiposaur.
  *
  * Nearly everything is synthesized with the Web Audio API, with one recorded
- * exception: the lane-change swipe is a real swipe recorded by the developer
+ * exception: the tail-whip swing is a real swipe recorded by the developer
  * (public/audio/swip.mp3). If that file is unavailable the synthesized whoosh
  * below plays instead, so the cue never goes missing. The background music is a
  * small 16-step sequencer (bass, arpeggio, kick, snare, hats) whose tempo and
@@ -320,10 +320,10 @@ class SoundEngine {
   }
 
   /**
-   * The lane-change whip. Plays the recorded swipe once it has loaded; a fast
-   * multi-swipe gesture retriggers it, but not so fast that the tails pile up.
+   * The whip itself. Plays the recorded swipe once it has loaded; the retrigger
+   * guard only matters if a slap is somehow requested twice in one frame.
    */
-  public playWhoosh(): void {
+  public playSwipe(): void {
     if (this.isMuted) return;
     const ctx = this.initCtx();
     if (!ctx) return;
@@ -345,6 +345,11 @@ class SoundEngine {
       } catch {}
     }
 
+    this.playNoise(0.12, 0.16, 'bandpass', 900);
+    this.playTone(460, 150, 0.13, 'sine', 0.14);
+  }
+
+  public playWhoosh(): void {
     this.playNoise(0.12, 0.16, 'bandpass', 900);
     this.playTone(460, 150, 0.13, 'sine', 0.14);
   }
