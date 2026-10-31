@@ -4,9 +4,9 @@ A short, factual description of the current judging build, written for
 judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Current version:** `1.1.2`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
+- **Current version:** `1.1.3`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
 - **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the final jam feature set; exact deployed commit not asserted).
-- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.2`; the only release tag is the earlier `v1.0.0`).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.3`; the only release tag is the earlier `v1.0.0`).
 - **Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
@@ -18,7 +18,8 @@ judges and reviewers rather than players. Player-facing instructions live in
 Swiposaur is a three-lane endless runner in the browser. The dinosaur, the
 critters, the city, the weather and nearly every sound are generated in code at
 runtime; the build contains no sprite sheets, no textures, and one recorded
-audio file (the tail-whip hit cue, `public/audio/swip.mp3`).
+audio file (the tail-whip stamina refund cue, `public/audio/swip.mp3`, which plays
+only when that hit raises the stamina bar).
 Its loop is built around one resource: **stamina**, which a landed tail-whip
 refills and which the street drains. A run ends when stamina reaches zero or the
 enraged crowd catches the runner.
@@ -30,16 +31,16 @@ enraged crowd catches the runner.
 | UI | React 19 (function components, hooks only) |
 | Simulation | Plain TypeScript class `GameEngine`, no React involvement per frame |
 | 3D | Three.js with hand-built voxel meshes from primitives |
-| Audio | Web Audio API, synthesised at runtime, plus one recorded swipe sample |
+| Audio | Web Audio API, synthesised at runtime, plus one recorded swipe sample played only when a whip refunds stamina |
 | Styling | Tailwind CSS v4 |
 | Bundler | Vite 8 |
 | Tests | Vitest (node environment for rules, jsdom for UI) |
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
 `npm run build` emits one JS bundle plus one CSS file. In the build checked 31
-October 2026, JavaScript was 1,143,400 bytes (297,755 bytes gzipped) and CSS was
-98,243 bytes (14,320 bytes gzipped): together 1,241,643 bytes raw and 312,075
-bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,506
+October 2026, JavaScript was 1,143,685 bytes (297,784 bytes gzipped) and CSS was
+98,243 bytes (14,320 bytes gzipped): together 1,241,928 bytes raw and 312,104
+bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,791
 bytes, including icons, metadata and the 9,523-byte swipe recording. These are
 generated-build measurements, not
 source tree size. There is no code splitting yet; see §12.
@@ -264,7 +265,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 ## 13. Tests
 
-169 tests across 17 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
+172 tests across 17 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
 
 | Area | Files |
 | --- | --- |

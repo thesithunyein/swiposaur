@@ -27,7 +27,7 @@ A mobile-first 3D voxel endless runner with a stamina economy, a seven-day login
 streak, five daily missions on Myanmar time, twelve dinosaur skins across twelve
 biomes, English and Burmese localization, and a durable online leaderboard with
 an honest on-device fallback. Written in TypeScript with React, Three.js and the
-Web Audio API; 169 automated tests across 17 files; released under Apache-2.0.
+Web Audio API; 172 automated tests across 17 files; released under Apache-2.0.
 
 See [TECHNICAL.md](TECHNICAL.md) for the engineering write-up and
 [ORIGINALITY.md](ORIGINALITY.md) for the originality and AI-use declaration.

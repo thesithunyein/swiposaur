@@ -83,6 +83,12 @@ const SLAP_COOLDOWN_FRAMES = 18;
  */
 const SLAP_BUFFER_FRAMES = 20;
 /**
+ * How long a lane change or a jump keeps the chaos meter "armed". The meter is
+ * a dodge reward: a player standing still and mashing whip still scores, but
+ * the multiplier cannot climb on whip presses alone.
+ */
+const DODGE_CHARGE_MS = 2000;
+/**
  * Forward/backward extent of the whip. The old 90-unit front edge was only
  * ~0.19 s of travel late in a run, shorter than human reaction time, and a
  * sidewalk walker could drift out of it between the cue and the tap.
@@ -173,6 +179,12 @@ export class GameEngine {
   // 3-Lane Alignment (Left: index 0 = -90, Center: index 1 = 0, Right: index 2 = 90)
   public currentLaneIndex: number = 1; // Always lands squarely in center of lane!
   private joystickLaneChanged: boolean = false;
+  /**
+   * Time left on the "you actually dodged something" license for building the
+   * chaos multiplier. Standing still and mashing whip used to reach FEVER in
+   * under two seconds, so a slap only feeds the meter while this is running.
+   */
+  private dodgeChargeMs: number = 0;
 
   // Opening Cinematic Mega Slap Sequence
   public introState: IntroState = {
@@ -400,6 +412,7 @@ export class GameEngine {
     this.initPlayer();
     this.currentLaneIndex = 1; // Squarely in center lane (0)
     this.stats.currentLane = 1;
+    this.dodgeChargeMs = 0;
     this.player.x = 0;
     this.player.y = 0;
     this.player.z = 0;
@@ -594,6 +607,7 @@ export class GameEngine {
       this.stats.currentLane = this.currentLaneIndex;
       this.tutorialState.active = false;
       this.stats.tutorialActive = false;
+      this.dodgeChargeMs = DODGE_CHARGE_MS;
       markMobileTutorialSeen();
       sounds.playPowerup();
       this.addFloatingText(
@@ -610,6 +624,7 @@ export class GameEngine {
     if (newIndex !== this.currentLaneIndex) {
       this.currentLaneIndex = newIndex;
       this.stats.currentLane = this.currentLaneIndex;
+      this.dodgeChargeMs = DODGE_CHARGE_MS;
       sounds.playWhoosh();
     }
   }
@@ -777,6 +792,7 @@ export class GameEngine {
     if (!p) return;
     if (p.z <= 0.6 && p.vz <= 0.2) {
       p.vz = JUMP_VELOCITY;
+      this.dodgeChargeMs = DODGE_CHARGE_MS;
       sounds.playJump();
       this.spawnParticleExplosion(p.x, p.y, '#E2E8F0', 6, 'cloud');
     }
@@ -884,6 +900,11 @@ export class GameEngine {
         this.stats.chaosLevel = Math.max(0, this.stats.chaosLevel - 0.04 * dtFactor);
         this.updateChaosMultiplier();
       }
+    }
+
+    // Dodge license for the chaos meter, refreshed by lane changes and jumps.
+    if (this.dodgeChargeMs > 0) {
+      this.dodgeChargeMs = Math.max(0, this.dodgeChargeMs - 16.66 * dtFactor);
     }
 
     // 1b. Flame Mode Timer
@@ -1681,8 +1702,8 @@ export class GameEngine {
         rotation: 0,
       };
 
-      // Play Sound: the recorded swipe only lands when the whip connects.
-      sounds.playSwipe();
+      // Instrumental impact only; the recorded swipe is tied to the stamina
+      // refund below so it can never be heard without the meter moving.
       sounds.playSlap(this.stats.comboStreak);
       this.renderer.triggerShake(5 + Math.min(8, this.stats.comboStreak));
       this.renderer.triggerHitFreeze(2);
@@ -1731,17 +1752,26 @@ export class GameEngine {
       // to erase the fatigue clock on its own. Touch gets the slightly richer
       // +26 slice; keyboard keeps the tuned +22.
       const staminaGain = this.touchInputMode ? STAMINA_PER_WHIP_TOUCH : STAMINA_PER_WHIP;
+      const staminaBefore = p.stamina;
       p.stamina = Math.min(this.stats.maxStamina, p.stamina + staminaGain);
       this.stats.stamina = Math.round(p.stamina);
-      sounds.playStaminaRefill();
-      this.addFloatingText(b.x, b.y + 70, `+${staminaGain} STAMINA!`, '#10B981', 20);
+      const staminaAdded = p.stamina - staminaBefore;
+      // Refund cue, recorded swipe included, fires only when the bar really
+      // moves. At full stamina a hit still gets the impact sound and shake.
+      if (staminaAdded > 0.5) {
+        sounds.playSwipe();
+        sounds.playStaminaRefill();
+        this.addFloatingText(b.x, b.y + 70, `+${Math.round(staminaAdded)} STAMINA!`, '#10B981', 20);
+      }
 
       // Slapping also helps you pull away from chasing officer
       if (this.stats.chaserOnScreen) {
         this.stats.chaserAlertTimer = Math.max(0, this.stats.chaserAlertTimer - 1.2);
       }
 
-      this.addChaos(18); // Fills chaos meter
+      // A multiplier is a dodge reward. Whips landed while standing still still
+      // score at the current multiplier, but they do not raise it.
+      if (this.dodgeChargeMs > 0) this.addChaos(18); // Fills chaos meter
       const slapPoints = b.points * this.stats.chaosMultiplier;
       this.stats.score += slapPoints;
       this.triggerAchievementCheck();

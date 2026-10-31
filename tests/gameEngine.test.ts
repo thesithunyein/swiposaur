@@ -687,15 +687,75 @@ describe('stamina economy', () => {
     state.update(1);
     expect(swipe).not.toHaveBeenCalled();
 
-    // A whip that lands on a walker plays it exactly once.
+    // A connecting whip plays it exactly once, and only because the stamina
+    // bar moved: 40 + 22.
     p.slapCooldown = 0;
+    p.stamina = 40;
     engine.bystanders = [shopper(1, 0, p.y + 10)];
     engine.requestSlap();
     state.update(1);
     expect(engine.stats.slapsCount).toBe(1);
+    expect(p.stamina).toBeCloseTo(62, 2);
     expect(swipe).toHaveBeenCalledTimes(1);
 
     swipe.mockRestore();
+  });
+
+  it('keeps the recorded swipe silent on a hit the stamina bar cannot refund', () => {
+    const engine = setup();
+    const p = engine.player;
+    p.stamina = 100;
+    const swipe = vi.spyOn(sounds, 'playSwipe').mockImplementation(() => {});
+    const state = engine as unknown as { update(dtFactor: number): void };
+
+    engine.bystanders = [shopper(1, 0, p.y + 10)];
+    engine.requestSlap();
+    state.update(1);
+
+    expect(engine.stats.slapsCount).toBe(1);
+    expect(p.stamina).toBe(100);
+    expect(swipe).not.toHaveBeenCalled();
+
+    swipe.mockRestore();
+  });
+
+  it('does not let stationary whip mashing raise the chaos multiplier', () => {
+    const engine = setup();
+    const p = engine.player;
+    const state = engine as unknown as { update(dtFactor: number): void };
+
+    for (let i = 0; i < 8; i++) {
+      p.slapCooldown = 0;
+      engine.bystanders = [shopper(i + 1, 0, p.y + 10)];
+      engine.requestSlap();
+      state.update(1);
+    }
+
+    expect(engine.stats.slapsCount).toBe(8);
+    expect(engine.stats.chaosLevel).toBeLessThan(1);
+    expect(engine.stats.chaosMultiplier).toBe(1);
+  });
+
+  it('arms the chaos meter with a lane change so a landed whip can fill it', () => {
+    const engine = setup();
+    const p = engine.player;
+    const state = engine as unknown as { update(dtFactor: number): void };
+
+    engine.changeLane(-1);
+    engine.bystanders = [shopper(1, 0, p.y + 10)];
+    engine.requestSlap();
+    state.update(1);
+
+    expect(engine.stats.slapsCount).toBe(1);
+    expect(engine.stats.chaosLevel).toBeCloseTo(18, 1);
+
+    p.slapCooldown = 0;
+    engine.bystanders = [shopper(2, 40, p.y + 30)];
+    engine.requestSlap();
+    state.update(1);
+
+    // 36 chaos crosses the first threshold, so the dodge pays off.
+    expect(engine.stats.chaosMultiplier).toBe(2);
   });
 
   it('does not bleed stamina during the opening seconds', () => {

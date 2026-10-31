@@ -2,8 +2,9 @@
  * Audio for Swiposaur.
  *
  * Nearly everything is synthesized with the Web Audio API, with one recorded
- * exception: the tail-whip hit is a real swipe recorded by the developer
- * (public/audio/swip.mp3). If that file is unavailable the synthesized whoosh
+ * exception: the tail-whip stamina refund is a real swipe recorded by the
+ * developer (public/audio/swip.mp3), and the engine calls it only when a hit
+ * raises the stamina bar. If that file is unavailable the synthesized whoosh
  * below plays instead, so the cue never goes missing. The background music is a
  * small 16-step sequencer (bass, arpeggio, kick, snare, hats) whose tempo and
  * layers rise with the chaos multiplier.

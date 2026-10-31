@@ -31,8 +31,9 @@ charge the Primal Roar and outrun the stampede.
 Swiposaur is a three-lane endless runner that runs entirely in the browser: no plugins,
 no sprite sheets and no server requirement. The whole world (dinosaur, critters, biomes,
 weather and sound effects) is generated in code at runtime, with one exception: the
-tail-whip hit is a real finger swipe recorded by the developer
-(`public/audio/swip.mp3`, 9.5 KB). The only other binary files in the build are the app
+tail-whip stamina refund plays a real finger swipe recorded by the developer
+(`public/audio/swip.mp3`, 9.5 KB), and only when the hit actually moves the stamina
+bar. The only other binary files in the build are the app
 icons and favicons.
 
 | | |
@@ -41,7 +42,7 @@ icons and favicons.
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` at that commit · final jam build with 12 biomes and Burmese localization |
-| **Current build** | `1.1.2` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip connects. Nothing else was changed after submission |
+| **Current build** | `1.1.3` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip refunds stamina, and a roar multiplier that only builds while you are dodging. Nothing else was changed after submission |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
 | **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls. Recorded before the recorded swipe cue was added, so it describes the synthesised whoosh |
@@ -52,7 +53,7 @@ icons and favicons.
 | **Engine** | React 19 + Three.js, custom voxel meshes, Web Audio (synthesized effects plus one recorded swipe) |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Production footprint** | `dist/`: 1,406,506 bytes on disk · JS+CSS: 1,241,643 bytes raw / 312,075 bytes gzipped (297,755 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
+| **Production footprint** | `dist/`: 1,406,791 bytes on disk · JS+CSS: 1,241,928 bytes raw / 312,104 bytes gzipped (297,784 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
 
 ---
 
@@ -97,7 +98,7 @@ flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter inside<br/>whip reach?"}
     range -- yes --> hit["TAIL WHIP LANDS<br/>+22 stamina (+26 touch) · combo +1"]
     range -- no --> whiff["WHIFF<br/>no stamina refund"]
-    hit --> roar["Roar meter charges<br/>1x → 2x → 4x → 8x → 16x"]
+    hit --> roar["Roar meter charges<br/>while dodging<br/>1x → 2x → 4x → 8x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}
     roar --> dodge
     dodge -- "hit" --> dmg["−35 to −45 stamina<br/>stampede chases for 6 s"]
@@ -116,10 +117,12 @@ flowchart LR
    stampede for 6 seconds unless you run clean. Running also burns stamina once the
    opening is over, and the drain climbs with the clock, so no run is infinite.
 4. **Whip to survive.** A landed whip refunds +22 stamina (+26 on touch), has an
-   18-frame cooldown and charges the roar meter — enough to keep the loop alive, never
-   enough to erase the fatigue clock on its own.
-5. **Roar multiplier.** The meter steps `1x → 2x → 4x → 8x → 16x`; every point of score
-   rides on it, so chaining whips is worth more than surviving passively.
+   18-frame cooldown and scores at the roar multiplier, enough to keep the loop alive,
+   never enough to erase the fatigue clock on its own.
+5. **Roar multiplier.** The meter steps `1x → 2x → 4x → 8x → 16x` and only charges while
+   you are dodging: a lane change or jump arms it for two seconds. A player standing still
+   and mashing whip still scores at the current tier, but cannot raise it. Every point of
+   score rides on the meter, so moving beats button mashing.
 
 ### Scoring and grades
 
@@ -243,7 +246,7 @@ npm run dev:api    # http://localhost:3000
 - **A board that says "Saved on this device" is the documented fallback, not a failure.** It
   means the deployment has no durable store or the probe did not answer; reloading lets it
   probe again. See *Configuration* for the storage variables.
-- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 169 tests across 17
+- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 172 tests across 17
   files with no browser, network or saved state. If a low-memory machine struggles with the
   default worker pool, `npx vitest run --no-file-parallelism` runs the same suite in one
   worker.
@@ -292,8 +295,9 @@ ever creates one record.
 - Custom Three.js renderer: voxel dinosaur built from primitives, 12 skins, 12 biomes,
   dynamic shadows, weather and camera shake.
 - Web Audio SFX, all synthesized at runtime (whips, blasts, coin chimes), except the
-  tail-whip hit, which is one 0.78 s recording made by the developer
-  (`public/audio/swip.mp3`). Nothing is licensed from a sample pack. The arcade sequencer
+  tail-whip stamina refund, which is one 0.78 s recording made by the developer
+  (`public/audio/swip.mp3`) and plays only when that hit raises the stamina bar. Nothing
+  is licensed from a sample pack. The arcade sequencer
   is not started during a run, so the effects carry the audio.
 - A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
   pollen, with an 8-second first-load progress bar and a 2-second reload progress bar.
@@ -421,7 +425,7 @@ docs/screenshots/               screenshots used by this README
 | --- | --- | --- |
 | All 3D models, textures and UI art | Generated in code with Three.js primitives and inline SVG | Original work, Apache-2.0 |
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` as transparent PNG and source SVG | Original work, Apache-2.0 |
-| Music and sound effects | Synthesized at runtime with the Web Audio API; the tail-whip hit cue is a recording made by the developer (`public/audio/swip.mp3`) | Original work, Apache-2.0 |
+| Music and sound effects | Synthesized at runtime with the Web Audio API; the tail-whip stamina refund cue is a recording made by the developer (`public/audio/swip.mp3`), played only when that hit raises the stamina bar | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
 | Burmese font: Aka 08 | [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | License not stated in the repository metadata; verify the font's redistribution terms with its author before redistribution |
 | React, React DOM | react.dev | MIT |

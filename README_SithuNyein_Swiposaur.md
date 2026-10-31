@@ -6,7 +6,7 @@
 
 <img src="docs/brand/swiposaur-seal.png" alt="Swiposaur sealed build" width="68" />
 
-### Digit7 Jam 2026 · HTML arcade game · v1.1.2
+### Digit7 Jam 2026 · HTML arcade game · v1.1.3
 
 **Team:** Solo Canvas — Sithu Nyein (solo)
 
@@ -73,7 +73,9 @@ the moment one thumb has to jump and whip at once. Ground whips stay manual, so 
 can still run out and a run can still end; touch whips refund +26 stamina instead of +22.
 
 Scoring: distance + coins + vaults + near-misses + whip combos, multiplied by the Roar
-meter (1×–16×). Stamina falls to fatigue while running and is partly refunded by a landed
+meter (1×–16×). The meter only charges while you are dodging: a lane change or jump arms
+it for two seconds, so standing still and mashing whip scores at the current tier but
+cannot raise it. Stamina falls to fatigue while running and is partly refunded by a landed
 whip (+22 on keyboard, +26 on touch), so every run has a ceiling.
 
 Grades are read off the run itself, not the score: the tier comes from distance plus the
@@ -87,7 +89,7 @@ flowchart LR
     start(["Tap / SPACE"]) --> range{"Critter in<br/>whip reach?"}
     range -- yes --> hit["WHIP LANDS<br/>+22 / +26 touch · combo +1"]
     range -- no --> whiff["WHIFF<br/>no refund"]
-    hit --> roar["Roar charges<br/>1x → 16x"]
+    hit --> roar["Roar charges<br/>while dodging<br/>1x → 16x"]
     whiff --> dodge{"Obstacle in lane?"}
     roar --> dodge
     dodge -- hit --> dmg["−35 to −45 stamina<br/>stampede for 6 s"]
@@ -156,7 +158,8 @@ flowchart TD
   primitives + inline SVG), Apache-2.0.
 - Audio: original. All effects and music are synthesized at runtime with the Web Audio API,
   plus one recorded swipe cue (`public/audio/swip.mp3`, 0.78 s, 9.5 KB) made by the
-  developer for the tail-whip hit. No third-party sample library.
+  developer. It plays only when the tail-whip hit raises the stamina bar, so a hit at
+  full stamina stays silent. No third-party sample library.
 - Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P and Noto Sans Myanmar
   (Google Fonts, SIL OFL 1.1), plus Aka 08 for the Burmese UI (credited to
   [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts),
@@ -225,7 +228,7 @@ read and can explain every file and is responsible for the submitted code.
 ## 16. Repository and build access
 
 - Repository: https://github.com/thesithunyein/swiposaur
-- Current version: `1.1.2`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata. The submitted jam build was `1.1.0`; `1.1.2` adds the recorded swipe cue described in §11 and changes nothing else.
+- Current version: `1.1.3`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata. The submitted jam build was `1.1.0`; `1.1.3` adds the recorded swipe cue described in §11 and a roar meter that only charges while dodging.
 - Earlier tag: [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), an earlier six-biome snapshot without Burmese localization; it is not the build described here.
 - Build this source: `npm install && npm run build` → `dist/`
 - The repository is public, so reviewers can open it without an invitation. If the
@@ -234,4 +237,4 @@ read and can explain every file and is responsible for the submitted code.
 
 ## 17. Build version
 
-**Current build, v1.1.2:** the final jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization, plus the recorded swipe cue. The 2-minute demo was recorded on `1.1.0`, before that cue, so the narration describes the synthesised whoosh. The public playable URL was checked on 29 October 2026 and serves this final jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains an earlier six-biome snapshot.
+**Current build, v1.1.3:** the final jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization, plus the recorded swipe cue and a roar meter that only charges while you are dodging. The 2-minute demo was recorded on `1.1.0`, before that cue, so the narration describes the synthesised whoosh. The public playable URL was checked on 29 October 2026 and serves this final jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains an earlier six-biome snapshot.
