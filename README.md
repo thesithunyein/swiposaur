@@ -38,14 +38,14 @@ binary files in the build are the app icons and favicons.
 | **Game title** | Swiposaur — Tail Frenzy |
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
-| **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · post-jam build with 12 biomes and Burmese localization |
+| **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` (`package.json`) · final jam build with 12 biomes and Burmese localization |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
 | **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls |
 | **How to play** | Open the live URL in any browser with WebGL, wait for the load gate, press **ကစားမည် / PLAY**, then `Space` for a tail-whip on desktop or tap the WHIP button on a phone |
 | **Orientation / resolution** | Phones: portrait from 360×640 (9:16 works). Desktop: any orientation from 1280×720. The canvas fills the window at any aspect ratio and the camera re-derives its aspect on resize |
 | **Network requirements** | No backend is needed to play. The browser fetches web fonts, and on this deployment probes `/api/leaderboard`; if either is unavailable the game falls back to system fonts and the on-device Hall of Fame. No third-party API key or account |
-| **Historical jam snapshot** | [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) — six biomes, before the Burmese localization; not the build described below |
+| **Earlier snapshot** | [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) — six biomes, before the Burmese localization; not the build described below |
 | **Engine** | React 19 + Three.js, custom voxel meshes, synthesized Web Audio |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
@@ -203,7 +203,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Production build for the current `v1.1.0` judging version from `main` (the `v1.0.0` tag remains the original jam snapshot):
+Production build for the current `v1.1.0` judging version from `main` (the `v1.0.0` tag remains an earlier snapshot):
 
 ```bash
 npm run build      # outputs ./dist

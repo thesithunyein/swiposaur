@@ -223,8 +223,8 @@ responsible for the submitted code.
 ## 16. Repository and build access
 
 - Repository: https://github.com/thesithunyein/swiposaur
-- Current judging version: `v1.1.0`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata; this is the post-jam build described in this document.
-- Historical jam tag: [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), an earlier six-biome snapshot without Burmese localization; it is not the build described here.
+- Current judging version: `v1.1.0`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata; this is the final jam build described in this document.
+- Earlier tag: [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), an earlier six-biome snapshot without Burmese localization; it is not the build described here.
 - Build this source: `npm install && npm run build` → `dist/`
 - The repository is public, so reviewers can open it without an invitation. If the
   organizer requires a private repository, access will be granted to the announced
@@ -232,4 +232,4 @@ responsible for the submitted code.
 
 ## 17. Build version
 
-**Current judging build, v1.1.0:** the post-jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization. The public playable URL was checked on 29 October 2026 and serves this post-jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains the historical six-biome jam snapshot.
+**Current judging build, v1.1.0:** the final jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization. The public playable URL was checked on 29 October 2026 and serves this final jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains an earlier six-biome snapshot.

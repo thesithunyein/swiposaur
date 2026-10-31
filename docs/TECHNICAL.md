@@ -1,13 +1,13 @@
 # Swiposaur — Technical Document
 
-A short, factual description of the current post-jam judging build, written for
+A short, factual description of the current judging build, written for
 judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Current judging version:** `v1.1.0`, post-jam build with twelve biomes and English/Burmese localization.
-- **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the post-jam feature set; exact deployed commit not asserted).
-- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`; the only release tag is historical `v1.0.0`).
-- **Historical jam snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
+- **Current judging version:** `v1.1.0`, final jam build with twelve biomes and English/Burmese localization.
+- **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the final jam feature set; exact deployed commit not asserted).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.0`; the only release tag is the earlier `v1.0.0`).
+- **Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
 
@@ -77,7 +77,7 @@ cannot be rejected by the server for a different reason, and vice versa.
 fog, props, weather, celestial body and the renderer style they reuse) and
 `constants.ts` defines twelve wardrobe skins plus three legacy aliases kept so
 old saves and submitted scores still resolve. `levels.ts` maps a level to the
-biome it unlocks; the six post-jam habitats arrive at levels 45, 55, 65, 75, 85
+biome it unlocks; the six later habitats arrive at levels 45, 55, 65, 75, 85
 and 95, each paired with a skin. Adding a biome is a data change plus a style
 choice, not new geometry.
 

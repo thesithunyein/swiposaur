@@ -3,10 +3,10 @@
 **Project:** Swiposaur — Tail Frenzy
 **Author:** Sithu Nyein (Myanmar citizen), solo entry
 **Repository:** <https://github.com/thesithunyein/swiposaur>
-**Current judging version:** `v1.1.0`, post-jam build with twelve biomes and English/Burmese localization
+**Current judging version:** `v1.1.0`, final jam build with twelve biomes and English/Burmese localization
 **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; exact deployed commit not asserted)
 **Current source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (package version `1.1.0`)
-**Historical jam snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), the earlier six-biome build before Burmese localization
+**Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), the earlier six-biome build before Burmese localization
 
 ## 1. Development record
 
@@ -16,7 +16,7 @@ commits**, every one of them inside the jam window. The count is pinned to that
 commit so it can be checked with `git rev-list --count a435f75`; later commits only
 extend the same history. The history is public, so the development timeline can be
 checked commit by commit. The current source is package version `1.1.0`; `v1.0.0`
-remains the original jam snapshot. No part of the game was published or made
+remains an earlier snapshot. No part of the game was published or made
 commercially available before this submission.
 
 ## 2. What is original
