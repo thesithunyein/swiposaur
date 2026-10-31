@@ -62,9 +62,8 @@ Best on a phone in portrait (360×640 and up) or any desktop window (1280×720 a
   remembered on the device. Every map, skin and mission name is translated.
 - **Lane change:** `A`/`D` or `←`/`→`; on touch the LEFT/RIGHT buttons, a swipe
   left/right, or a tap on the left/right third.
-- **Jump:** `W`, `↑`, `Space` when not beside a critter; on touch the JUMP button or a
-  swipe up.
-- **Tail-whip:** `Space`, `F`, `Enter`, or the whip button; on touch the 96 px WHIP
+- **Jump:** `W`/`↑`; on touch the JUMP button or a swipe up.
+- **Tail-whip:** `Space` or the whip button; on touch the 96 px WHIP
   button, a swipe down, or a tap in the centre.
 - **Pause:** `P` / `Esc` or the pause button.
 

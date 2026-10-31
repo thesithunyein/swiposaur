@@ -192,8 +192,8 @@ canvas runs at full speed.
 | Action | Desktop | Mobile |
 | --- | --- | --- |
 | Change lane | `A` / `D`, `←` / `→` | LEFT / RIGHT buttons, swipe left / right, or tap the left / right third |
-| Jump | `W`, `↑`, or `Space` when not near a critter | JUMP button or swipe up |
-| Tail-whip | `Space`, `F`, `Enter`, or the whip button | 96 px WHIP button, swipe down, or tap the middle 40% |
+| Jump | `W` / `↑` | JUMP button or swipe up |
+| Tail-whip | `Space` or the whip button | 96 px WHIP button, swipe down, or tap the middle 40% |
 | Pause | `P` / `Esc` | Pause button |
 
 On touch the engine also auto-whips a glowing critter **only while the dino is airborne**,
