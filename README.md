@@ -42,7 +42,7 @@ icons and favicons.
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` at that commit · final jam build with 12 biomes and Burmese localization |
-| **Current build** | `1.1.3` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip refunds stamina, and a roar multiplier that only builds while you are dodging. Nothing else was changed after submission |
+| **Current build** | `1.1.4` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip refunds stamina, a roar multiplier that only builds while you are dodging, and one swing per press with no queued follow-up. Nothing else was changed after submission |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
 | **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls. Recorded before the recorded swipe cue was added, so it describes the synthesised whoosh |
@@ -53,7 +53,7 @@ icons and favicons.
 | **Engine** | React 19 + Three.js, custom voxel meshes, Web Audio (synthesized effects plus one recorded swipe) |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Production footprint** | `dist/`: 1,406,791 bytes on disk · JS+CSS: 1,241,928 bytes raw / 312,104 bytes gzipped (297,784 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
+| **Production footprint** | `dist/`: 1,406,461 bytes on disk · JS+CSS: 1,241,598 bytes raw / 314,391 bytes gzipped (299,967 B JS + 14,424 B CSS; about 307 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
 
 ---
 
@@ -209,7 +209,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Production build for the current `1.1.2` version from `main` (the submitted jam build was `1.1.0` at `a435f75`; the `v1.0.0` tag remains an earlier snapshot):
+Production build for the current `1.1.4` version from `main` (the submitted jam build was `1.1.0` at `a435f75`; the `v1.0.0` tag remains an earlier snapshot):
 
 ```bash
 npm run build      # outputs ./dist

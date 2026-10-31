@@ -6,7 +6,7 @@
 
 <img src="docs/brand/swiposaur-seal.png" alt="Swiposaur sealed build" width="68" />
 
-### Digit7 Jam 2026 · HTML arcade game · v1.1.3
+### Digit7 Jam 2026 · HTML arcade game · v1.1.4
 
 **Team:** Solo Canvas — Sithu Nyein (solo)
 
@@ -227,7 +227,7 @@ read and can explain every file and is responsible for the submitted code.
 ## 16. Repository and build access
 
 - Repository: https://github.com/thesithunyein/swiposaur
-- Current version: `1.1.3`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata. The submitted jam build was `1.1.0`; `1.1.3` adds the recorded swipe cue described in §11 and a roar meter that only charges while dodging.
+- Current version: `1.1.4`, source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with matching package metadata. The submitted jam build was `1.1.0`; `1.1.4` adds the recorded swipe cue described in §11, a roar meter that only charges while dodging, and one swing per whip press.
 - Earlier tag: [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0), an earlier six-biome snapshot without Burmese localization; it is not the build described here.
 - Build this source: `npm install && npm run build` → `dist/`
 - The repository is public, so reviewers can open it without an invitation. If the
@@ -236,4 +236,4 @@ read and can explain every file and is responsible for the submitted code.
 
 ## 17. Build version
 
-**Current build, v1.1.3:** the final jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization, plus the recorded swipe cue and a roar meter that only charges while you are dodging. The 2-minute demo was recorded on `1.1.0`, before that cue, so the narration describes the synthesised whoosh. The public playable URL was checked on 29 October 2026 and serves this final jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains an earlier six-biome snapshot.
+**Current build, v1.1.4:** the final jam source on [`main`](https://github.com/thesithunyein/swiposaur/tree/main), with twelve biomes and English/Burmese localization, plus the recorded swipe cue, a roar meter that only charges while you are dodging, and one swing per whip press. The 2-minute demo was recorded on `1.1.0`, before that cue, so the narration describes the synthesised whoosh. The public playable URL was checked on 29 October 2026 and serves this final jam feature set; its exact deployed commit is not asserted here. The original `v1.0.0` tag remains an earlier six-biome snapshot.

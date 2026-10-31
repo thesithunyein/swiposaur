@@ -4,9 +4,9 @@ A short, factual description of the current judging build, written for
 judges and reviewers rather than players. Player-facing instructions live in
 [README.md](../README.md).
 
-- **Current version:** `1.1.3`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
+- **Current version:** `1.1.4`, final jam build with twelve biomes and English/Burmese localization (the jam submission was `1.1.0`).
 - **Playable URL:** <https://swiposaur.sithunyein.com/> (checked 29 October 2026; serves the final jam feature set; exact deployed commit not asserted).
-- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.3`; the only release tag is the earlier `v1.0.0`).
+- **Source:** [`main`](https://github.com/thesithunyein/swiposaur/tree/main) (`package.json` version `1.1.4`; the only release tag is the earlier `v1.0.0`).
 - **Earlier snapshot:** [`v1.0.0`](https://github.com/thesithunyein/swiposaur/tree/v1.0.0) (six biomes; before Burmese localization).
 - **Author:** Sithu Nyein (solo)
 - **License:** Apache-2.0 ([LICENSE](../LICENSE))
@@ -38,9 +38,9 @@ enraged crowd catches the runner.
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
 `npm run build` emits one JS bundle plus one CSS file. In the build checked 31
-October 2026, JavaScript was 1,143,685 bytes (297,784 bytes gzipped) and CSS was
-98,243 bytes (14,320 bytes gzipped): together 1,241,928 bytes raw and 312,104
-bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,791
+October 2026, JavaScript was 1,143,355 bytes (299,967 bytes gzipped) and CSS was
+98,243 bytes (14,424 bytes gzipped): together 1,241,598 bytes raw and 314,391
+bytes gzipped (about 307 KiB). The complete `dist/` directory was 1,406,461
 bytes, including icons, metadata and the 9,523-byte swipe recording. These are
 generated-build measurements, not
 source tree size. There is no code splitting yet; see §12.
@@ -243,7 +243,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 1. **No frame-time instrumentation.** Averages hide hitches; a rolling p95
    frame time on screen would be honest and useful.
-2. **One bundle.** 1,143,400 bytes minified in the build checked 31 October
+2. **One bundle.** 1,143,355 bytes minified in the build checked 31 October
    2026, over Vite's 500 KB warning. Code-splitting the renderer would shrink
    time-to-first-frame on a phone.
 3. **No service worker.** The manifest gives an "Add to Home Screen" shortcut,

@@ -370,7 +370,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 bg-[#160E08] border-t border-white/10 text-center text-xs text-[#FED7AA]/80">
-          Swiposaur 3D Dino Party Runner v1.1.3
+          Swiposaur 3D Dino Party Runner v1.1.4
         </div>
       </div>
     </div>

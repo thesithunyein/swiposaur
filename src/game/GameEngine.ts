@@ -77,12 +77,6 @@ const STAMINA_PER_WHIP_TOUCH = 26;
 /** Frames between whips, so a crowd cannot be farmed frame by frame. */
 const SLAP_COOLDOWN_FRAMES = 18;
 /**
- * A whip pressed while the previous swing is still on cooldown is remembered
- * for this long. Without it a fast tap on a walker entering the strike window
- * was silently swallowed, which read as "this bystander can't be whipped".
- */
-const SLAP_BUFFER_FRAMES = 20;
-/**
  * How long a lane change or a jump keeps the chaos meter "armed". The meter is
  * a dodge reward: a player standing still and mashing whip still scores, but
  * the multiplier cannot climb on whip presses alone.
@@ -260,8 +254,6 @@ export class GameEngine {
   public staminaBonus: number = 0;
   private hitFreezeMs: number = 0;
   private passiveRunTimer: number = 0;
-  /** Frames a whip pressed during cooldown stays queued. */
-  private slapBufferFrames: number = 0;
   /** Lane kept open by the previous obstacle segment, for a reachable corridor. */
   private lastFreeLaneIndex: number | null = null;
   // Opening grace window (seconds) after the intro cinematic. While it runs the
@@ -456,7 +448,6 @@ export class GameEngine {
     this.stats.mobDistance = 180;
     this.stats.gameOverReason = undefined;
     this.passiveRunTimer = 0;
-    this.slapBufferFrames = 0;
     this.graceTimer = 0;
     this.boostJumpsCount = 0;
     this.nearMissesCount = 0;
@@ -1023,26 +1014,10 @@ export class GameEngine {
 
     if (this.input.slapRequested || this.input.keys.slap) {
       this.input.slapRequested = false;
-      if (p.slapCooldown > 0) {
-        // Too early: queue the intent instead of dropping it on the floor.
-        this.slapBufferFrames = SLAP_BUFFER_FRAMES;
-      } else {
-        this.slapBufferFrames = 0;
-        this.executeSlap();
-      }
-    } else if (this.slapBufferFrames > 0) {
-      if (p.slapCooldown <= 0) {
-        // Only spend the queued swing on a real target; otherwise let it lapse.
-        if (this.findWhipTarget()) {
-          this.slapBufferFrames = 0;
-          this.executeSlap();
-        } else {
-          this.slapBufferFrames = 0;
-        }
-      } else {
-        this.slapBufferFrames -= dtFactor;
-        if (this.slapBufferFrames < 0) this.slapBufferFrames = 0;
-      }
+      // One press, one swing. A press inside the cooldown is dropped rather
+      // than queued: a queued press fired ~300 ms later at whoever drifted
+      // into reach, which read as a whip sound with no visible hit.
+      if (p.slapCooldown <= 0) this.executeSlap();
     }
 
     // Progress active whip / slap animation

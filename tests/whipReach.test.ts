@@ -223,7 +223,7 @@ describe('whip reach', () => {
     expect(second.slapped).toBe(true);
   });
 
-  it('queues a whip pressed during cooldown instead of swallowing it', () => {
+  it('drops a whip pressed during cooldown instead of firing it later', () => {
     const { engine, p } = setup(1, 159, -0.6, 40);
     // Two targets in reach, and a stationary runner so both stay in range.
     p.baseSpeed = 0;
@@ -239,9 +239,15 @@ describe('whip reach', () => {
     expect(first.slapped).toBe(true);
 
     // The second tap arrives while the 18-frame whip cooldown is still running.
+    // It must not fire on its own later at the second target: a delayed swing
+    // sounded like a whip with no hit.
     engine.requestSlap();
     for (let i = 0; i < 20; i++) state.update(1);
+    expect(second.slapped).toBe(false);
 
+    // A fresh press once the cooldown is over still connects.
+    engine.requestSlap();
+    state.update(1);
     expect(second.slapped).toBe(true);
   });
 });
