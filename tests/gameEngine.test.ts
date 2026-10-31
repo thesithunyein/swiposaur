@@ -22,6 +22,7 @@ vi.mock('../src/game/ThreeGameRenderer.ts', () => {
 
 import { GameEngine } from '../src/game/GameEngine.ts';
 import { isRampType } from '../src/game/obstacleRules.ts';
+import { sounds } from '../src/game/SoundEngine.ts';
 
 function setTouchEnvironment(touch: boolean): void {
   Object.defineProperty(window, 'matchMedia', {
@@ -672,6 +673,29 @@ describe('stamina economy', () => {
     state.update(1);
     expect(engine.stats.slapsCount).toBe(1);
     expect(engine.bystanders.filter((b) => b.slapped)).toHaveLength(1);
+  });
+
+  it('plays the recorded swipe only when the whip connects', () => {
+    const engine = setup();
+    const p = engine.player;
+    const swipe = vi.spyOn(sounds, 'playSwipe').mockImplementation(() => {});
+    const state = engine as unknown as { update(dtFactor: number): void };
+
+    // A whip into empty road is silent.
+    engine.bystanders = [];
+    engine.requestSlap();
+    state.update(1);
+    expect(swipe).not.toHaveBeenCalled();
+
+    // A whip that lands on a walker plays it exactly once.
+    p.slapCooldown = 0;
+    engine.bystanders = [shopper(1, 0, p.y + 10)];
+    engine.requestSlap();
+    state.update(1);
+    expect(engine.stats.slapsCount).toBe(1);
+    expect(swipe).toHaveBeenCalledTimes(1);
+
+    swipe.mockRestore();
   });
 
   it('does not bleed stamina during the opening seconds', () => {

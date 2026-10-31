@@ -2,7 +2,7 @@
  * Audio for Swiposaur.
  *
  * Nearly everything is synthesized with the Web Audio API, with one recorded
- * exception: the tail-whip swing is a real swipe recorded by the developer
+ * exception: the tail-whip hit is a real swipe recorded by the developer
  * (public/audio/swip.mp3). If that file is unavailable the synthesized whoosh
  * below plays instead, so the cue never goes missing. The background music is a
  * small 16-step sequencer (bass, arpeggio, kick, snare, hats) whose tempo and
@@ -320,8 +320,9 @@ class SoundEngine {
   }
 
   /**
-   * The whip itself. Plays the recorded swipe once it has loaded; the retrigger
-   * guard only matters if a slap is somehow requested twice in one frame.
+   * The whip landing. The engine calls this only when the swing connects, so a
+   * missed whip stays silent. The retrigger guard only matters if a slap is
+   * somehow requested twice in one frame.
    */
   public playSwipe(): void {
     if (this.isMuted) return;

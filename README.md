@@ -31,7 +31,7 @@ charge the Primal Roar and outrun the stampede.
 Swiposaur is a three-lane endless runner that runs entirely in the browser: no plugins,
 no sprite sheets and no server requirement. The whole world (dinosaur, critters, biomes,
 weather and sound effects) is generated in code at runtime, with one exception: the
-tail-whip cue is a real finger swipe recorded by the developer
+tail-whip hit is a real finger swipe recorded by the developer
 (`public/audio/swip.mp3`, 9.5 KB). The only other binary files in the build are the app
 icons and favicons.
 
@@ -41,7 +41,7 @@ icons and favicons.
 | **Team name** | Solo Canvas (solo entry, one member) |
 | **Team leader / main contact** | Sithu Nyein · <sithunyein.mailto@gmail.com> · [GitHub](https://github.com/thesithunyein) · Telegram `@thesithunyein` |
 | **Submission build** | commit [`a435f75`](https://github.com/thesithunyein/swiposaur/commit/a435f75) on `main` · release identifier `1.1.0` at that commit · final jam build with 12 biomes and Burmese localization |
-| **Current build** | `1.1.1` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays with the tail-whip. Nothing else was changed after submission |
+| **Current build** | `1.1.1` on `main`, deployed 31 Oct 2026: the submitted game plus one recorded swipe cue that plays only when a tail-whip connects. Nothing else was changed after submission |
 | **Repository access** | <https://github.com/thesithunyein/swiposaur/> is public — no invite or access request is needed to read the source at that commit |
 | **Live build** | <https://swiposaur.sithunyein.com/> (checked 29 Oct 2026; deployed from `main`, though the exact deployed commit is not asserted) |
 | **Demo video** | [2-minute narrated walkthrough on YouTube](https://youtu.be/aeFZKiTROJ4) — hook, the code-generated world, the Primal Roar loop, the stampede, mobile controls. Recorded before the recorded swipe cue was added, so it describes the synthesised whoosh |
@@ -52,7 +52,7 @@ icons and favicons.
 | **Engine** | React 19 + Three.js, custom voxel meshes, Web Audio (synthesized effects plus one recorded swipe) |
 | **Entry point** | `index.html` → `src/main.tsx` |
 | **Submission documents** | [Technical document](docs/TECHNICAL.md) · [Originality and AI use](docs/ORIGINALITY.md) · [Team profile](docs/TEAM.md) |
-| **Production footprint** | `dist/`: 1,406,506 bytes on disk · JS+CSS: 1,241,643 bytes raw / 312,076 bytes gzipped (297,756 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
+| **Production footprint** | `dist/`: 1,406,506 bytes on disk · JS+CSS: 1,241,643 bytes raw / 312,075 bytes gzipped (297,755 B JS + 14,320 B CSS; about 305 KiB) · one 9.5 KB recorded swipe, no sprite or texture files |
 
 ---
 
@@ -243,7 +243,7 @@ npm run dev:api    # http://localhost:3000
 - **A board that says "Saved on this device" is the documented fallback, not a failure.** It
   means the deployment has no durable store or the probe did not answer; reloading lets it
   probe again. See *Configuration* for the storage variables.
-- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 168 tests across 17
+- **Automated checks:** `npm ci && npm run typecheck && npm test` runs 169 tests across 17
   files with no browser, network or saved state. If a low-memory machine struggles with the
   default worker pool, `npx vitest run --no-file-parallelism` runs the same suite in one
   worker.
@@ -292,7 +292,7 @@ ever creates one record.
 - Custom Three.js renderer: voxel dinosaur built from primitives, 12 skins, 12 biomes,
   dynamic shadows, weather and camera shake.
 - Web Audio SFX, all synthesized at runtime (whips, blasts, coin chimes), except the
-  tail-whip swipe, which is one 0.78 s recording made by the developer
+  tail-whip hit, which is one 0.78 s recording made by the developer
   (`public/audio/swip.mp3`). Nothing is licensed from a sample pack. The arcade sequencer
   is not started during a run, so the effects carry the audio.
 - A staged boot gate before the title menu: logo, one bar, one tip, drifting clouds and
@@ -421,7 +421,7 @@ docs/screenshots/               screenshots used by this README
 | --- | --- | --- |
 | All 3D models, textures and UI art | Generated in code with Three.js primitives and inline SVG | Original work, Apache-2.0 |
 | Logo and icons | Inline SVG in `src/components/GameLogo.tsx`, exported to `docs/brand/` as transparent PNG and source SVG | Original work, Apache-2.0 |
-| Music and sound effects | Synthesized at runtime with the Web Audio API; the tail-whip swipe is a recording made by the developer (`public/audio/swip.mp3`) | Original work, Apache-2.0 |
+| Music and sound effects | Synthesized at runtime with the Web Audio API; the tail-whip hit cue is a recording made by the developer (`public/audio/swip.mp3`) | Original work, Apache-2.0 |
 | Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P, Noto Sans Myanmar | Google Fonts | SIL Open Font License 1.1 |
 | Burmese font: Aka 08 | [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts), served by jsDelivr | License not stated in the repository metadata; verify the font's redistribution terms with its author before redistribution |
 | React, React DOM | react.dev | MIT |

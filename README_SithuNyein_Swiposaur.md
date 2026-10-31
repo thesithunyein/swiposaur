@@ -156,7 +156,7 @@ flowchart TD
   primitives + inline SVG), Apache-2.0.
 - Audio: original. All effects and music are synthesized at runtime with the Web Audio API,
   plus one recorded swipe cue (`public/audio/swip.mp3`, 0.78 s, 9.5 KB) made by the
-  developer for the tail-whip. No third-party sample library.
+  developer for the tail-whip hit. No third-party sample library.
 - Fonts: Fredoka, Lilita One, Titan One, Sniglet, Press Start 2P and Noto Sans Myanmar
   (Google Fonts, SIL OFL 1.1), plus Aka 08 for the Burmese UI (credited to
   [saturngod/myanmar-unicode-fonts](https://github.com/saturngod/myanmar-unicode-fonts),

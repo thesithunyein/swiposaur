@@ -18,7 +18,7 @@ judges and reviewers rather than players. Player-facing instructions live in
 Swiposaur is a three-lane endless runner in the browser. The dinosaur, the
 critters, the city, the weather and nearly every sound are generated in code at
 runtime; the build contains no sprite sheets, no textures, and one recorded
-audio file (the tail-whip swipe, `public/audio/swip.mp3`).
+audio file (the tail-whip hit cue, `public/audio/swip.mp3`).
 Its loop is built around one resource: **stamina**, which a landed tail-whip
 refills and which the street drains. A run ends when stamina reaches zero or the
 enraged crowd catches the runner.
@@ -37,8 +37,8 @@ enraged crowd catches the runner.
 | Server (optional) | Express for the dev API; a serverless function on the deployed host |
 
 `npm run build` emits one JS bundle plus one CSS file. In the build checked 31
-October 2026, JavaScript was 1,143,400 bytes (297,756 bytes gzipped) and CSS was
-98,243 bytes (14,320 bytes gzipped): together 1,241,643 bytes raw and 312,076
+October 2026, JavaScript was 1,143,400 bytes (297,755 bytes gzipped) and CSS was
+98,243 bytes (14,320 bytes gzipped): together 1,241,643 bytes raw and 312,075
 bytes gzipped (about 305 KiB). The complete `dist/` directory was 1,406,506
 bytes, including icons, metadata and the 9,523-byte swipe recording. These are
 generated-build measurements, not
@@ -264,7 +264,7 @@ not a measured guarantee on every device; very old low-end GPUs can drop below
 
 ## 13. Tests
 
-168 tests across 17 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
+169 tests across 17 files (`npm test`), all passing in the verification run for this documentation update. Typecheck is run separately with `npm run typecheck`:
 
 | Area | Files |
 | --- | --- |

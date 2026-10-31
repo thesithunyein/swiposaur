@@ -1655,7 +1655,6 @@ export class GameEngine {
     p.isSlapping = true;
     p.slapProgress = 0;
     this.passiveRunTimer = 0;
-    sounds.playSwipe();
 
     // Detect closest bystander in slap reach
     const hitBystander = this.findWhipTarget();
@@ -1682,7 +1681,8 @@ export class GameEngine {
         rotation: 0,
       };
 
-      // Play Sound
+      // Play Sound: the recorded swipe only lands when the whip connects.
+      sounds.playSwipe();
       sounds.playSlap(this.stats.comboStreak);
       this.renderer.triggerShake(5 + Math.min(8, this.stats.comboStreak));
       this.renderer.triggerHitFreeze(2);
