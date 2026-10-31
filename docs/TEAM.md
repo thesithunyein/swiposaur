@@ -17,9 +17,9 @@ the same author appear in `git shortlog`).
 
 ## Contact
 
-- GitHub: <https://github.com/thesithunyein>
-- Game: <https://swiposaur.sithunyein.com/>
-- Repository: <https://github.com/thesithunyein/swiposaur>
+- Website: <https://sithunyein.com>
+- Email Address: <sithunyein.mailto@gmail.com>
+- Telegram Username: @thesithunyein
 
 ## What was built for this jam
 
